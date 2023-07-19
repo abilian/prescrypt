@@ -1,0 +1,370 @@
+import ast
+import bz2
+import json
+import time
+from pathlib import Path
+from unittest import skip
+
+from pytest import raises
+
+from prescrypt import converter, nodes
+from prescrypt.nodes import (Assign, BinOp, Bytes, Keyword, Name, Node, Num,
+                             Starred)
+
+samples_dir = Path(__file__).parent / "samples"
+sample1 = samples_dir / "python_sample.py"
+sample3 = samples_dir / "python_sample3.py"
+
+
+def _export_python_sample_ast():
+    # Get what to export
+    filenames = sample1, sample3
+    # Write
+    for filename in filenames:
+        filename_bz2 = filename[:-2] + "bz2"
+        code = filename.read_text()
+        root = converter.parse(code)
+        ast_bin = bz2.compress(root.tojson(indent=None).encode())
+        with open(filename_bz2, "wb") as f:
+            n = f.write(ast_bin) or "some"
+        print(f"wrote {n} bytes to {filename_bz2}")
+
+
+def _get_ref_json(path: Path):
+    path_bz2 = path.parent / (path.stem + ".bz2")
+    js_ref = bz2.decompress(open(path_bz2, "rb").read()).decode()
+    return json.dumps(json.loads(js_ref), indent=2, sort_keys=True)
+
+
+def timeit(what, func, *args, **kwargs):
+    t0 = time.perf_counter()
+    func(*args, **kwargs)
+    t1 = time.perf_counter()
+    print(f"{what} took {t1 - t0:1.2f} s")
+
+
+def _performance_runner():
+    """Some simple perf tests ...
+    (this function's name should not include 'test')
+    """
+    code = open(sample1, "rb").read().decode() * 100
+    timeit("sample with ast.parse", ast.parse, code)
+    timeit("sample with converter.parse", converter.parse, code)
+    timeit(
+        "sample with converter.parse + comments", converter.parse, code, comments=True
+    )
+
+    code = """if x < 9:
+    def foo(a, *b):
+        # done
+        return a + b or 4
+    foo(3, 4*bar)
+    """
+    code = (code.strip() + "\n\n") * 10000
+
+    print()
+    timeit("minisample with ast.parse", ast.parse, code)
+    timeit("minisample with converter.parse", converter.parse, code)
+    timeit(
+        "minisample with converter.parse + comments",
+        converter.parse,
+        code,
+        comments=True,
+    )
+
+
+def test_Node_creation():
+    Node = nodes.Node
+
+    class MyNodeWithoutSlots(Node):
+        pass
+
+    class MyStubNode(Node):
+        __slots__ = ()
+
+    class MyNode(Node):
+        __slots__ = "name", "op", "foo_node", "foo_nodes", "bar"
+
+    stubnode = MyStubNode()
+    stubnodes = [MyStubNode(), MyStubNode(), MyStubNode()]
+
+    # Node is an abstract class
+    raises(AssertionError, Node)
+    # Nodes must have slots (and no __dict__ to preserve memory)
+    raises(AssertionError, MyNodeWithoutSlots)
+    # number of names must match
+    raises(
+        AssertionError,
+        MyNode,
+    )
+    raises(AssertionError, MyStubNode, 1)
+    raises(AssertionError, MyNode, "a", "Add", stubnode, stubnodes, 1, 2)
+
+    # These work
+    MyNode("a", "Add", stubnode, stubnodes, 1)
+    MyNode("a", "Add", None, stubnodes, 1)
+    MyNode("a", "Add", stubnode, [], 1)
+    MyNode("a", "Add", stubnode, stubnodes, "bla")
+    MyNode("a", "Add", stubnode, stubnodes, [1, 2, 3])
+    MyNode("a", "Mult", stubnode, stubnodes, 1)
+    MyNode("blas asdasd as", "Mult", stubnode, stubnodes, 1)
+
+    # Name must be a string
+    raises(AssertionError, MyNode, 1, "Add", stubnode, stubnodes, 1)
+    # op must be an existing operator
+    raises(AssertionError, MyNode, "a", "crap", stubnode, stubnodes, 1)
+    # names ending with _node must be a node, and _nodes must be a list of nodes
+    raises(AssertionError, MyNode, "a", "Add", 1, stubnodes, 1)
+    raises(AssertionError, MyNode, "a", "Add", "x", stubnodes, 1)
+    raises(AssertionError, MyNode, "a", "Add", stubnode, "not a node", 1)
+    raises(AssertionError, MyNode, "a", "Add", stubnode, [1, 2], 1)
+    # bar can be anything, but not a Node or list of Nodes
+    raises(AssertionError, MyNode, "a", "Add", stubnode, stubnodes, stubnode)
+    raises(AssertionError, MyNode, "a", "Add", stubnode, stubnodes, stubnodes)
+
+
+def test_json_conversion():
+    # Test json conversion
+    roota = Assign([Name("foo")], BinOp("Add", Name("a"), Num(3)))
+    rootb = Assign([Name("foo")], BinOp("Add", None, Num(3.2)))
+    rootc = Assign([Name("foo")], BinOp("Add", Bytes(b"xx"), Num(4j)))
+
+    for node1 in (roota, rootb, rootc):
+        js = node1.tojson()
+        node2 = Node.fromjson(js)
+        #
+        assert js.count("BinOp") == 1
+        assert js.count("Num") == 1
+        #
+        assert node2.target_nodes[0].name == node1.target_nodes[0].name
+        assert node2.value_node.op == node1.value_node.op
+        assert node2.value_node.left_node == node1.value_node.left_node
+        assert node2.value_node.right_node.value == node1.value_node.right_node.value
+        # In fact, we can do
+        node1 == node2
+
+    assert roota != rootb
+    assert roota != rootc
+    with raises(ValueError):
+        roota == 5
+
+    assert str(roota) == roota.tojson()
+    assert len(repr(roota)) < 80
+
+
+def test_comments():
+    code = """
+    # cm0
+    class Foo:
+        # cm1
+        def foo(self):
+            # cm2
+            if 1:
+                # cm3
+                a = 3
+            else:
+                # cm4
+                a = 2
+            for i in x:
+                # cm5
+                a += i
+            else:
+                # cm6
+                pass
+            while x:
+                # cm7
+                pass
+            else:
+                # cm8
+                pass
+            try:
+                # cm9
+                pass
+            except Exception:
+                # cm10
+                pass
+            else:
+                # cm10
+                pass
+            finally:
+                # cm11
+                pass
+            with foo:
+               # cm12
+               bar
+    """
+    code = "\n".join(x[4:] for x in code.splitlines())
+
+    root = converter.parse(code, comments=False)
+    assert "cm" not in root.tojson()
+
+    root = converter.parse(code, comments=True)
+    for i in range(13):
+        assert ("cm%i" % i) in root.tojson()
+
+
+def _compare_large_strings(text1, text2):
+    # Compare in sections of 8 lines, with an overlap of 4,
+    # to make fails easier to read. Invariant to newline-types in Str nodes.
+    lines1, lines2 = text1.splitlines(), text2.splitlines()
+    for i in range(0, max(len(lines1), len(lines2)), 4):
+        prefix = "# line %i\n" % i
+        sec1 = prefix + "\n".join(lines1[i : i + 8])
+        sec2 = prefix + "\n".join(lines2[i : i + 8]).replace(
+            "\\r\\n", "\\n"
+        )  # for pypy
+        assert sec1 == sec2
+
+
+def test_compare_print():
+    ast = converter.parse("print(foo, bar)")
+    n = ast.body_nodes[0].value_node
+    assert isinstance(n, nodes.Call)
+    assert n.func_node.name == "print"
+    assert len(n.arg_nodes) == 2
+    assert n.arg_nodes[0].name == "foo"
+    assert n.arg_nodes[1].name == "bar"
+
+
+def test_consistent_ast0():
+    # Parse the sample file and export as a json string
+    code = ""
+    root = converter.parse(code)
+    js = root.tojson()
+    # Compare with ref
+    ref = '{\n  "_type": "Module",\n  "body_nodes": []\n}'
+    _compare_large_strings(ref, js)
+
+
+@skip
+def test_consistent_ast1():
+    # Parse the sample file and export as a json string
+    code = sample1.read_text()
+    root = converter.parse(code)
+    js = root.tojson()
+    # Compare with ref
+    _compare_large_strings(_get_ref_json(sample1), js)
+
+
+def test_consistent_ast3():
+    # Parse the sample file and export as a json string
+    code = sample3.read_text()
+    root = converter.parse(code)
+    js = root.tojson()
+    # Compare with ref
+    _compare_large_strings(_get_ref_json(sample3), js)
+
+
+def test_functiondef_some_more():
+    code = """
+    def foo(a, b=3, *, c=4, d):
+        pass
+    def bar(a:[], b:(1,2), *c:'xx', **d:'yy') -> 'returns':
+        pass
+    """
+    code = "\n".join(x[4:] for x in code.splitlines())
+
+    root = converter.parse(code)
+    assert len(root.body_nodes) == 2
+
+    f1, f2 = root.body_nodes
+    assert isinstance(f1, nodes.FunctionDef)
+    assert isinstance(f2, nodes.FunctionDef)
+
+    # Test args of foo (focus on default values)
+    assert len(f1.arg_nodes) == 2
+    assert len(f1.kwarg_nodes) == 2
+    for arg, name in zip(f1.arg_nodes + f1.kwarg_nodes, "abcd"):
+        assert isinstance(arg, nodes.Arg)
+        assert arg.name == name
+        assert arg.annotation_node is None
+    assert f1.arg_nodes[0].value_node is None
+    assert f1.arg_nodes[1].value_node.value == 3  # Num node
+    assert f1.kwarg_nodes[0].value_node.value == 4
+    assert f1.kwarg_nodes[1].value_node is None
+
+    # Test args of bar (focus on annotations)
+    assert len(f2.arg_nodes) == 2
+    assert len(f2.kwarg_nodes) == 0
+    for arg, name in zip(f2.arg_nodes + [f2.args_node, f2.kwargs_node], "abcd"):
+        assert isinstance(arg, nodes.Arg)
+        assert arg.name == name
+    assert f2.args_node.value_node is None
+    assert f2.kwargs_node.value_node is None
+    #
+    assert isinstance(f2.arg_nodes[0].annotation_node, nodes.List)
+    assert isinstance(f2.arg_nodes[1].annotation_node, nodes.Tuple)
+    assert isinstance(f2.args_node.annotation_node, nodes.Str)
+    assert isinstance(f2.kwargs_node.annotation_node, nodes.Str)
+
+
+def test_call_some_more():
+    code = "foo(1, a, *b, c=3, **d)"
+    node = converter.parse(code).body_nodes[0].value_node  # Call is in an Expr
+    assert isinstance(node, nodes.Call)
+
+    assert len(node.arg_nodes) == 3
+    assert len(node.kwarg_nodes) == 2
+    for arg, cls in zip(
+        node.arg_nodes + node.kwarg_nodes, [Num, Name, Starred, Num, None.__class__]
+    ):
+        isinstance(arg, cls)
+    assert node.arg_nodes[2].value_node.name == "b"
+    assert node.kwarg_nodes[1].name is None
+    assert node.kwarg_nodes[1].value_node.name == "d"  # keyword with emtpy name
+
+
+def test_call_even_some_more():
+    code = "foo(a, *b, c, *d, **e, **f)"
+    node = converter.parse(code).body_nodes[0].value_node
+
+    assert len(node.arg_nodes) == 4
+    assert len(node.kwarg_nodes) == 2
+    for arg, cls in zip(
+        node.arg_nodes + node.kwarg_nodes,
+        [Name, Starred, Name, Starred, Keyword, Keyword],
+    ):
+        isinstance(arg, cls)
+
+
+def test_classdef_some_more():
+    code = "class Foo(Bar, *bases, metaclass=X, **extra_kwargs): pass"
+    node = converter.parse(code).body_nodes[0]
+    assert isinstance(node, nodes.ClassDef)
+
+    assert len(node.arg_nodes) == 2
+    assert len(node.kwarg_nodes) == 2
+    #
+    assert node.arg_nodes[0].name == "Bar"
+    assert isinstance(node.arg_nodes[1], nodes.Starred)
+    assert node.arg_nodes[1].value_node.name == "bases"
+    # kwarg nodes are Keywords
+    assert node.kwarg_nodes[0].name == "metaclass"
+    assert node.kwarg_nodes[0].value_node.name == "X"  # Name node
+    assert node.kwarg_nodes[1].name is None
+    assert node.kwarg_nodes[1].value_node.name == "extra_kwargs"
+
+
+def test_python_33_plus():
+    # Yield from
+    code = "def foo():\n   yield from x"
+    root = converter.parse(code).body_nodes[0]
+    node = root.body_nodes[0].value_node
+    assert isinstance(node, nodes.YieldFrom)
+
+
+def test_annotated_assignments():
+    # Verify that we treat annotated assignments as regular assingments
+    code = "foo: int = 3"
+    node = converter.parse(code).body_nodes[0]
+
+    assert isinstance(node, nodes.Assign)
+    assert len(node.target_nodes) == 1
+    assert isinstance(node.target_nodes[0], nodes.Name)
+    assert node.target_nodes[0].name == "foo"
+    assert isinstance(node.value_node, nodes.Num)
+    assert node.value_node.value == 3
+
+    # Verify that we do not support annotated assignments with no value
+    with raises(RuntimeError):
+        converter.parse("foo: int")

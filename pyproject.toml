@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "prescrypt-ng"
+version = "0.8.0"
+description = ""
+authors = ["Stefane Fermigier <sf@fermigier.com>"]
+readme = "README.md"
+packages = [{include = "prescrypt", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[tool.poetry.group.dev.dependencies]
+abilian-devtools = "^0.5.2"
+dukpy = "^0.3.0"
+devtools = "^0.11.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
