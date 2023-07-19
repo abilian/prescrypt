@@ -4,13 +4,27 @@ from typing import cast
 import dukpy
 import pytest
 from devtools import debug
+from dukpy import JSRuntimeError
 
 from prescrypt.expr_compiler import ExpressionCompiler
 
 
 class Compiler(ExpressionCompiler):
-    _pscript_overload = False
-    pass
+
+    def compile(self, expression: str) -> str:
+        tree = ast.parse(expression).body[0].value
+        expr = cast(ast.expr, tree)
+        js_code = self.gen_expr(expr)
+        return self.flatten(js_code)
+
+    def flatten(self, js_code) -> str:
+        match js_code:
+            case str(s):
+                return s
+            case [*x]:
+                return " ".join(self.flatten(s) for s in x)
+            case _:
+                raise ValueError(f"Unexpected type: {type(js_code)}")
 
 
 simple_expressions = [
@@ -118,6 +132,7 @@ simple_expressions = [
     # "list({'a': 1}.items())",
     # Ellipsis
     # "str(...) == 'Ellipsis'",
+    "%d" % 1,
 ]
 
 
@@ -125,14 +140,16 @@ simple_expressions = [
 def test_expressions(expression: str):
     expected = eval(expression)
 
-    tree = ast.parse(expression).body[0].value
-    expr = cast(ast.expr, tree)
     compiler = Compiler()
-    jscode = compiler.gen_expr(expr)
+    js_code = compiler.compile(expression)
 
-    debug(expression, jscode)
+    debug(expression, js_code)
 
     # interpreter = dukpy.JSInterpreter()
-    # js_result = interpreter.evaljs(jscode)
+    # try:
+    #     js_result = interpreter.evaljs(js_code)
+    # except JSRuntimeError:
+    #     debug(js_code)
+    #     raise
     #
     # assert js_result == expected, f"{expression} != {js_result} != {expected}"

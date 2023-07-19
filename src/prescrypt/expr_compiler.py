@@ -1,10 +1,12 @@
 import ast
+import json
+import re
 
 from devtools import debug
 
 from prescrypt import stdlib
-from prescrypt.constants import (BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP,
-                                 isidentifier1, reserved_names)
+from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
+                                 UNARY_OP, isidentifier1, reserved_names)
 from prescrypt.exceptions import JSError
 from prescrypt.utils import unify
 
@@ -17,40 +19,47 @@ class ExpressionCompiler:
     + Dict(expr* keys, expr* values)
     + Set(expr* elts)
 
-    - BoolOp(boolop op, expr* values)
-    - UnaryOp(unaryop op, expr operand)
-    - BinOp(expr left, operator op, expr right)
-    - Compare(expr left, cmpop* ops, expr* comparators)
-    - Call(expr func, expr* args, keyword* keywords)
+    + BoolOp(boolop op, expr* values)
+    + UnaryOp(unaryop op, expr operand)
+    + BinOp(expr left, operator op, expr right)
+    + Compare(expr left, cmpop* ops, expr* comparators)
+    + Call(expr func, expr* args, keyword* keywords)
 
-    - NamedExpr(expr target, expr value)
+    + JoinedStr(expr* values)
+    + Name(identifier id, expr_context ctx)
+    + Attribute(expr value, identifier attr, expr_context ctx)
+    + IfExp(expr test, expr body, expr orelse)
+
     - Lambda(arguments args, expr body)
-    - IfExp(expr test, expr body, expr orelse)
     - ListComp(expr elt, comprehension* generators)
     - SetComp(expr elt, comprehension* generators)
     - DictComp(expr key, expr value, comprehension* generators)
+    - NamedExpr(expr target, expr value)
     - GeneratorExp(expr elt, comprehension* generators)
     - Await(expr value)
     - Yield(expr? value)
     - YieldFrom(expr value)
     - FormattedValue(expr value, int conversion, expr? format_spec)
-    - JoinedStr(expr* values)
-    - Attribute(expr value, identifier attr, expr_context ctx)
     - Subscript(expr value, expr slice, expr_context ctx)
     - Starred(expr value, expr_context ctx)
-    - Name(identifier id, expr_context ctx)
     - Slice(expr? lower, expr? upper, expr? step)
     """
 
     # Temp
     _pscript_overload = False
+    _methods = {}
+    _functions = {}
+    _seen_func_names = set()
+    _seen_class_names = set()
+    _std_methods = set()
+    _stack = []
 
     def gen_expr(self, expr_node: ast.expr) -> str | list:
         assert isinstance(expr_node, ast.expr)
 
         match expr_node:
             #
-            # Constants
+            # Constants / literals
             #
             case ast.Num(n):
                 return str(n)
@@ -64,6 +73,20 @@ class ExpressionCompiler:
             case ast.NameConstant(value):
                 M = {True: "true", False: "false", None: "null"}
                 return M[value]
+
+            case ast.JoinedStr(values):
+                parts, value_nodes = [], []
+                for n in values:
+                    match n:
+                        case ast.Str(s):
+                            parts.append(s)
+                        case ast.FormattedValue(value, conversion, format_spec):
+                            parts.append("{" + self._parse_FormattedValue_fmt(n) + "}")
+                            value_nodes.append(n.value_node)
+                        case _:
+                            raise JSError("Unknown JoinedStr part: " + str(n))
+                thestring = json.dumps("".join(parts))
+                return self.use_std_method(thestring, "format", value_nodes)
 
             #
             # Complex primitive types
@@ -102,11 +125,23 @@ class ExpressionCompiler:
             case ast.Name(id, ctx):
                 return self.gen_name(id, ctx)
 
+            case ast.Attribute(value, attr, ctx):
+                return self.gen_attribute(value, attr, ctx)
+
             #
             # Calls
             #
             case ast.Call(func, args, keywords):
                 return self.gen_call(func, args, keywords)
+
+            #
+            # Other epxressions
+            #
+            case ast.IfExp(test, body, orelse):
+                return self.gen_if_exp(test, body, orelse)
+
+            case ast.ListComp(elt, generators):
+                return self.gen_list_comp(elt, generators)
 
             #
             # Error
@@ -127,10 +162,9 @@ class ExpressionCompiler:
         code.append("]")
         return code
 
-    def gen_dict(self, keys, values) -> str | list:
+    def gen_dict(self, keys, values) -> list | str:
         # Oh JS; without the outer braces, it would only be an Object if used
         # in an assignment ...
-        use_make_dict_func = False
         code = ["({"]
         for key, val in zip(keys, values):
             if isinstance(key, (ast.Num, ast.NameConstant)):
@@ -142,8 +176,8 @@ class ExpressionCompiler:
             ):
                 code += key.value
             else:
-                use_make_dict_func = True
-                break
+                return self.gen_dict_fallback(keys, values)
+
             code.append(": ")
             code += self.gen_expr(val)
             code.append(", ")
@@ -151,24 +185,24 @@ class ExpressionCompiler:
             code.pop(-1)  # skip last comma
         code.append("})")
 
-        # Do we need to use the fallback?
-        if use_make_dict_func:
-            func_args = []
-            for key, val in zip(keys, values):
-                func_args += [
-                    unify(self.gen_expr(key)),
-                    unify(self.gen_expr(val)),
-                ]
-            self.use_std_function("create_dict", [])
-            return stdlib.FUNCTION_PREFIX + "create_dict(" + ", ".join(func_args) + ")"
         return code
+
+    def gen_dict_fallback(self, keys: list[ast.expr], values: list[ast.expr]) -> str:
+        func_args = []
+        for key, val in zip(keys, values):
+            func_args += [
+                unify(self.gen_expr(key)),
+                unify(self.gen_expr(val)),
+            ]
+        self.use_std_function("create_dict", [])
+        return stdlib.FUNCTION_PREFIX + "create_dict(" + ", ".join(func_args) + ")"
 
     #
     # Ops
     #
     def gen_unary_op(self, op, operand) -> str | list:
         if type(op) is ast.Not:
-            return "!", self._wrap_truthy(operand)
+            return ["!", self._wrap_truthy(operand)]
         else:
             js_op = UNARY_OP[op]
             right = unify(self.gen_expr(operand))
@@ -186,7 +220,7 @@ class ExpressionCompiler:
     def gen_bin_op(self, left, op, right) -> str | list:
         if type(op) == ast.Mod and isinstance(left, ast.Str):
             # Modulo on a string is string formatting in Python
-            return self._format_string(node)
+            return self._format_string(left, right)
 
         _js_left = self.gen_expr(left)
         debug(left, _js_left)
@@ -282,6 +316,29 @@ class ExpressionCompiler:
         #     self.vars.use(name, used_name)
         return name
 
+    def gen_attribute(self, value, attr, ctx, fullname=None):
+        fullname = attr + "." + fullname if fullname else attr
+        match value:
+            case ast.Name():
+                base_name = self.gen_name(value, ctx)
+            case ast.Attribute():
+                base_name = self.gen_attribute(value, ctx, fullname)
+            case _:
+                base_name = unify(self.gen_expr(value))
+
+        # Double underscore name mangling
+        if attr.startswith("__") and not attr.endswith("__") and base_name == "this":
+            for i in range(len(self._stack) - 1, -1, -1):
+                if self._stack[i][0] == "class":
+                    classname = self._stack[i][1]
+                    attr = "_" + classname + attr
+                    break
+
+        if attr in ATTRIBUTE_MAP:
+            return ATTRIBUTE_MAP[attr].replace("{}", base_name)
+        else:
+            return f"{base_name}.{attr}"
+
     #
     # Function calls
     #
@@ -318,9 +375,11 @@ class ExpressionCompiler:
         # Handle normally
         if base_name.endswith("._base_class") or base_name == "super()":
             # super() was used, use "call" to pass "this"
-            return [full_name] + self._get_args(node, "this", True)
+            return [full_name] + self._get_args(
+                args, keywords, "this", use_call_or_apply=True
+            )
         else:
-            code = [full_name] + self._get_args(node, base_name)
+            code = [full_name] + self._get_args(args, keywords, base_name)
             # Insert "new" if this looks like a class
             if base_name == "this":
                 pass
@@ -337,7 +396,7 @@ class ExpressionCompiler:
                     code.insert(0, "new ")
             return code
 
-    def _get_args(self, node, base_name, use_call_or_apply=False):
+    def _get_args(self, args, keywords, base_name, use_call_or_apply=False):
         """Get arguments for function call.
 
         Does checking for keywords and handles starargs. The first
@@ -355,8 +414,8 @@ class ExpressionCompiler:
         base_name = base_name or "null"
 
         # Get arguments
-        args_simple, args_array = self._get_positional_args(node)
-        kwargs = self._get_keyword_args(node)
+        args_simple, args_array = self._get_positional_args(args)
+        kwargs = self._get_keyword_args(keywords)
 
         if kwargs is not None:
             # Keyword arguments need a whole special treatment
@@ -385,7 +444,7 @@ class ExpressionCompiler:
             # Normal function call
             return ["(", args_simple, ")"]
 
-    def _get_positional_args(self, node):
+    def _get_positional_args(self, args: list[ast.expr]):
         """Returns:
         * a string args_simple, which represents the positional args in comma
           separated form. Can be None if the args cannot be represented that
@@ -395,17 +454,20 @@ class ExpressionCompiler:
 
         # Generate list of arg lists (has normal positional args and starargs)
         # Note that there can be multiple starargs and these can alternate.
+        assert isinstance(args, list)
+
         argswithcommas = []
         arglists = [argswithcommas]
-        for arg in node.arg_nodes:
-            if isinstance(arg, ast.Starred):
-                starname = "".join(self.parse(arg.value_node))
-                arglists.append(starname)
-                argswithcommas = []
-                arglists.append(argswithcommas)
-            else:
-                argswithcommas.extend(self.parse(arg))
-                argswithcommas.append(", ")
+        for arg in args:
+            match arg:
+                case ast.Starred(value):
+                    starname = "".join(self.gen_expr(value))
+                    arglists.append(starname)
+                    argswithcommas = []
+                    arglists.append(argswithcommas)
+                case _:
+                    argswithcommas.extend(self.gen_expr(arg))
+                    argswithcommas.append(", ")
 
         # Clear empty lists and trailing commas
         for i in reversed(range(len(arglists))):
@@ -428,9 +490,7 @@ class ExpressionCompiler:
             code = ["[].concat("]
             for arglist in arglists:
                 if isinstance(arglist, list):
-                    code += ["["]
-                    code += arglist
-                    code += ["]"]
+                    code += ["["] + arglist + ["]"]
                 else:
                     code += [arglist]
                 code += [", "]
@@ -438,20 +498,23 @@ class ExpressionCompiler:
             code += ")"
             return None, "".join(code)
 
-    def _get_keyword_args(self, node):
+    def _get_keyword_args(self, keywords: list[ast.keyword]):
         """Get a string that represents the dictionary of keyword arguments, or
         None if there are no keyword arguments (normal nor double-star)."""
 
+        assert isinstance(keywords, list)
+
         # Collect elements that will make up the total kwarg dict
         kwargs = []
-        for kwnode in node.kwarg_nodes:
-            if not kwnode.name:  # **xx
-                kwargs.append(unify(self.gen_expr(kwnode.value_node)))
+        debug(keywords)
+        for keyword in keywords:
+            if not keyword.arg:  # **xx
+                kwargs.append(unify(self.gen_expr(keyword.value)))
             else:  # foo=xx
                 if not (kwargs and isinstance(kwargs[-1], list)):
                     kwargs.append([])
                 kwargs[-1].append(
-                    f"{kwnode.name}: {unify(self.gen_expr(kwnode.value_node))}"
+                    f"{keyword.arg}: {unify(self.gen_expr(keyword.value))}"
                 )
 
         # Resolve sequneces of loose kwargs
@@ -468,6 +531,90 @@ class ExpressionCompiler:
             # register use of merge_dicts(), but we build the string ourselves
             self.use_std_function("merge_dicts", [])
             return stdlib.FUNCTION_PREFIX + "merge_dicts(" + ", ".join(kwargs) + ")"
+
+    #
+    # The rest
+    #
+    def gen_if_exp(self, test, body, orelse) -> list[str]:
+        # in "a if b else c"
+        js_body = self.gen_expr(body)
+        js_test = self._wrap_truthy(test)
+        js_else = self.gen_expr(orelse)
+
+        code = ["("]
+        code += js_test
+        code.append(")? (")
+        code += js_body
+        code.append(") : (")
+        code += js_else
+        code.append(")")
+        return code
+
+    def gen_list_comp(self, elt, generators) -> list[str]:
+        # Note: generators is a list of ast.comprehension
+        # ast.comprehension has attrs: 'target', 'iter', 'ifs', 'is_async',
+        debug(elt, generators)
+
+        self.push_stack("function", "listcomp")
+        elt = "".join(self.gen_expr(elt))
+        code = ["(function list_comprehension (iter0) {", "var res = [];"]
+        vars = []
+
+        for iter, comprehension in enumerate(generators):
+            cc = []
+            # Get target (can be multiple vars)
+            if isinstance(comprehension.target, ast.Tuple):
+                target = ["".join(self.gen_expr(t)) for t in comprehension.target]
+            else:
+                target = ["".join(self.gen_expr(comprehension.target))]
+
+            for t in target:
+                vars.append(t)
+            vars.append("i%i" % iter)
+
+            # comprehension(target_node, iter_node, if_nodes)
+            if iter > 0:  # first one is passed to function as an arg
+                cc.append(f"iter# = {''.join(self.gen_expr(comprehension.iter_node))};")
+                vars.append("iter%i" % iter)
+            cc.append(
+                'if ((typeof iter# === "object") && '
+                "(!Array.isArray(iter#))) {iter# = Object.keys(iter#);}"
+            )
+            cc.append("for (i#=0; i#<iter#.length; i#++) {")
+            cc.append(self._iterator_assign("iter#[i#]", *target))
+
+            # Ifs
+            if comprehension.if_nodes:
+                cc.append("if (!(")
+                for iff in comprehension.if_nodes:
+                    cc += unify(self.gen_expr(iff))
+                    cc.append("&&")
+                cc.pop(-1)  # pop '&&'
+                cc.append(")) {continue;}")
+
+            # Insert code for this comprehension loop
+            code.append(
+                "".join(cc)
+                .replace("i#", "i%i" % iter)
+                .replace("iter#", "iter%i" % iter)
+            )
+
+        # Push result
+        code.append("{res.push(%s);}" % elt)
+        for comprehension in node.comp_nodes:
+            code.append("}")  # end for
+        # Finalize
+        code.append("return res;})")  # end function
+        iter0 = "".join(self.parse(node.comp_nodes[0].iter_node))
+        code.append(".call(this, " + iter0 + ")")  # call funct with iter as 1st arg
+        code.insert(2, f"var {', '.join(vars)};")
+        # Clean vars
+        for var in vars:
+            self.vars.add(var)
+        self.pop_stack()
+        return code
+
+        # todo: apply the apply(this) trick everywhere where we use a function
 
     #
     # Utility functions
@@ -496,6 +643,65 @@ class ExpressionCompiler:
         else:
             return self.use_std_function("truthy", [test])
 
-    def use_std_function(self, name: str, args: list) -> str | list:
+    def _format_string(self, left, right):
+        # Get value_nodes
+        if isinstance(right, (ast.Tuple, ast.List)):
+            value_nodes = right.elts
+        else:
+            value_nodes = [right]
+
+        # Is the left side a string? If not, exit early
+        # This works, but we cannot know whether the left was a string or number :P
+        # if not isinstance(node.left_node, ast.Str):
+        #     thestring = unify(self.parse(node.left_node))
+        #     thestring += ".replace(/%([0-9\.\+\-\#]*[srdeEfgGioxXc])/g, '{:$1}')"
+        #     return self.use_std_method(thestring, 'format', value_nodes)
+
+        assert isinstance(left, ast.Str)
+        js_left = "".join(self.gen_expr(left))
+        sep, js_left = js_left[0], js_left[1:-1]
+
+        # Get matches
+        matches = list(re.finditer(r"%[0-9.+#-]*[srdeEfgGioxXc]", js_left))
+        if len(matches) != len(value_nodes):
+            raise JSError(
+                "In string formatting, number of placeholders "
+                "does not match number of replacements"
+            )
+        # Format
+        parts = []
+        start = 0
+        for m in matches:
+            fmt = m.group(0)
+            fmt = {"%r": "!r", "%s": ""}.get(fmt, ":" + fmt[1:])
+            # Add the part in front of the match (and after prev match)
+            parts.append(left[start : m.start()])
+            parts.append("{%s}" % fmt)
+            start = m.end()
+        parts.append(left[start:])
+        thestring = sep + "".join(parts) + sep
+        return self.use_std_method(thestring, "format", value_nodes)
+
+    def use_std_function(self, name: str, args: list) -> str:
         """Use a function from the standard library."""
-        return [stdlib.FUNCTION_PREFIX + name, "(", ", ".join(args), ")"]
+        mangled_name = stdlib.FUNCTION_PREFIX + name
+        return f"{mangled_name}.call({', '.join(args)})"
+
+    def use_std_method(self, base, name, arg_nodes) -> str:
+        """Use a method from the PScript standard library."""
+        self._handle_std_deps(stdlib.METHODS[name])
+        self._std_methods.add(name)
+        mangled_name = stdlib.METHOD_PREFIX + name
+        args = [
+            (a if isinstance(a, str) else unify(self.gen_expr(a))) for a in arg_nodes
+        ]
+        # return '%s.%s(%s)' % (base, mangled_name, ', '.join(args))
+        args.insert(0, base)
+        return f"{mangled_name}.call({', '.join(args)})"
+
+    def _handle_std_deps(self, code):
+        nargs, function_deps, method_deps = stdlib.get_std_info(code)
+        for dep in function_deps:
+            self.use_std_function(dep, [])
+        for dep in method_deps:
+            self.use_std_method("x", dep, [])
