@@ -87,9 +87,9 @@ class NameSpace(dict):
         return [(name, val) for name, val in self.items() if isinstance(val, set)]
 
 
-@dataclass
 class Stack:
-    stack: list = Field(default_factory=list)
+    def __init__(self):
+        self.stack = []
 
     def push(self, item):
         self.stack.append(item)

@@ -181,6 +181,17 @@ files = [
 ]
 
 [[package]]
+name = "buildstr"
+version = "0.1.0"
+description = "Fancy Pythonic String Builder."
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "buildstr-0.1.0-py3-none-any.whl", hash = "sha256:c943e22941604a29b27f2e11db849d0edbe141d1603227017dc90e0d598130f5"},
+    {file = "buildstr-0.1.0.tar.gz", hash = "sha256:e2efe607c6e8de05c059103e676df4ccb48b00dcd812e66fde38d4be68c29f97"},
+]
+
+[[package]]
 name = "cachecontrol"
 version = "0.13.1"
 description = "httplib2 caching for requests"
@@ -2231,4 +2242,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "798bb642e08d10e10664686b3fbca4a9db97c0063b7934524adb01bfc6535cd3"
+content-hash = "34a422b204d0b4e5129e69159ae539b4a7d0d4125d845ee9de8a1baf8253e5fa"

@@ -9,19 +9,14 @@ Main limiting features for browsers (not sure if this is 100% complete):
 * Object.keys supported from IE 9 - we use it in method_keys()
 """
 import ast
-import json
-import sys
-from ast import AST
+from abc import abstractmethod
 
 from . import stdlib
-from .exceptions import JSError
-from .expr_compiler import ExpressionCompiler
 from .namespace import NameSpace
+from .utils import unify
 
-reprs = json.dumps  # Save string representation without the u in u'xx'.
 
-
-class Compiler(ExpressionCompiler):
+class BaseCompiler:
     """The Base parser class. Implements the basic mechanism to allow parsing
     to work, but does not implement any parsing on its own.
 
@@ -33,104 +28,82 @@ class Compiler(ExpressionCompiler):
     # type x. They should return a string or a list of strings. parse()
     # always returns a list of strings.
 
-    def __init__(
-        self, code, pysource=None, indent=0, docstrings=True, inline_stdlib=True
-    ):
-        self._pycode = code  # helpfull during debugging
-        self._pysource = None
-        if isinstance(pysource, str):
-            self._pysource = pysource, 0
-        elif isinstance(pysource, tuple):
-            self._pysource = str(pysource[0]), int(pysource[1])
-        elif pysource is not None:
-            logger.warning("Parser ignores pysource; it must be str or (str, int).")
-        self._root = converter.parse(code)
-        self._stack = []
-        self._indent = indent
-        self._dummy_counter = 0
-        self._scope_prefix = []  # stack of name prefixes to simulate local scope
+    # def __init__(
+    #     self, code, pysource=None, indent=0, docstrings=True, inline_stdlib=True
+    # ):
+    #     self._pycode = code  # helpfull during debugging
+    #     self._pysource = None
+    #     if isinstance(pysource, str):
+    #         self._pysource = pysource, 0
+    #     elif isinstance(pysource, tuple):
+    #         self._pysource = str(pysource[0]), int(pysource[1])
+    #     elif pysource is not None:
+    #         logger.warning("Parser ignores pysource; it must be str or (str, int).")
+    #     self._root = converter.parse(code)
+    #     self._stack = []
+    #     self._indent = indent
+    #     self._dummy_counter = 0
+    #     self._scope_prefix = []  # stack of name prefixes to simulate local scope
+    #
+    #     # To keep track of std lib usage
+    #     self._std_functions = set()
+    #     self._std_methods = set()
+    #
+    #     # To help distinguish classes from functions
+    #     self._seen_func_names = set()
+    #     self._seen_class_names = set()
+    #
+    #     # Options
+    #     self._docstrings = bool(docstrings)  # whether to inclue docstrings
+    #
+    #     # Collect function and method handlers
+    #     self._functions, self._methods = {}, {}
+    #     for name in dir(self.__class__):
+    #         if name.startswith("function_op_"):
+    #             pass  # special operator function that we use explicitly
+    #         elif name.startswith("function_"):
+    #             self._functions[name[9:]] = getattr(self, name)
+    #         elif name.startswith("method_"):
+    #             self._methods[name[7:]] = getattr(self, name)
+    #
+    #     # Prepare
+    #     self.push_stack("module", "")
+    #
+    #     # Parse
+    #     try:
+    #         self._parts = self.parse(self._root)
+    #     except JSError as err:
+    #         # Give smarter error message
+    #         _, _, tb = sys.exc_info()
+    #         try:
+    #             msg = self._better_js_error(tb)
+    #         except Exception:  # pragma: no cover
+    #             raise err
+    #         else:
+    #             err.args = (msg + ":\n" + str(err),)
+    #             raise (err)
+    #
+    #     # Finish
+    #     ns = self.vars  # do not self.pop_stack() so caller can inspect module vars
+    #     defined_names = ns.get_defined()
+    #     if defined_names:
+    #         self._parts.insert(0, self.get_declarations(ns))
+    #
+    #     # Add part of the stdlib that was actually used
+    #     if inline_stdlib:
+    #         libcode = stdlib.get_partial_std_lib(
+    #             self._std_functions, self._std_methods, self._indent
+    #         )
+    #         if libcode:
+    #             self._parts.insert(0, libcode)
+    #
+    #     # Post-process
+    #     if self._parts:
+    #         self._parts[0] = "    " * indent + self._parts[0].lstrip()
 
-        # To keep track of std lib usage
-        self._std_functions = set()
-        self._std_methods = set()
-
-        # To help distinguish classes from functions
-        self._seen_func_names = set()
-        self._seen_class_names = set()
-
-        # Options
-        self._docstrings = bool(docstrings)  # whether to inclue docstrings
-
-        # Collect function and method handlers
-        self._functions, self._methods = {}, {}
-        for name in dir(self.__class__):
-            if name.startswith("function_op_"):
-                pass  # special operator function that we use explicitly
-            elif name.startswith("function_"):
-                self._functions[name[9:]] = getattr(self, name)
-            elif name.startswith("method_"):
-                self._methods[name[7:]] = getattr(self, name)
-
-        # Prepare
-        self.push_stack("module", "")
-
-        # Parse
-        try:
-            self._parts = self.parse(self._root)
-        except JSError as err:
-            # Give smarter error message
-            _, _, tb = sys.exc_info()
-            try:
-                msg = self._better_js_error(tb)
-            except Exception:  # pragma: no cover
-                raise err
-            else:
-                err.args = (msg + ":\n" + str(err),)
-                raise (err)
-
-        # Finish
-        ns = self.vars  # do not self.pop_stack() so caller can inspect module vars
-        defined_names = ns.get_defined()
-        if defined_names:
-            self._parts.insert(0, self.get_declarations(ns))
-
-        # Add part of the stdlib that was actually used
-        if inline_stdlib:
-            libcode = stdlib.get_partial_std_lib(
-                self._std_functions, self._std_methods, self._indent
-            )
-            if libcode:
-                self._parts.insert(0, libcode)
-
-        # Post-process
-        if self._parts:
-            self._parts[0] = "    " * indent + self._parts[0].lstrip()
-
-    def parse(self, node):
-        """Parse a node. Check node type and dispatch to one of the specific
-        parse functions. Raises error if we cannot parse this type of node.
-
-        Returns a list of strings.
-        """
-        node_type = node.__class__.__name__
-        parse_func = getattr(self, "parse_" + node_type, None)
-        if not parse_func:
-            raise JSError(f"Cannot parse {node_type}-nodes yet")
-
-        res = parse_func(node)
-        # Return as list also if a tuple or string was returned
-        assert res is not None
-        match res:
-            case tuple():
-                return list(res)
-            case list():
-                return res
-            case _:
-                return [res]
-
-    def dump(self):
-        """Get the JS code as a string."""
-        return "".join(self._parts)
+    @abstractmethod
+    def gen_expr(self, node):
+        pass
 
     def _better_js_error(self, tb):  # pragma: no cover
         """If we get a JSError, we try to get the corresponding node and print
@@ -236,7 +209,9 @@ class Compiler(ExpressionCompiler):
         self._handle_std_deps(stdlib.FUNCTIONS[name])
         self._std_functions.add(name)
         mangled_name = stdlib.FUNCTION_PREFIX + name
-        args = [(a if isinstance(a, str) else unify(self.parse(a))) for a in arg_nodes]
+        args = [
+            (a if isinstance(a, str) else unify(self.gen_expr(a))) for a in arg_nodes
+        ]
         return f"{mangled_name}({', '.join(args)})"
 
     def use_std_method(self, base, name, arg_nodes):
@@ -244,7 +219,9 @@ class Compiler(ExpressionCompiler):
         self._handle_std_deps(stdlib.METHODS[name])
         self._std_methods.add(name)
         mangled_name = stdlib.METHOD_PREFIX + name
-        args = [(a if isinstance(a, str) else unify(self.parse(a))) for a in arg_nodes]
+        args = [
+            (a if isinstance(a, str) else unify(self.gen_expr(a))) for a in arg_nodes
+        ]
         # return '%s.%s(%s)' % (base, mangled_name, ', '.join(args))
         args.insert(0, base)
         return f"{mangled_name}.call({', '.join(args)})"
@@ -275,8 +252,3 @@ class Compiler(ExpressionCompiler):
             docstring = "\n".join(lines)
 
         return docstring
-
-    def compile(self, node: AST):
-        match node:
-            case ast.expr():
-                return self.gen_expr(node)

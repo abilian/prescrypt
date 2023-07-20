@@ -17,15 +17,6 @@ class Compiler(ExpressionCompiler):
         js_code = self.gen_expr(expr)
         return self.flatten(js_code)
 
-    def flatten(self, js_code) -> str:
-        match js_code:
-            case str(s):
-                return s
-            case [*x]:
-                return " ".join(self.flatten(s) for s in x)
-            case _:
-                raise ValueError(f"Unexpected type: {type(js_code)}")
-
 
 simple_expressions = [
     # Literals
@@ -135,6 +126,10 @@ simple_expressions = [
     "%d" % 1,
 ]
 
+# Syntactically correct but will fail at runtime
+simple_expressions2 = [
+    "a.a"
+]
 
 @pytest.mark.parametrize("expression", simple_expressions)
 def test_expressions(expression: str):
@@ -145,11 +140,19 @@ def test_expressions(expression: str):
 
     debug(expression, js_code)
 
-    # interpreter = dukpy.JSInterpreter()
-    # try:
-    #     js_result = interpreter.evaljs(js_code)
-    # except JSRuntimeError:
-    #     debug(js_code)
-    #     raise
-    #
-    # assert js_result == expected, f"{expression} != {js_result} != {expected}"
+    interpreter = dukpy.JSInterpreter()
+    try:
+        js_result = interpreter.evaljs(js_code)
+    except JSRuntimeError:
+        debug(js_code)
+        raise
+
+    assert js_result == expected, f"{expression} != {js_result} != {expected}"
+
+
+@pytest.mark.parametrize("expression", simple_expressions2)
+def test_expressions2(expression: str):
+    compiler = Compiler()
+    js_code = compiler.compile(expression)
+
+    debug(expression, js_code)

@@ -1,3 +1,4 @@
+import json
 import re
 
 
@@ -23,3 +24,7 @@ def unify(x):
         return x  # dicts
     else:
         return f"({x})"
+
+
+def js_repr(obj):
+    return json.dumps(obj, ensure_ascii=False, indent=2)

@@ -1,17 +1,19 @@
 import ast
-import json
 import re
 
+from buildstr import Builder
 from devtools import debug
 
 from prescrypt import stdlib
+from prescrypt.base_compiler import BaseCompiler
 from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
-                                 UNARY_OP, isidentifier1, reserved_names)
+                                 RETURNING_BOOL, UNARY_OP, isidentifier1,
+                                 reserved_names)
 from prescrypt.exceptions import JSError
-from prescrypt.utils import unify
+from prescrypt.utils import js_repr, unify
 
 
-class ExpressionCompiler:
+class ExpressionCompiler(BaseCompiler):
     """
     + Constant(constant value, string? kind)
     + List(expr* elts, expr_context ctx)
@@ -45,16 +47,31 @@ class ExpressionCompiler:
     - Slice(expr? lower, expr? upper, expr? step)
     """
 
-    # Temp
-    _pscript_overload = False
-    _methods = {}
-    _functions = {}
-    _seen_func_names = set()
-    _seen_class_names = set()
-    _std_methods = set()
-    _stack = []
+    def __init__(self, *args, **kwargs):
+        # Temp
+        self._pscript_overload = False
+        self._methods = {}
+        self._functions = {}
+        self._seen_func_names = set()
+        self._seen_class_names = set()
+        self._std_methods = set()
+        self._stack = []
 
-    def gen_expr(self, expr_node: ast.expr) -> str | list:
+    def gen_expr(self, expr_node: ast.expr) -> str:
+        assert isinstance(expr_node, ast.expr)
+
+        return self.flatten(self._gen_expr(expr_node))
+
+    def flatten(self, js_code) -> str:
+        match js_code:
+            case str(s):
+                return s
+            case [*x]:
+                return "".join(self.flatten(s) for s in x)
+            case _:
+                raise ValueError(f"Unexpected type: {type(js_code)}")
+
+    def _gen_expr(self, expr_node: ast.expr) -> str | list:
         assert isinstance(expr_node, ast.expr)
 
         match expr_node:
@@ -85,7 +102,7 @@ class ExpressionCompiler:
                             value_nodes.append(n.value_node)
                         case _:
                             raise JSError("Unknown JoinedStr part: " + str(n))
-                thestring = json.dumps("".join(parts))
+                thestring = js_repr("".join(parts))
                 return self.use_std_method(thestring, "format", value_nodes)
 
             #
@@ -153,14 +170,10 @@ class ExpressionCompiler:
     # Complex types
     #
     def gen_list(self, elts, ctx) -> str | list:
-        code = ["["]
-        for el in elts:
-            code += self.gen_expr(el)
-            code.append(", ")
-        if elts:
-            code.pop(-1)  # skip last comma
-        code.append("]")
-        return code
+        code = Builder()
+        with code(surround=("[", "]"), separator=", "):
+            code << [self.gen_expr(el) for el in elts]
+        return code.build()
 
     def gen_dict(self, keys, values) -> list | str:
         # Oh JS; without the outer braces, it would only be an Object if used
@@ -202,7 +215,7 @@ class ExpressionCompiler:
     #
     def gen_unary_op(self, op, operand) -> str | list:
         if type(op) is ast.Not:
-            return ["!", self._wrap_truthy(operand)]
+            return ["!", self.gen_truthy(operand)]
         else:
             js_op = UNARY_OP[op]
             right = unify(self.gen_expr(operand))
@@ -211,10 +224,10 @@ class ExpressionCompiler:
     def gen_bool_op(self, op, values) -> str | list:
         js_op = f" {BOOL_OP[op]} "
         if type(op) == ast.Or:  # allow foo = bar or []
-            js_values = [unify(self._wrap_truthy(val)) for val in values[:-1]]
+            js_values = [unify(self.gen_truthy(val)) for val in values[:-1]]
             js_values += [unify(self.gen_expr(values[-1]))]
         else:
-            js_values = [unify(self._wrap_truthy(val)) for val in values]
+            js_values = [unify(self.gen_truthy(val)) for val in values]
         return js_op.join(js_values)
 
     def gen_bin_op(self, left, op, right) -> str | list:
@@ -378,23 +391,23 @@ class ExpressionCompiler:
             return [full_name] + self._get_args(
                 args, keywords, "this", use_call_or_apply=True
             )
+
+        code = [full_name] + self._get_args(args, keywords, base_name)
+        # Insert "new" if this looks like a class
+        if base_name == "this":
+            pass
+        elif method_name:
+            if method_name[0].lower() != method_name[0]:
+                code.insert(0, "new ")
         else:
-            code = [full_name] + self._get_args(args, keywords, base_name)
-            # Insert "new" if this looks like a class
-            if base_name == "this":
+            fn = full_name
+            if fn in self._seen_func_names and fn not in self._seen_class_names:
                 pass
-            elif method_name:
-                if method_name[0].lower() != method_name[0]:
-                    code.insert(0, "new ")
-            else:
-                fn = full_name
-                if fn in self._seen_func_names and fn not in self._seen_class_names:
-                    pass
-                elif fn not in self._seen_func_names and fn in self._seen_class_names:
-                    code.insert(0, "new ")
-                elif full_name[0].lower() != full_name[0]:
-                    code.insert(0, "new ")
-            return code
+            elif fn not in self._seen_func_names and fn in self._seen_class_names:
+                code.insert(0, "new ")
+            elif full_name[0].lower() != full_name[0]:
+                code.insert(0, "new ")
+        return code
 
     def _get_args(self, args, keywords, base_name, use_call_or_apply=False):
         """Get arguments for function call.
@@ -538,17 +551,19 @@ class ExpressionCompiler:
     def gen_if_exp(self, test, body, orelse) -> list[str]:
         # in "a if b else c"
         js_body = self.gen_expr(body)
-        js_test = self._wrap_truthy(test)
+        js_test = self.gen_truthy(test)
         js_else = self.gen_expr(orelse)
 
-        code = ["("]
-        code += js_test
-        code.append(")? (")
-        code += js_body
-        code.append(") : (")
-        code += js_else
-        code.append(")")
-        return code
+        code = Builder()
+        with code(surround="()"):
+            code << js_test
+        code << "?"
+        with code(surround="()"):
+            code << js_body
+        code << ":"
+        with code(surround="()"):
+            code << js_else
+        return code.build()
 
     def gen_list_comp(self, elt, generators) -> list[str]:
         # Note: generators is a list of ast.comprehension
@@ -619,7 +634,7 @@ class ExpressionCompiler:
     #
     # Utility functions
     #
-    def _wrap_truthy(self, node: ast.expr) -> str | list:
+    def gen_truthy(self, node: ast.expr) -> str | list:
         """Wraps an operation in a truthy call, unless it's not necessary."""
         eq_name = stdlib.FUNCTION_PREFIX + "op_equals"
         test = "".join(self.gen_expr(node))
@@ -637,7 +652,7 @@ class ExpressionCompiler:
             or test.count(eq_name)
             or test == '"this_is_js()"'
             or test.startswith("Array.isArray(")
-            or (test.startswith(returning_bool) and "||" not in test)
+            or (test.startswith(RETURNING_BOOL) and "||" not in test)
         ):
             return unify(test)
         else:

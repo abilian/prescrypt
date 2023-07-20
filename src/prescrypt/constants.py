@@ -1,6 +1,8 @@
 import ast
 import re
 
+from prescrypt import stdlib
+
 NAME_MAP = {
     "True": "true",
     "False": "false",
@@ -115,3 +117,31 @@ JS_RESERVED_NAMES = (
 )
 
 reserved_names = JS_RESERVED_NAMES
+
+# Define builtin stuff for which we know that it returns a bool or int
+_bool_funcs = (
+    "hasattr",
+    "all",
+    "any",
+    "op_contains",
+    "op_equals",
+    "truthy",
+)
+_bool_meths = (
+    "count",
+    "isalnum",
+    "isalpha",
+    "isidentifier",
+    "islower",
+    "isnumeric",
+    "isdigit",
+    "isdecimal",
+    "isspace",
+    "istitle",
+    "isupper",
+    "startswith",
+)
+RETURNING_BOOL = tuple(
+    [stdlib.FUNCTION_PREFIX + x + "(" for x in _bool_funcs]
+    + [stdlib.METHOD_PREFIX + x + "." for x in _bool_meths]
+)
