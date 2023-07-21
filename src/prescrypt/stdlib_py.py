@@ -36,18 +36,18 @@ def function_RawJS(compilet, args):
 #
 # Contructors
 #
-def str(compiler, args, kwargs):
+def function_str(compiler, args, kwargs):
     match args:
         case []:
             return '""'
         case [arg]:
             js_arg = unify(compiler.gen_expr(arg))
-            return f"{js_arg}.toString()"
+            return f"({js_arg}).toString()"
         case [*_]:
-            return compiler.use_std_function("str", args)
+            return compiler.call_std_function("str", args)
 
 
-def bool(compiler, args, kwargs):
+def function_bool(compiler, args, kwargs):
     match args:
         case []:
             return "false"
@@ -58,7 +58,7 @@ def bool(compiler, args, kwargs):
             raise JSError("bool() at most one argument")
 
 
-def int(compiler, args, kwargs):
+def function_int(compiler, args, kwargs):
     match args:
         case []:
             return "0"
@@ -69,7 +69,7 @@ def int(compiler, args, kwargs):
             raise JSError("int() at most one argument")
 
 
-def float(compiler, args, kwargs):
+def function_float(compiler, args, kwargs):
     match args:
         case []:
             return "0.0"
@@ -83,12 +83,13 @@ def float(compiler, args, kwargs):
 def function_dict(compiler, args, kwargs):
     match args:
         case []:
+            debug(kwargs)
             js_kwargs = [
-                f"{arg.name}: {unify(compiler.gen_expr(arg.value))}" for arg in kwargs
+                f"{arg.arg}: {unify(compiler.gen_expr(arg.value))}" for arg in kwargs
             ]
             return "{%s}" % ", ".join(js_kwargs)
         case [*_]:
-            return compiler.use_std_function("dict", args)
+            return compiler.call_std_function("dict", args)
 
 
 def function_list(compiler, args, kwargs):
@@ -96,7 +97,9 @@ def function_list(compiler, args, kwargs):
         case []:
             return "[]"
         case [*_]:
-            return compiler.use_std_function("list", args)
+            js_args = [compiler.gen_expr(arg) for arg in args]
+            debug(args, js_args)
+            return compiler.call_std_function("list", js_args)
 
 
 def function_tuple(compiler, args, kwargs):
@@ -181,24 +184,24 @@ def function_issubclass(node):
     return f"({cls1}.prototype instanceof {cls2})"
 
 
-def function_print(node):
+def function_print(compiler, args, kwargs):
     # Process keywords
     sep, end = '" "', ""
-    for kw in node.kwarg_nodes:
+    for kw in kwargs:
         if kw.name == "sep":
-            sep = "".join(self.parse(kw.value_node))
+            sep = flatten(compiler.gen_expr(kw.value))
         elif kw.name == "end":
-            end = "".join(self.parse(kw.value_node))
+            end = flatten(compiler.gen_expr(kw.value))
         elif kw.name in ("file", "flush"):
             raise JSError("print() file and flush args not supported")
         else:
             raise JSError(f"Invalid argument for print(): {kw.name!r}")
 
     # Combine args
-    args = [unify(self.parse(arg)) for arg in node.arg_nodes]
-    end = f" + {end}" if (args and end and end != "\n") else ""
+    js_args = [unify(compiler.gen_expr(arg)) for arg in args]
+    end = f" + {end}" if (js_args and end and end != "\n") else ""
     combiner = f" + {sep} + "
-    args_concat = combiner.join(args) or '""'
+    args_concat = combiner.join(js_args) or '""'
     return "console.log(" + args_concat + end + ")"
 
 
@@ -266,12 +269,12 @@ def function_range(compiler, args, kwargs):
     match args:
         case [a]:
             args = ast.Num(0), a, ast.Num(1)
-            return compiler.use_std_function("range", args)
+            return compiler.call_std_function("range", args)
         case [a, b]:
             args = a, b, ast.Num(1)
-            return compiler.use_std_function("range", args)
+            return compiler.call_std_function("range", args)
         case [a, b, c]:
-            return compiler.use_std_function("range", args)
+            return compiler.call_std_function("range", args)
         case _:
             raise JSError("range() needs 1, 2 or 3 arguments")
 
@@ -288,7 +291,7 @@ def function_sorted(compiler, args, kwargs):
             reverse = kw.value
         else:
             raise JSError(f"Invalid keyword argument for sorted: {kw.name!r}")
-    return compiler.use_std_function("sorted", [args[0], key, reverse])
+    return compiler.call_std_function("sorted", [args[0], key, reverse])
 
 
 # Methods of list/dict/str
@@ -334,7 +337,6 @@ class Stdlib:
                 pass
 
     def get_function(self, name, default=None):
-        debug(self._std_functions)
         return self._std_functions.get(name, default)
 
     def get_method(self, name, default=None):

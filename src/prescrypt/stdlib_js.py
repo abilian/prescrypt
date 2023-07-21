@@ -18,7 +18,7 @@ METHOD_PREFIX = "_pymeth_"
 
 def get_functions(filename: str) -> dict[str, str]:
     result = {}
-    path = (Path(__file__).parent) / "stdlibjs" / filename
+    path = Path(__file__).parent / "stdlibjs" / filename
     for block in path.read_text().split("// ---\n"):
         block = block.strip()
         if not block:
@@ -141,11 +141,11 @@ def get_full_std_lib(indent=0):
     return get_partial_std_lib(FUNCTIONS.keys(), METHODS.keys(), indent)
 
 
-# todo: now that we have modules, we can have shorter/no prefixes, right?
-# -> though maybe we use them for string replacement somewhere?
-def get_all_std_names():
-    """Get list if function names and methods names in std lib."""
-    return (
-        [FUNCTION_PREFIX + f for f in FUNCTIONS],
-        [METHOD_PREFIX + f for f in METHODS],
-    )
+# # todo: now that we have modules, we can have shorter/no prefixes, right?
+# # -> though maybe we use them for string replacement somewhere?
+# def get_all_std_names():
+#     """Get list if function names and methods names in std lib."""
+#     return (
+#         [FUNCTION_PREFIX + f for f in FUNCTIONS],
+#         [METHOD_PREFIX + f for f in METHODS],
+#     )

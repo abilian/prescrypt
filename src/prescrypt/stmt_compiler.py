@@ -235,7 +235,7 @@ class StatementCompiler(ExpressionCompiler):
 
         # Build code to throw
         if err_cls:
-            code = self.use_std_function("op_error", [f"'{err_cls}'", err_msg or '""'])
+            code = self.call_std_function("op_error", [f"'{err_cls}'", err_msg or '""'])
         else:
             code = err_msg
 
@@ -252,7 +252,7 @@ class StatementCompiler(ExpressionCompiler):
         code += js_test
         code.append(")) { throw ")
         code.append(
-            self.use_std_function("op_error", ["'AssertionError'", js_repr(js_msg)])
+            self.call_std_function("op_error", ["'AssertionError'", js_repr(js_msg)])
         )
         code.append(";}")
         return code
@@ -794,7 +794,7 @@ class StatementCompiler(ExpressionCompiler):
                 kw_argnames.add(node.kwargs_node.name)
                 self.vars.add(node.kwargs_node.name)
                 code += [node.kwargs_node.name, " = "]
-            self.use_std_function("op_parse_kwargs", [])
+            self.call_std_function("op_parse_kwargs", [])
             code += [
                 stdlib.FUNCTION_PREFIX + "op_parse_kwargs(",
                 names,
@@ -921,7 +921,7 @@ class StatementCompiler(ExpressionCompiler):
         docstring = docstring if self._docstrings else ""
         for line in make_class_definition(node.name, base_class, docstring):
             code.append(self.lf(line))
-        self.use_std_function("op_instantiate", [])
+        self.call_std_function("op_instantiate", [])
 
         # Body ...
         self.vars.add(node.name)

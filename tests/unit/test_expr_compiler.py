@@ -59,6 +59,9 @@ simple_expressions = [
     "bool([1])",
     "bool([])",
     "list()",
+    "list([1])",
+    "list((1,))",
+    "list((1, 2))",
     "tuple()",
     "dict()",
     # Other builtin functions
@@ -72,6 +75,7 @@ simple_expressions = [
     "range(1)",
     "range(0, 1)",
     "range(0, 10, 2)",
+    "sorted([2, 1])",
     # Lambda
     "(lambda x: x)(3)",
     # Boolean expressions
@@ -110,11 +114,8 @@ simple_expressions = [
     "[]",
     "[1]",
     "[1, 2]",
-    "[1, 2] == [2, 1]",
-    "[1, 2] == list([1, 2])",
-    "[1, 2] == [x for x in [1, 2]]",
-    "[1, 2] == [x for x in (1, 2)]",
-    "[1, 2] == sorted([2, 1])",
+    "[x for x in [1, 2]]",
+    "[x for x in (1, 2)]",
     # "{k: k for k in 'abc'}",
     # Str
     "str(1.0) == '1.'",
@@ -134,12 +135,11 @@ simple_expressions = [
     # Dict
     "{}",
     "{'a': 1}",
+    "dict(a=1)",
+    "dict([('a', 1)])",
     "list({'a': 1})",
     "list({'a': 1}.keys())",
     "list({'a': 1}.values())",
-    "{'a': 1} == {'a': 1}",
-    "dict(a=1) == {'a': 1}",
-    "dict([('a', 1)]) == {'a': 1}",
     # Subscripts
     "[1][0] == 1",
     "{'a': 1}['a']",
@@ -149,6 +149,16 @@ simple_expressions = [
     # Ellipsis
     # "str(...) == 'Ellipsis'",
     "%d" % 1,
+    # Equality
+    "1 == 1",
+    "1 != 0",
+    # "dict() == {}",
+    # "list() == []",
+    # "tuple() == ()",
+    # "set() == set()",
+    # "list([1, 2]) == [1, 2]",
+    # "tuple([1, 2]) == (1, 2)",
+    # "set([1, 2]) == {1, 2}",
 ]
 
 # Syntactically correct but will fail at runtime
@@ -162,65 +172,8 @@ simple_expressions2 = [
 # ]
 
 
-# language=JavaScript
-preamble_js = """
-const _pyfunc_op_equals = function (a, b) {
-  // nargs: 2
-  var a_type = typeof a;
-  // If a (or b actually) is of type string, number or boolean, we don't need
-  // to do all the other type checking below.
-  if (a_type === "string" || a_type === "boolean" || a_type === "number") {
-    return a == b;
-  }
-
-  if (a == null || b == null) {
-  } else if (Array.isArray(a) && Array.isArray(b)) {
-    var i = 0,
-      iseq = a.length == b.length;
-    while (iseq && i < a.length) {
-      iseq = _pyfunc_op_contains(a[i], b[i]);
-      i += 1;
-    }
-    return iseq;
-  } else if (a.constructor === Object && b.constructor === Object) {
-    var akeys = Object.keys(a),
-      bkeys = Object.keys(b);
-    akeys.sort();
-    bkeys.sort();
-    var i = 0,
-      k,
-      iseq = _pyfunc_op_contains(akeys, bkeys);
-    while (iseq && i < akeys.length) {
-      k = akeys[i];
-      iseq = _pyfunc_op_contains(a[k], b[k]);
-      i += 1;
-    }
-    return iseq;
-  }
-  return a == b;
-};
-
-const _pyfunc_op_contains = function (a, b) {
-  // nargs: 2
-  if (b == null) {
-  } else if (Array.isArray(b)) {
-    for (var i = 0; i < b.length; i++) {
-      if (_pyfunc_op_equals(a, b[i])) return true;
-    }
-    return false;
-  } else if (b.constructor === Object) {
-    for (var k in b) {
-      if (a == k) return true;
-    }
-    return false;
-  } else if (b.constructor == String) {
-    return b.indexOf(a) >= 0;
-  }
-  var e = Error("Not a container: " + b);
-  e.name = "TypeError";
-  throw e;
-};
-"""
+stdlib_js = Path(__file__).parent / ".." / ".." / "src" / "prescrypt" / "stdlibjs"
+preamble_js = (stdlib_js / "_stdlib.js").read_text()
 
 
 @pytest.mark.parametrize("expression", simple_expressions)
@@ -233,21 +186,6 @@ def test_expressions(expression: str):
     debug(expression, js_code)
 
     interpreter = dukpy.JSInterpreter()
-
-    # stdlibjs = Path(__file__).parent / ".." / ".." / "src" / "prescrypt" / "stdlibjs"
-    # functions_js = (stdlibjs / "functions.js").read_text()
-    # methods_js = (stdlibjs / "methods.js").read_text()
-    #
-    # interpreter.evaljs(functions_js)
-    # interpreter.evaljs(methods_js)
-
-    # interpreter.evaljs(preamble_js)
-
-    # try:
-    #     interpreter.evaljs(preamble_js)
-    # except JSRuntimeError as err:
-    #     debug(vars(interpreter))
-    #     debug(err, vars(err))
 
     full_code = preamble_js + "\n" + js_code
     try:

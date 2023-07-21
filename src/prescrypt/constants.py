@@ -1,7 +1,7 @@
 import ast
 import re
 
-from prescrypt import stdlib
+from prescrypt import stdlib_js
 
 NAME_MAP = {
     "True": "true",
@@ -140,6 +140,6 @@ _bool_meths = (
     "startswith",
 )
 RETURNING_BOOL = tuple(
-    [stdlib.FUNCTION_PREFIX + x + "(" for x in _bool_funcs]
-    + [stdlib.METHOD_PREFIX + x + "." for x in _bool_meths]
+    [stdlib_js.FUNCTION_PREFIX + x + "(" for x in _bool_funcs]
+    + [stdlib_js.METHOD_PREFIX + x + "." for x in _bool_meths]
 )

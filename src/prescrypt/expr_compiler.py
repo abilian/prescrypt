@@ -4,7 +4,7 @@ import re
 from buildstr import Builder
 from devtools import debug
 
-from prescrypt import stdlib
+from prescrypt import stdlib_js
 from prescrypt.base_compiler import BaseCompiler
 from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
                                  JS_RESERVED_NAMES, NAME_MAP, RETURNING_BOOL,
@@ -204,7 +204,7 @@ class ExpressionCompiler(BaseCompiler):
                 unify(self.gen_expr(key)),
                 unify(self.gen_expr(val)),
             ]
-        self.use_std_function("create_dict", [])
+        self.call_std_function("create_dict", [])
         return stdlib.FUNCTION_PREFIX + "create_dict(" + ", ".join(func_args) + ")"
 
     #
@@ -253,14 +253,14 @@ class ExpressionCompiler(BaseCompiler):
                     and "op_add" not in right
                 )
             ):
-                return self.use_std_function("op_add", [js_left, js_right])
+                return self.call_std_function("op_add", [js_left, js_right])
 
         elif type(op) == ast.Mult:
             C = ast.Num
             if self._pscript_overload and not (
                 isinstance(left, C) and isinstance(right, C)
             ):
-                return self.use_std_function("op_mult", [js_left, js_right])
+                return self.call_std_function("op_mult", [js_left, js_right])
 
         elif type(op) == ast.Pow:
             return ["Math.pow(", js_left, ", ", js_right, ")"]
@@ -279,7 +279,7 @@ class ExpressionCompiler(BaseCompiler):
 
         if type(op) in (ast.Eq, ast.NotEq) and not js_left.endswith(".length"):
             if self._pscript_overload:
-                code = self.use_std_function("op_equals", [js_left, js_right])
+                code = self.call_std_function("op_equals", [js_left, js_right])
                 if type(op) == ast.NotEq:
                     code = "!" + code
             else:
@@ -290,8 +290,8 @@ class ExpressionCompiler(BaseCompiler):
             return code
 
         elif type(op) in (ast.In, ast.NotIn):
-            self.use_std_function("op_equals", [])  # trigger use of equals
-            code = self.use_std_function("op_contains", [js_left, js_right])
+            self.call_std_function("op_equals", [])  # trigger use of equals
+            code = self.call_std_function("op_contains", [js_left, js_right])
             if type(op) == ast.NotIn:
                 code = "!" + code
             return code
@@ -551,7 +551,7 @@ class ExpressionCompiler(BaseCompiler):
             return kwargs[0]
         else:
             # register use of merge_dicts(), but we build the string ourselves
-            self.use_std_function("merge_dicts", [])
+            self.call_std_function("merge_dicts", [])
             return stdlib.FUNCTION_PREFIX + "merge_dicts(" + ", ".join(kwargs) + ")"
 
     #
@@ -577,8 +577,6 @@ class ExpressionCompiler(BaseCompiler):
     def gen_list_comp(self, elt, generators) -> list[str]:
         # Note: generators is a list of ast.comprehension
         # ast.comprehension has attrs: 'target', 'iter', 'ifs', 'is_async',
-        debug(elt, generators)
-
         self.push_stack("function", "listcomp")
         elt = "".join(self.gen_expr(elt))
         code = ["(function list_comprehension (iter0) {", "var res = [];"]
@@ -645,7 +643,7 @@ class ExpressionCompiler(BaseCompiler):
     #
     def gen_truthy(self, node: ast.expr) -> str | list:
         """Wraps an operation in a truthy call, unless it's not necessary."""
-        eq_name = stdlib.FUNCTION_PREFIX + "op_equals"
+        eq_name = stdlib_js.FUNCTION_PREFIX + "op_equals"
         test = "".join(self.gen_expr(node))
         if not self._pscript_overload:
             return unify(test)
@@ -665,9 +663,11 @@ class ExpressionCompiler(BaseCompiler):
         ):
             return unify(test)
         else:
-            return self.use_std_function("truthy", [test])
+            return self.call_std_function("truthy", [test])
 
     def _format_string(self, left, right):
+        """Format a string using the old-school `%` operator."""
+
         # Get value_nodes
         if isinstance(right, (ast.Tuple, ast.List)):
             value_nodes = right.elts
@@ -705,27 +705,3 @@ class ExpressionCompiler(BaseCompiler):
         parts.append(left[start:])
         thestring = sep + "".join(parts) + sep
         return self.use_std_method(thestring, "format", value_nodes)
-
-    def use_std_function(self, name: str, args: list) -> str:
-        """Use a function from the standard library."""
-        mangled_name = stdlib.FUNCTION_PREFIX + name
-        return f"{mangled_name}({', '.join(args)})"
-
-    def use_std_method(self, base, name, arg_nodes) -> str:
-        """Use a method from the PScript standard library."""
-        self._handle_std_deps(stdlib.METHODS[name])
-        self._std_methods.add(name)
-        mangled_name = stdlib.METHOD_PREFIX + name
-        args = [
-            (a if isinstance(a, str) else unify(self.gen_expr(a))) for a in arg_nodes
-        ]
-        # return '%s.%s(%s)' % (base, mangled_name, ', '.join(args))
-        args.insert(0, base)
-        return f"{mangled_name}.call({', '.join(args)})"
-
-    def _handle_std_deps(self, code):
-        nargs, function_deps, method_deps = stdlib.get_std_info(code)
-        for dep in function_deps:
-            self.use_std_function(dep, [])
-        for dep in method_deps:
-            self.use_std_method("x", dep, [])
