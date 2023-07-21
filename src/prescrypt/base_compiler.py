@@ -13,6 +13,7 @@ from abc import abstractmethod
 
 from . import stdlib_js
 from .namespace import NameSpace
+from .utils import unify
 
 
 class BaseCompiler:
@@ -193,35 +194,6 @@ class BaseCompiler:
         """Line feed - create a new line with the correct indentation."""
         return "\n" + self._indent * "    " + code
 
-    # def _handle_std_deps(self, code):
-    #     nargs, function_deps, method_deps = stdlib.get_std_info(code)
-    #     for dep in function_deps:
-    #         self.use_std_function(dep, [])
-    #     for dep in method_deps:
-    #         self.use_std_method("x", dep, [])
-    #
-    # def use_std_function(self, name, arg_nodes):
-    #     """Use a function from the PScript standard library."""
-    #     self._handle_std_deps(stdlib.FUNCTIONS[name])
-    #     self._std_functions.add(name)
-    #     mangled_name = stdlib.FUNCTION_PREFIX + name
-    #     args = [
-    #         (a if isinstance(a, str) else unify(self.gen_expr(a))) for a in arg_nodes
-    #     ]
-    #     return f"{mangled_name}({', '.join(args)})"
-    #
-    # def use_std_method(self, base, name, arg_nodes):
-    #     """Use a method from the PScript standard library."""
-    #     self._handle_std_deps(stdlib.METHODS[name])
-    #     self._std_methods.add(name)
-    #     mangled_name = stdlib.METHOD_PREFIX + name
-    #     args = [
-    #         (a if isinstance(a, str) else unify(self.gen_expr(a))) for a in arg_nodes
-    #     ]
-    #     # return '%s.%s(%s)' % (base, mangled_name, ', '.join(args))
-    #     args.insert(0, base)
-    #     return f"{mangled_name}.call({', '.join(args)})"
-
     def pop_docstring(self, node):
         """If a docstring is present in the body of the given node, remove
         that string node and return it as a string, corrected for indentation
@@ -256,27 +228,15 @@ class BaseCompiler:
     #
     # Using stdlib
     #
-    def call_std_function(self, name: str, js_args: list[str]) -> str:
-        """Use a function from the Prescrypt standard library."""
+    def call_std_function(self, name: str, args: list) -> str:
+        """Call a function from the Prescrypt standard library."""
         mangled_name = stdlib_js.FUNCTION_PREFIX + name
-        debug(mangled_name, js_args)
+        js_args = [(a if isinstance(a, str) else unify(self.gen_expr(a))) for a in args]
         return f"{mangled_name}({', '.join(js_args)})"
 
-    def use_std_method(self, base, name, arg_nodes) -> str:
-        """Use a method from the Prescrypt standard library."""
-        self._handle_std_deps(stdlib_js.METHODS[name])
-        self._std_methods.add(name)
+    def call_std_method(self, base, name: str, args: list) -> str:
+        """Call a method from the Prescrypt standard library."""
         mangled_name = stdlib_js.METHOD_PREFIX + name
-        args = [
-            (a if isinstance(a, str) else unify(self.gen_expr(a))) for a in arg_nodes
-        ]
-        # return '%s.%s(%s)' % (base, mangled_name, ', '.join(args))
+        js_args = [(a if isinstance(a, str) else unify(self.gen_expr(a))) for a in args]
         args.insert(0, base)
-        return f"{mangled_name}.call({', '.join(args)})"
-
-    def _handle_std_deps(self, code):
-        nargs, function_deps, method_deps = stdlib_js.get_std_info(code)
-        for dep in function_deps:
-            self.call_std_function(dep, [])
-        for dep in method_deps:
-            self.use_std_method("x", dep, [])
+        return f"{mangled_name}.call({', '.join(js_args)})"

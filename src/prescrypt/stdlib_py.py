@@ -81,15 +81,19 @@ def function_float(compiler, args, kwargs):
 
 
 def function_dict(compiler, args, kwargs):
-    match args:
-        case []:
-            debug(kwargs)
+    match args, kwargs:
+        case [], []:
+            return "({})"
+        case [], [*_]:
             js_kwargs = [
                 f"{arg.arg}: {unify(compiler.gen_expr(arg.value))}" for arg in kwargs
             ]
-            return "{%s}" % ", ".join(js_kwargs)
-        case [*_]:
+            return "({%s})" % ", ".join(js_kwargs)
+        case [*_], []:
             return compiler.call_std_function("dict", args)
+        case _, _:
+            # TODO
+            raise JSError("dict() takes at most one argument")
 
 
 def function_list(compiler, args, kwargs):
@@ -297,24 +301,24 @@ def function_sorted(compiler, args, kwargs):
 # Methods of list/dict/str
 
 
-def method_sort(node, base):
-    if len(node.arg_nodes) == 0:  # sorts args are keyword-only
+def method_sort(compiler, args, kwargs, base):
+    if len(args) == 0:  # sorts args are keyword-only
         key, reverse = ast.Name("undefined"), ast.NameConstant(False)
-        for kw in node.kwarg_nodes:
+        for kw in kwargs:
             if kw.name == "key":
                 key = kw.value_node
             elif kw.name == "reverse":
                 reverse = kw.value_node
             else:
                 raise JSError(f"Invalid keyword argument for sort: {kw.name!r}")
-        return self.use_std_method(base, "sort", [key, reverse])
+        return compiler.call_std_method(base, "sort", [key, reverse])
 
 
-def method_format(node, base):
-    if node.kwarg_nodes:
+def method_format(compiler, args, kwargs, base):
+    if kwargs:
         raise JSError("Method format() does not support keyword args.")
 
-    return self.use_std_method(base, "format", node.arg_nodes)
+    return compiler.call_std_method(base, "format", args)
 
 
 #

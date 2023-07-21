@@ -96,7 +96,7 @@ class ExpressionCompiler(BaseCompiler):
                         case _:
                             raise JSError("Unknown JoinedStr part: " + str(n))
                 thestring = js_repr("".join(parts))
-                return self.use_std_method(thestring, "format", value_nodes)
+                return self.call_std_method(thestring, "format", value_nodes)
 
             #
             # Complex primitive types
@@ -704,4 +704,4 @@ class ExpressionCompiler(BaseCompiler):
             start = m.end()
         parts.append(left[start:])
         thestring = sep + "".join(parts) + sep
-        return self.use_std_method(thestring, "format", value_nodes)
+        return self.call_std_method(thestring, "format", value_nodes)

@@ -62,8 +62,9 @@ simple_expressions = [
     "list([1])",
     "list((1,))",
     "list((1, 2))",
-    "tuple()",
     "dict()",
+    # Tuple is translated to array.
+    # "tuple()",
     # Other builtin functions
     "chr(35)",
     "ord('a')",
@@ -194,7 +195,7 @@ def test_expressions(expression: str):
         print(full_code)
         raise
 
-    assert js_result == expected, f"{expression} != {js_result} != {expected}"
+    assert js_result == expected, f"{expression} : {js_result} != {expected}"
 
 
 @pytest.mark.parametrize("expression", simple_expressions2)
