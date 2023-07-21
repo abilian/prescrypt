@@ -7,7 +7,7 @@ from prescrypt.expr_compiler import ExpressionCompiler
 
 from . import stdlib
 from .exceptions import JSError
-from .utils import js_repr, unify
+from .utils import flatten, js_repr, unify
 
 RAW_DOC_WARNING = (
     "Function %s only has a docstring, which used to be "
@@ -121,9 +121,9 @@ class StatementCompiler(ExpressionCompiler):
     def gen_stmt(self, node_or_nodes: ast.stmt | list[ast.stmt]) -> str:
         match node_or_nodes:
             case [*stmts]:
-                return self.flatten([self.gen_stmt(node) for node in stmts])
+                return flatten([self.gen_stmt(node) for node in stmts])
             case ast.stmt():
-                return self.flatten(self._gen_stmt(node_or_nodes))
+                return flatten(self._gen_stmt(node_or_nodes))
             case _:
                 raise JSError(f"Unexpected node type: {type(node_or_nodes)}")
 

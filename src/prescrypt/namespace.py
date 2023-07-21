@@ -1,4 +1,7 @@
-from dataclasses import Field, dataclass
+LOCAL = 1
+NONLOCAL = 2
+GLOBAL = 3
+GLOBAL_SUB = 4
 
 
 class NameSpace(dict):
@@ -17,11 +20,11 @@ class NameSpace(dict):
 
     def set_nonlocal(self, key):
         """Explicitly declare a name as nonlocal."""
-        self[key] = 2  # also if already exists
+        self[key] = NONLOCAL  # also if already exists
 
     def set_global(self, key):
         """Explicitly declare a name as global."""
-        self[key] = 3  # also if already exists
+        self[key] = GLOBAL  # also if already exists
         # becomes 4 in parent scope
 
     def use(self, key, how):
@@ -41,7 +44,8 @@ class NameSpace(dict):
         # because py2js() is often used to transpile snippets which are later
         # combined), so we assume that the user know what (s)he is doing.
         curval = self.get(key, 0)
-        if curval not in (2, 3):  # dont overwrite nonlocal or global
+        # don't overwrite nonlocal or global
+        if curval not in (NONLOCAL, GLOBAL):
             self[key] = 1
 
     def discard(self, key):
@@ -56,7 +60,7 @@ class NameSpace(dict):
         for name in sub.get_globals():
             sub.discard(name)
             if name not in self:
-                self[name] = 4
+                self[name] = GLOBAL_SUB
             # elif self[name] not in (3, 4):  ... dont know whether outer scope
             #     raise JSError('Cannot use non-global that is global in subscope.')
         for name, hows in sub.get_undefined():
@@ -67,16 +71,16 @@ class NameSpace(dict):
     def is_known(self, name):
         """Get whether the given name is defined or declared global/nonlocal in
         this scope."""
-        return self.get(name, 0) in (1, 2, 3)
+        return self.get(name, 0) in (LOCAL, NONLOCAL, GLOBAL)
 
     def get_defined(self):
         """Get list of variable names that the current scope defines."""
-        return {name for name, val in self.items() if val == 1}
+        return {name for name, val in self.items() if val == LOCAL}
 
     def get_globals(self):
         """Get list of variable names that are declared global in the current
         scope or its subscopes."""
-        return {name for name, val in self.items() if val in (3, 4)}
+        return {name for name, val in self.items() if val in (GLOBAL, GLOBAL_SUB)}
 
     def get_undefined(self):
         """Get (name, set) tuples for variables that are used, but not defined.
@@ -87,29 +91,29 @@ class NameSpace(dict):
         return [(name, val) for name, val in self.items() if isinstance(val, set)]
 
 
-class Stack:
-    def __init__(self):
-        self.stack = []
-
-    def push(self, item):
-        self.stack.append(item)
-
-    def pop(self):
-        return self.stack.pop()
-
-    def push(self, type, name):
-        """New namespace stack.
-
-        Match a call to this with a call to pop_stack() and process the
-        resulting line to declare the used variables. type must be
-        'module', 'class' or 'function'.
-        """
-        assert type in ("module", "class", "function")
-        self._stack.append((type, name, NameSpace()))
-
-    def pop(self):
-        """Pop the current stack and return the namespace."""
-        # Pop
-        nstype, nsname, ns = self._stack.pop(-1)
-        self.vars.leak_stack(ns)
-        return ns
+# class Stack:
+#     def __init__(self):
+#         self.stack = []
+#
+#     def push(self, item):
+#         self.stack.append(item)
+#
+#     def pop(self):
+#         return self.stack.pop()
+#
+#     def push(self, type, name):
+#         """New namespace stack.
+#
+#         Match a call to this with a call to pop_stack() and process the
+#         resulting line to declare the used variables. type must be
+#         'module', 'class' or 'function'.
+#         """
+#         assert type in ("module", "class", "function")
+#         self._stack.append((type, name, NameSpace()))
+#
+#     def pop(self):
+#         """Pop the current stack and return the namespace."""
+#         # Pop
+#         nstype, nsname, ns = self._stack.pop(-1)
+#         self.vars.leak_stack(ns)
+#         return ns

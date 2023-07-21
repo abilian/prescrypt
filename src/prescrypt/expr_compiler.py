@@ -7,10 +7,11 @@ from devtools import debug
 from prescrypt import stdlib
 from prescrypt.base_compiler import BaseCompiler
 from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
-                                 RETURNING_BOOL, UNARY_OP, isidentifier1,
-                                 reserved_names)
+                                 JS_RESERVED_NAMES, NAME_MAP, RETURNING_BOOL,
+                                 UNARY_OP, isidentifier1)
 from prescrypt.exceptions import JSError
-from prescrypt.utils import js_repr, unify
+from prescrypt.stdlib_py import Stdlib
+from prescrypt.utils import flatten, js_repr, unify
 
 
 class ExpressionCompiler(BaseCompiler):
@@ -33,11 +34,13 @@ class ExpressionCompiler(BaseCompiler):
     + IfExp(expr test, expr body, expr orelse)
 
     - Lambda(arguments args, expr body)
+
     - ListComp(expr elt, comprehension* generators)
     - SetComp(expr elt, comprehension* generators)
     - DictComp(expr key, expr value, comprehension* generators)
-    - NamedExpr(expr target, expr value)
     - GeneratorExp(expr elt, comprehension* generators)
+
+    - NamedExpr(expr target, expr value)
     - Await(expr value)
     - Yield(expr? value)
     - YieldFrom(expr value)
@@ -59,17 +62,7 @@ class ExpressionCompiler(BaseCompiler):
 
     def gen_expr(self, expr_node: ast.expr) -> str:
         assert isinstance(expr_node, ast.expr)
-
-        return self.flatten(self._gen_expr(expr_node))
-
-    def flatten(self, js_code) -> str:
-        match js_code:
-            case str(s):
-                return s
-            case [*x]:
-                return "".join(self.flatten(s) for s in x)
-            case _:
-                raise ValueError(f"Unexpected type: {type(js_code)}")
+        return flatten(self._gen_expr(expr_node))
 
     def _gen_expr(self, expr_node: ast.expr) -> str | list:
         assert isinstance(expr_node, ast.expr)
@@ -120,6 +113,10 @@ class ExpressionCompiler(BaseCompiler):
 
             case ast.Dict(keys, values):
                 return self.gen_dict(keys, values)
+
+            case ast.Subscript(value, slice, ctx):
+                # TODO: handle slice, ctx
+                return f"{self.gen_expr(value)}[{self.gen_expr(slice)}]"
 
             #
             # Operators
@@ -309,24 +306,29 @@ class ExpressionCompiler(BaseCompiler):
     def gen_name(self, id, ctx) -> str:
         name = id
         # ctx can be Load, Store, Del -> can be of use somewhere?
-        if name in reserved_names:
+        if name in JS_RESERVED_NAMES:
             raise JSError(f"Cannot use reserved name {name} as a variable name!")
-        # if self.vars.is_known(name):
-        #     return self.with_prefix(name)
-        # if self._scope_prefix:
-        #     for stackitem in reversed(self._stack):
-        #         scope = stackitem[2]
-        #         for prefix in reversed(self._scope_prefix):
-        #             prefixed_name = prefix + name
-        #             if prefixed_name in scope:
-        #                 return prefixed_name
-        # if name in self.NAME_MAP:
-        #     return self.NAME_MAP[name]
-        # # Else ...
-        # if not (name in self._functions or name in ("undefined", "window")):
-        #     # mark as used (not defined)
-        #     used_name = (name + "." + fullname) if fullname else name
-        #     self.vars.use(name, used_name)
+
+        if self.vars.is_known(name):
+            return self.with_prefix(name)
+
+        if self._scope_prefix:
+            for stackitem in reversed(self._stack):
+                scope = stackitem[2]
+                for prefix in reversed(self._scope_prefix):
+                    prefixed_name = prefix + name
+                    if prefixed_name in scope:
+                        return prefixed_name
+
+        if name in NAME_MAP:
+            return NAME_MAP[name]
+
+        # Else ...
+        if not (name in self._functions or name in ("undefined", "window")):
+            # mark as used (not defined)
+            used_name = (name + "." + fullname) if fullname else name
+            self.vars.use(name, used_name)
+
         return name
 
     def gen_attribute(self, value, attr, ctx, fullname=None):
@@ -348,7 +350,7 @@ class ExpressionCompiler(BaseCompiler):
                     break
 
         if attr in ATTRIBUTE_MAP:
-            return ATTRIBUTE_MAP[attr].replace("{}", base_name)
+            return ATTRIBUTE_MAP[attr].format(base_name)
         else:
             return f"{base_name}.{attr}"
 
@@ -371,17 +373,24 @@ class ExpressionCompiler(BaseCompiler):
                 full_name = unify(self.gen_expr(func))
                 method_name = ""
 
+            case ast.Name():
+                method_name = ""
+                base_name = ""
+                full_name = func.id
+
             case _:
                 method_name = ""
                 base_name = ""
                 full_name = unify(self.gen_expr(func))
 
-        # Handle special functions and methods
+        # Handle builtins functions and methods
+        builtins = Stdlib()
         res = None
-        if method_name in self._methods:
-            res = self._methods[method_name](node, base_name)
-        elif full_name in self._functions:
-            res = self._functions[full_name](node)
+        if func := builtins.get_function(full_name):
+            res = func(self, args, keywords)
+        elif meth := builtins.get_method(full_name):
+            res = meth(self, base_name, args, keywords)
+
         if res is not None:
             return res
 
@@ -700,7 +709,7 @@ class ExpressionCompiler(BaseCompiler):
     def use_std_function(self, name: str, args: list) -> str:
         """Use a function from the standard library."""
         mangled_name = stdlib.FUNCTION_PREFIX + name
-        return f"{mangled_name}.call({', '.join(args)})"
+        return f"{mangled_name}({', '.join(args)})"
 
     def use_std_method(self, base, name, arg_nodes) -> str:
         """Use a method from the PScript standard library."""

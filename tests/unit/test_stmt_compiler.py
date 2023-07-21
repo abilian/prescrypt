@@ -1,11 +1,7 @@
 import ast
-from textwrap import dedent
-from typing import cast
 
-import dukpy
 import pytest
 from devtools import debug
-from dukpy import JSRuntimeError
 
 from prescrypt.stmt_compiler import StatementCompiler
 
@@ -25,6 +21,8 @@ simple_statements = [
     "while 1: break",
     "while 0: continue",
     "assert 1",
+    "a = 1",
+    # "global a",
     # dedent("""
     #     try:
     #         1
@@ -38,18 +36,6 @@ simple_statements = [
 
 @pytest.mark.parametrize("statement", simple_statements)
 def test_statement(statement: str):
-    # expected = eval(expression)
-
     compiler = Compiler()
     js_code = compiler.compile(statement)
-
     debug(statement, js_code)
-
-    # interpreter = dukpy.JSInterpreter()
-    # try:
-    #     js_result = interpreter.evaljs(js_code)
-    # except JSRuntimeError:
-    #     debug(js_code)
-    #     raise
-    #
-    # assert js_result == expected, f"{expression} != {js_result} != {expected}"

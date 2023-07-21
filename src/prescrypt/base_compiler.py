@@ -23,6 +23,9 @@ class BaseCompiler:
     For details see the Parser class.
     """
 
+    _indent: int
+    _stack: list
+
     # Developer notes:
     # The parse_x() functions are called by parse() with the node of
     # type x. They should return a string or a list of strings. parse()
@@ -102,8 +105,12 @@ class BaseCompiler:
     #         self._parts[0] = "    " * indent + self._parts[0].lstrip()
 
     @abstractmethod
-    def gen_expr(self, node):
-        pass
+    def gen_expr(self, node) -> str:
+        """Implemented in the ExpressionCompiler mixin."""
+
+    @abstractmethod
+    def gen_stmt(self, node) -> str:
+        """Implemented in the StatementCompiler mixin."""
 
     def _better_js_error(self, tb):  # pragma: no cover
         """If we get a JSError, we try to get the corresponding node and print
@@ -187,16 +194,6 @@ class BaseCompiler:
         """Line feed - create a new line with the correct indentation."""
         return "\n" + self._indent * "    " + code
 
-    def dummy(self, name=""):
-        """Get a unique name.
-
-        The name is added to vars.
-        """
-        self._dummy_counter += 1
-        name = "stub%i_%s" % (self._dummy_counter, name)
-        self.vars.add(name)
-        return name
-
     def _handle_std_deps(self, code):
         nargs, function_deps, method_deps = stdlib.get_std_info(code)
         for dep in function_deps:
@@ -245,7 +242,11 @@ class BaseCompiler:
             def getindent(x):
                 return len(x) - len(x.strip())
 
-            indent = min([getindent(x) for x in lines[1:]]) if (len(lines) > 1) else 0
+            if len(lines) > 1:
+                indent = min([getindent(x) for x in lines[1:]])
+            else:
+                indent = 0
+
             if lines:
                 lines[0] = " " * indent + lines[0]
                 lines = [line[indent:] for line in lines]

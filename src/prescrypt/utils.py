@@ -28,3 +28,14 @@ def unify(x):
 
 def js_repr(obj):
     return json.dumps(obj, ensure_ascii=False, indent=2)
+
+
+def flatten(js_code: list | str) -> str:
+    """Flatten a list of strings or a single string to a single string."""
+    match js_code:
+        case str(s):
+            return s
+        case [*x]:
+            return "".join(flatten(s) for s in x)
+        case _:
+            raise ValueError(f"Unexpected type: {type(js_code)}")

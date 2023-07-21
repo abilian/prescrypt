@@ -116,8 +116,6 @@ JS_RESERVED_NAMES = (
     # 'double', 'null', 'true', 'false',
 )
 
-reserved_names = JS_RESERVED_NAMES
-
 # Define builtin stuff for which we know that it returns a bool or int
 _bool_funcs = (
     "hasattr",
