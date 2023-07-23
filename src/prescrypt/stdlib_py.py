@@ -102,7 +102,6 @@ def function_list(compiler, args, kwargs):
             return "[]"
         case [*_]:
             js_args = [compiler.gen_expr(arg) for arg in args]
-            debug(args, js_args)
             return compiler.call_std_function("list", js_args)
 
 

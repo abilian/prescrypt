@@ -73,9 +73,9 @@ simple_expressions = [
     "len([])",
     "max([1, 2])",
     "min([1, 2])",
-    "range(1)",
-    "range(0, 1)",
-    "range(0, 10, 2)",
+    "list(range(1))",
+    "list(range(0, 1))",
+    "list(range(0, 10, 2))",
     "sorted([2, 1])",
     # Lambda
     "(lambda x: x)(3)",
