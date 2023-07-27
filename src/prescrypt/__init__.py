@@ -1,1 +1,1 @@
-from .main import py2js
+# from .compiler import py2js

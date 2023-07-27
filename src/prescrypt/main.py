@@ -1,30 +1,7 @@
-import ast
 import sys
 from pathlib import Path
-from typing import cast
 
-from prescrypt.expr_compiler import ExpressionCompiler
-from prescrypt.passes.desugar import desugar
-from prescrypt.utils import flatten
-
-
-# Temp compiler class
-class Compiler(ExpressionCompiler):
-
-    def gen_stmt(self, node) -> str:
-        """Not needed"""
-
-    def compile(self, expression: str) -> str:
-        tree = ast.parse(expression)
-        tree = cast(ast.Module, desugar(tree))
-        expr = cast(ast.expr, tree.body[0].value)
-        js_code = self.gen_expr(expr)
-        return flatten(js_code)
-
-
-def py2js(code) -> str:
-    compiler = Compiler()
-    return compiler.compile(code)
+from .compiler import py2js
 
 
 def main():

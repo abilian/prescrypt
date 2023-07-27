@@ -3,9 +3,9 @@ from ast import AST
 
 from devtools import debug
 
-from prescrypt.expr_compiler import ExpressionCompiler
+from . import stdlib_js
+from .expr_compiler import ExpressionCompiler
 
-from . import stdlib
 from .exceptions import JSError
 from .utils import flatten, js_repr, unify
 
@@ -117,6 +117,13 @@ class StatementCompiler(ExpressionCompiler):
         super().__init__(*args, **kwargs)
         self._indent = 0
         self._dummy_counter = 0
+
+    def gen_module(self, module: ast.Module):
+        statements = module.body
+        code = []
+        for statement in statements:
+            code += [self.gen_stmt(statement)]
+        return "\n".join(code)
 
     def gen_stmt(self, node_or_nodes: ast.stmt | list[ast.stmt]) -> str:
         match node_or_nodes:
@@ -796,7 +803,7 @@ class StatementCompiler(ExpressionCompiler):
                 code += [node.kwargs_node.name, " = "]
             self.call_std_function("op_parse_kwargs", [])
             code += [
-                stdlib.FUNCTION_PREFIX + "op_parse_kwargs(",
+                stdlib_js.FUNCTION_PREFIX + "op_parse_kwargs(",
                 names,
                 ", ",
                 values_var,

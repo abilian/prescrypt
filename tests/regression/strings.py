@@ -1,1 +1,5 @@
 print("AAA".lower())
+print("aaa".upper())
+print("aaa".capitalize())
+print("aaa".title())
+print("aAa".swapcase())
