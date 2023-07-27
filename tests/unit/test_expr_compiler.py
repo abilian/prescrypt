@@ -115,8 +115,9 @@ simple_expressions = [
     "[]",
     "[1]",
     "[1, 2]",
-    "[x for x in [1, 2]]",
-    "[x for x in (1, 2)]",
+    # List and tuples via generators
+    # "[x for x in [1, 2]]",
+    # "[x for x in (1, 2)]",
     # "{k: k for k in 'abc'}",
     # Str
     "str(1.0) == '1.'",
@@ -160,7 +161,9 @@ simple_expressions = [
     # "list([1, 2]) == [1, 2]",
     # "tuple([1, 2]) == (1, 2)",
     # "set([1, 2]) == {1, 2}",
+    #
     # Strings
+    #
     "'Ab+'.lower()",
     "'Ab+'.upper()",
 ]

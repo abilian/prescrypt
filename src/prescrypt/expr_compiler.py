@@ -359,40 +359,54 @@ class ExpressionCompiler(BaseCompiler):
     # Function calls
     #
     def gen_call(self, func, args, keywords) -> str | list:
-        # Get full function name and method name if it exists
+        method_name = ""
+        func_name = ""
+        obj_js = ""
 
         match func:
-            case ast.Attribute():
-                debug(func)
-                # We don't want to parse twice, because it may add to the vars_unknown
-                method_name = func.attr
-                nameparts = self.gen_expr(func)
-                full_name = unify(nameparts)
-                nameparts[-1] = nameparts[-1].rsplit(".", 1)[0]
-                base_name = unify(nameparts)
+            case ast.Attribute(value, attr, ctx):
+                # TODO:
+                # we asume for now that the left side is an object and the call
+                # a method call.
+                method_name = attr
+                obj_js = self.gen_expr(value)
 
-            case ast.Subscript():
-                base_name = unify(self.gen_expr(func.value_node))
+            case ast.Subscript(value, slice, ctx):
+                base_name = unify(self.gen_expr(value))
                 full_name = unify(self.gen_expr(func))
                 method_name = ""
 
-            case ast.Name():
+            case ast.Name(id):
                 method_name = ""
                 base_name = ""
-                full_name = func.id
+                full_name = id
 
             case _:
                 method_name = ""
                 base_name = ""
                 full_name = unify(self.gen_expr(func))
 
-        # Handle builtins functions and methods
         builtins = Stdlib()
+
+        if method_name:
+            if builtin_meth := builtins.get_method(method_name):
+                if res := builtin_meth(self, obj_js, args, keywords):
+                    return res
+
+            args_js = [obj_js] + [unify(self.gen_expr(arg)) for arg in args]
+
+            return f"_pymeth_{method_name}.apply({', '.join(args_js)})"
+
+        #
+        # FIXME: Everything below needs to be refactored
+        #
+
+        # Handle builtins functions and methods
         res = None
-        if func := builtins.get_function(full_name):
-            res = func(self, args, keywords)
-        elif meth := builtins.get_method(full_name):
-            res = meth(self, base_name, args, keywords)
+        if builtin_func := builtins.get_function(full_name):
+            res = builtin_func(self, args, keywords)
+        elif builtin_meth := builtins.get_method(full_name):
+            res = builtin_meth(self, base_name, args, keywords)
 
         if res is not None:
             return res

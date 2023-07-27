@@ -316,7 +316,7 @@ def method_sort(compiler, args, kwargs, base):
 
 def method_format(compiler, args, kwargs, base):
     if kwargs:
-        raise JSError("Method format() does not support keyword args.")
+        raise JSError("Method format() currently does not support keyword args.")
 
     return compiler.call_std_method(base, "format", args)
 

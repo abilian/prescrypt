@@ -329,7 +329,9 @@ export const isalpha = function () { // nargs: 0
 
 // method: isidentifier
 export const isidentifier = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     return Boolean(/^[A-Za-z_][A-Za-z0-9_]*$/.test(this));
 };
 
@@ -337,7 +339,9 @@ export const isidentifier = function () { // nargs: 0
 
 // method: islower
 export const islower = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     var low = this.toLowerCase(), high = this.toUpperCase();
     return low != high && low == this;
 };
@@ -346,7 +350,9 @@ export const islower = function () { // nargs: 0
 
 // method: isdecimal
 export const isdecimal = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     return Boolean(/^[0-9]+$/.test(this));
 };
 
@@ -354,7 +360,9 @@ export const isdecimal = function () { // nargs: 0
 
 // method: isnumeric
 export const isnumeric = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     return Boolean(/^[0-9]+$/.test(this));
 };
 
@@ -362,7 +370,9 @@ export const isnumeric = function () { // nargs: 0
 
 // method: isdigit
 export const isdigit = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     return Boolean(/^[0-9]+$/.test(this));
 };
 
@@ -370,7 +380,9 @@ export const isdigit = function () { // nargs: 0
 
 // method: isspace
 export const isspace = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     return Boolean(/^\s+$/.test(this));
 };
 
@@ -378,7 +390,9 @@ export const isspace = function () { // nargs: 0
 
 // method: istitle
 export const istitle = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     var low = this.toLowerCase(), title = METHOD_PREFIXtitle(this);
     return low != title && title == this;
 };
@@ -387,7 +401,9 @@ export const istitle = function () { // nargs: 0
 
 // method: isupper
 export const isupper = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     var low = this.toLowerCase(), high = this.toUpperCase();
     return low != high && high == this;
 };
@@ -396,7 +412,9 @@ export const isupper = function () { // nargs: 0
 
 // method: join
 export const join = function (x) { // nargs: 1
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     return x.join(this);  // call join on the list instead of the string.
 };
 
@@ -404,7 +422,9 @@ export const join = function (x) { // nargs: 1
 
 // method: ljust
 export const ljust = function (w, fill) { // nargs: 1 2
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     fill = (fill === undefined) ? ' ' : fill;
     var tofill = Math.max(0, w - this.length);
     return this + METHOD_PREFIXrepeat(fill, tofill);
@@ -414,7 +434,10 @@ export const ljust = function (w, fill) { // nargs: 1 2
 
 // method: lower
 export const lower = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String) {
+        return this.KEY.apply(this, arguments);
+    }
+
     return this.toLowerCase();
 };
 
@@ -422,11 +445,15 @@ export const lower = function () { // nargs: 0
 
 // method: lstrip
 export const lstrip = function (chars) { // nargs: 0 1
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
+    if (this.constructor !== String)
+        return this.KEY.apply(this, arguments);
+
     chars = (chars === undefined) ? ' \t\r\n' : chars;
     for (var i=0; i<this.length; i++) {
-        if (chars.indexOf(this[i]) < 0) return this.slice(i);
-    } return '';
+        if (chars.indexOf(this[i]) < 0)
+            return this.slice(i);
+    }
+    return '';
 };
 
 // ---
@@ -637,8 +664,10 @@ export const translate = function (table) { // nargs: 1
 
 // method: upper
 export const upper = function () { // nargs: 0
-    if (this.constructor !== String) return this.KEY.apply(this, arguments);
-    return this.toUpperCase();
+    if (this.constructor === String) {
+        return this.toUpperCase();
+    }
+    return this.KEY.apply(this, arguments);
 };
 
 // ---
