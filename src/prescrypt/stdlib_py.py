@@ -52,8 +52,8 @@ def function_bool(compiler, args, kwargs):
         case []:
             return "false"
         case [arg]:
-            js_arg = unify(compiler.gen_expr(arg))
-            return f"!!({js_arg})"
+            js_expr = compiler.call_std_function("truthy", args)
+            return f"!!({js_expr})"
         case _:
             raise JSError("bool() at most one argument")
 
@@ -286,7 +286,7 @@ def function_sorted(compiler, args, kwargs):
     if len(args) != 1:
         raise JSError("sorted() needs one argument")
 
-    key, reverse = ast.Name("undefined"), ast.NameConstant(False)
+    key, reverse = "undefined", ast.NameConstant(False)
     for kw in kwargs:
         if kw.name == "key":
             key = kw.value
@@ -294,6 +294,7 @@ def function_sorted(compiler, args, kwargs):
             reverse = kw.value
         else:
             raise JSError(f"Invalid keyword argument for sorted: {kw.name!r}")
+
     return compiler.call_std_function("sorted", [args[0], key, reverse])
 
 

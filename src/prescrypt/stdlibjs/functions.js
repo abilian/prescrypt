@@ -338,12 +338,24 @@ export const reversed = function (iter) { // nargs: 1
 
 // function: sorted
 export const sorted = function (iter, key, reverse) { // nargs: 1 2 3
-    if ((typeof iter==="object") && (!Array.isArray(iter))) {iter = Object.keys(iter);}
-    var comp = function (a, b) {a = key(a); b = key(b);
-        if (a<b) {return -1;} if (a>b) {return 1;} return 0;};
+    if ((typeof iter==="object") && (!Array.isArray(iter))) {
+        iter = Object.keys(iter);
+    }
+    let comp = function (a, b) {
+        a = key(a);
+        b = key(b);
+        if (a<b) {
+            return -1;
+        }
+        if (a>b) {
+            return 1;
+        }
+        return 0;
+    };
     comp = Boolean(key) ? comp : undefined;
     iter = iter.slice().sort(comp);
-    if (reverse) iter.reverse();
+    if (reverse)
+        iter.reverse();
     return iter;
 };
 

@@ -62,7 +62,8 @@ class ExpressionCompiler(BaseCompiler):
 
     def gen_expr(self, expr_node: ast.expr) -> str:
         assert isinstance(expr_node, ast.expr)
-        return flatten(self._gen_expr(expr_node))
+        code = self._gen_expr(expr_node)
+        return flatten(code)
 
     def _gen_expr(self, expr_node: ast.expr) -> str | list:
         assert isinstance(expr_node, ast.expr)
@@ -359,8 +360,10 @@ class ExpressionCompiler(BaseCompiler):
     #
     def gen_call(self, func, args, keywords) -> str | list:
         # Get full function name and method name if it exists
+
         match func:
             case ast.Attribute():
+                debug(func)
                 # We don't want to parse twice, because it may add to the vars_unknown
                 method_name = func.attr
                 nameparts = self.gen_expr(func)

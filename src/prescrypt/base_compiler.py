@@ -228,14 +228,14 @@ class BaseCompiler:
     #
     # Using stdlib
     #
-    def call_std_function(self, name: str, args: list) -> str:
-        """Call a function from the Prescrypt standard library."""
+    def call_std_function(self, name: str, args: list[str | ast.expr]) -> str:
+        """Generate a function call from the Prescrypt standard library."""
         mangled_name = stdlib_js.FUNCTION_PREFIX + name
         js_args = [(a if isinstance(a, str) else unify(self.gen_expr(a))) for a in args]
         return f"{mangled_name}({', '.join(js_args)})"
 
     def call_std_method(self, base, name: str, args: list) -> str:
-        """Call a method from the Prescrypt standard library."""
+        """Generate a method call from the Prescrypt standard library."""
         mangled_name = stdlib_js.METHOD_PREFIX + name
         js_args = [(a if isinstance(a, str) else unify(self.gen_expr(a))) for a in args]
         args.insert(0, base)

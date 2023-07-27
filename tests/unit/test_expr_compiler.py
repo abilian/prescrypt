@@ -123,8 +123,8 @@ simple_expressions = [
     "str(1e3) == '1000.'",
     # Lists
     # Str (nope)
-    # "str(True)",
-    # "str(False)",
+    "str(True).lower()",
+    "str(False).lower()",
     # "str(True) == 'True'",
     # "str(False) == 'False'",
     # Tupes (nope)
@@ -160,6 +160,9 @@ simple_expressions = [
     # "list([1, 2]) == [1, 2]",
     # "tuple([1, 2]) == (1, 2)",
     # "set([1, 2]) == {1, 2}",
+    # Strings
+    "'Ab+'.lower()",
+    "'Ab+'.upper()",
 ]
 
 # Syntactically correct but will fail at runtime
@@ -179,12 +182,13 @@ preamble_js = (stdlib_js / "_stdlib.js").read_text()
 
 @pytest.mark.parametrize("expression", simple_expressions)
 def test_expressions(expression: str):
+    py_code = expression
     expected = eval(expression)
 
     compiler = Compiler()
     js_code = compiler.compile(expression)
 
-    debug(expression, js_code)
+    debug(py_code, js_code)
 
     interpreter = dukpy.JSInterpreter()
 
