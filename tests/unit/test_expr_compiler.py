@@ -62,6 +62,10 @@ simple_expressions = [
     "list([1])",
     "list((1,))",
     "list((1, 2))",
+    "tuple()",
+    "tuple([1])",
+    "tuple((1,))",
+    "tuple((1, 2))",
     "dict()",
     # Tuple is translated to array.
     # "tuple()",
@@ -119,7 +123,9 @@ simple_expressions = [
     # "[x for x in [1, 2]]",
     # "[x for x in (1, 2)]",
     # "{k: k for k in 'abc'}",
-    # Str
+    #
+    # Str function / constructor
+    #
     "str(1.0) == '1.'",
     "str(1e3) == '1000.'",
     # Lists
@@ -134,7 +140,9 @@ simple_expressions = [
     # "1 in {1}",
     # "1 not in {1}",
     # "{1, 2} == {2, 1}",
-    # Dict
+    #
+    # Dicts + dict methods
+    #
     "{}",
     "{'a': 1}",
     "dict(a=1)",
@@ -142,7 +150,9 @@ simple_expressions = [
     "list({'a': 1})",
     "list({'a': 1}.keys())",
     "list({'a': 1}.values())",
+    #
     # Subscripts
+    #
     "[1][0] == 1",
     "{'a': 1}['a']",
     # Fail
@@ -166,6 +176,13 @@ simple_expressions = [
     #
     "'Ab+'.lower()",
     "'Ab+'.upper()",
+    #
+    # Functions from stdlib
+    #
+    "list(reversed([1, 2]))",
+    "sorted([0, 4, 3, 1, 2])",
+    "list(enumerate(['a', 'b', 'c']))",
+    "list(zip([1, 2, 3], ['a', 'b', 'c']))",
 ]
 
 # Syntactically correct but will fail at runtime
@@ -183,10 +200,24 @@ stdlib_js = Path(__file__).parent / ".." / ".." / "src" / "prescrypt" / "stdlibj
 preamble_js = (stdlib_js / "_stdlib.js").read_text()
 
 
+def js_eq(a, b):
+    # TODO: Make this unnecessary
+    if isinstance(a, (list, tuple)):
+        if not isinstance(b, (list, tuple)):
+            return False
+        if len(a) != len(b):
+            return False
+        for i, j in zip(a, b):
+            if not js_eq(i, j):
+                return False
+        return True
+    return a == b
+
+
 @pytest.mark.parametrize("expression", simple_expressions)
 def test_expressions(expression: str):
     py_code = expression
-    expected = eval(expression)
+    py_result = eval(expression)
 
     compiler = Compiler()
     js_code = compiler.compile(expression)
@@ -202,7 +233,7 @@ def test_expressions(expression: str):
         print(full_code)
         raise
 
-    assert js_result == expected, f"{expression} : {js_result} != {expected}"
+    assert js_eq(js_result, py_result), f"{expression} : {js_result} != {py_result}"
 
 
 @pytest.mark.parametrize("expression", simple_expressions2)

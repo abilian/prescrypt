@@ -377,9 +377,7 @@ class ExpressionCompiler(BaseCompiler):
                 method_name = ""
 
             case ast.Name(id):
-                method_name = ""
-                base_name = ""
-                full_name = id
+                func_name = id
 
             case _:
                 method_name = ""
@@ -397,18 +395,30 @@ class ExpressionCompiler(BaseCompiler):
 
             return f"_pymeth_{method_name}.apply({', '.join(args_js)})"
 
-        #
-        # FIXME: Everything below needs to be refactored
-        #
+        elif func_name:
+            if builtin_func := builtins.get_function(func_name):
+                if res := builtin_func(self, args, keywords):
+                    return res
 
-        # Handle builtins functions and methods
-        res = None
-        if builtin_func := builtins.get_function(full_name):
-            res = builtin_func(self, args, keywords)
-        elif builtin_meth := builtins.get_method(full_name):
-            res = builtin_meth(self, base_name, args, keywords)
+            args_js = [unify(self.gen_expr(arg)) for arg in args]
 
-        if res is not None:
+            return f"_pyfunc_{func_name}({', '.join(args_js)})"
+
+        else:
+            raise NotImplementedError("Unknown function call: " + str(func))
+
+            #
+            # FIXME: Everything below needs to be refactored
+            #
+
+            # Handle builtins functions and methods
+            # res = None
+            # if builtin_func := builtins.get_function(full_name):
+            #     res = builtin_func(self, args, keywords)
+            # elif builtin_meth := builtins.get_method(full_name):
+            #     res = builtin_meth(self, base_name, args, keywords)
+            #
+            # if res is not None:
             return res
 
         # Handle normally

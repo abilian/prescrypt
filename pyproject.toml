@@ -2,7 +2,7 @@
 name = "prescrypt-ng"
 version = "0.8.0"
 description = ""
-authors = ["Stefane Fermigier <sf@fermigier.com>"]
+authors = ["Stefane Fermigier <sf@abilian.com>"]
 readme = "README.md"
 packages = [{include = "prescrypt", from = "src" }]
 
