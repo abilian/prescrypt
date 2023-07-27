@@ -6,10 +6,14 @@ authors = ["Stefane Fermigier <sf@abilian.com>"]
 readme = "README.md"
 packages = [{include = "prescrypt", from = "src" }]
 
+[tool.poetry.scripts]
+# How do we call it ?
+prescrypt = "prescrypt.main:main"
+py2js = "prescrypt.main:main"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 buildstr = "^0.1.0"
-
 
 [tool.poetry.group.dev.dependencies]
 abilian-devtools = "^0.5.2"
