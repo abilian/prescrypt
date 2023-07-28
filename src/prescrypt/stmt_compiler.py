@@ -1,12 +1,8 @@
 import ast
-from ast import AST
-
-from devtools import debug
 
 from . import stdlib_js
-from .expr_compiler import ExpressionCompiler
-
 from .exceptions import JSError
+from .expr_compiler import ExpressionCompiler
 from .utils import flatten, js_repr, unify
 
 RAW_DOC_WARNING = (

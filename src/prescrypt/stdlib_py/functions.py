@@ -171,7 +171,7 @@ def function_range(compiler, args, kwargs):
         case [a, b]:
             args = a, b, ast.Num(1)
             return compiler.call_std_function("range", args)
-        case [a, b, c]:
+        case [_a, _b, _c]:
             return compiler.call_std_function("range", args)
         case _:
             raise JSError("range() needs 1, 2 or 3 arguments")

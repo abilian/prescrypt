@@ -1,13 +1,11 @@
-import ast
-
 from ..exceptions import JSError
-from ..utils import flatten, unify
+from ..utils import unify
 
 
 #
 # Contructors
 #
-def function_str(compiler, args, kwargs):
+def function_str(compiler, args, _kwargs):
     match args:
         case []:
             return '""'
@@ -18,18 +16,18 @@ def function_str(compiler, args, kwargs):
             return compiler.call_std_function("str", args)
 
 
-def function_bool(compiler, args, kwargs):
+def function_bool(compiler, args, _kwargs):
     match args:
         case []:
             return "false"
-        case [arg]:
+        case [_arg]:
             js_expr = compiler.call_std_function("truthy", args)
             return f"!!({js_expr})"
         case _:
             raise JSError("bool() at most one argument")
 
 
-def function_int(compiler, args, kwargs):
+def function_int(compiler, args, _kwargs):
     match args:
         case []:
             return "0"
@@ -40,7 +38,7 @@ def function_int(compiler, args, kwargs):
             raise JSError("int() at most one argument")
 
 
-def function_float(compiler, args, kwargs):
+def function_float(compiler, args, _kwargs):
     match args:
         case []:
             return "0.0"
@@ -67,7 +65,7 @@ def function_dict(compiler, args, kwargs):
             raise JSError("dict() takes at most one argument")
 
 
-def function_list(compiler, args, kwargs):
+def function_list(compiler, args, _kwargs):
     match args:
         case []:
             return "[]"

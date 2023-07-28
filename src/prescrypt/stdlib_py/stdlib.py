@@ -1,7 +1,7 @@
-from .constructors import * # noqa
-from .functions import *    # noqa
-from .methods import *    # noqa
-from .internals import *    # noqa
+from .constructors import *  # noqa
+from .functions import *  # noqa
+from .internals import *  # noqa
+from .methods import *  # noqa
 
 
 class Stdlib:

@@ -9,7 +9,6 @@ from .utils import flatten
 
 # Temp compiler class
 class Compiler(StatementCompiler):
-
     def compile(self, statement: str) -> str:
         tree = ast.parse(statement)
         tree = cast(ast.Module, desugar(tree))
