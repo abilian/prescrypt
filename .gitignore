@@ -1,0 +1,21 @@
+# Cruft
+*.egg-info/
+*.pyc
+*.sqlite*
+.cache/
+.coverage
+.eggs/
+.venv
+.hypothesis/
+.pytest_cache
+.ruff_cache
+
+# Generated
+__pycache__/
+
+# Test cruft
+/tests/regression/*.js
+
+# Local
+/tmp
+/sandbox
