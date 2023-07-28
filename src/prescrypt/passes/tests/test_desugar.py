@@ -1,4 +1,11 @@
+import ast
+
+import pytest
+
 from prescrypt.ast import ast
+from prescrypt.passes.binder import Binder
+from prescrypt.passes.type_inference import TypeInference
+from prescrypt.testing.data import EXPRESSIONS
 
 from ..desugar import desugar
 
@@ -29,3 +36,15 @@ def test_desugar_bool_op():
     tree = ast.parse(code)
     tree = desugar(tree)
     assert ast.unparse(tree) == "a and (b and c)"
+
+
+@pytest.mark.parametrize("expression", EXPRESSIONS)
+def test_expressions(expression: str):
+    tree = ast.parse(expression)
+    desugar(tree)
+
+    binder = Binder()
+    binder.visit(tree)
+
+    inferer = TypeInference()
+    inferer.visit(tree)

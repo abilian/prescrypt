@@ -4,8 +4,8 @@ from prescrypt.stdlib_py import stdlib
 from prescrypt.utils import unify
 
 from ..compiler import compiler
-from .expr import gen_expr
 from ..stdlib import call_std_function
+from .expr import gen_expr
 
 
 @gen_expr.register

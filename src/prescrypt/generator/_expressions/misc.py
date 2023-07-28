@@ -6,8 +6,8 @@ from buildstr import Builder
 from prescrypt.ast import ast
 from prescrypt.utils import unify
 
-from .expr import gen_expr
 from ..utilities import gen_truthy
+from .expr import gen_expr
 
 
 @gen_expr.register

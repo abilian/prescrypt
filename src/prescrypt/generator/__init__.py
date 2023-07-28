@@ -1,4 +1,8 @@
 from ._expressions.expr import gen_expr
+from ._statements.stmt import gen_stmt
+
+assert gen_expr
+assert gen_stmt
 
 from ._expressions import calls  # noqa
 from ._expressions import constants  # noqa

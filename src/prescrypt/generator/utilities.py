@@ -6,9 +6,9 @@ from prescrypt.utils import unify
 
 from ..constants import RETURNING_BOOL
 from ..exceptions import JSError
-from .context import ctx
-from .stdlib import call_std_function
 from . import gen_expr
+from .context import ctx
+from .stdlib import call_std_function, call_std_method
 
 
 #
@@ -39,7 +39,7 @@ def gen_truthy(node: ast.expr) -> str | list:
         return call_std_function("truthy", [test])
 
 
-def _format_string(self, left, right):
+def _format_string(left, right):
     """Format a string using the old-school `%` operator."""
 
     # Get value_nodes
@@ -56,7 +56,7 @@ def _format_string(self, left, right):
     #     return self.use_std_method(thestring, 'format', value_nodes)
 
     assert isinstance(left, ast.Str)
-    js_left = "".join(self.gen_expr(left))
+    js_left = "".join(gen_expr(left))
     sep, js_left = js_left[0], js_left[1:-1]
 
     # Get matches
@@ -78,4 +78,5 @@ def _format_string(self, left, right):
         start = m.end()
     parts.append(left[start:])
     thestring = sep + "".join(parts) + sep
-    return self.call_std_method(thestring, "format", value_nodes)
+
+    return call_std_method(thestring, "format", value_nodes)

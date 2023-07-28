@@ -2,17 +2,18 @@ from prescrypt.ast import ast
 from prescrypt.constants import BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.utils import unify
 
-from .expr import gen_expr
 from ..stdlib import call_std_function
 from ..utilities import _format_string, ctx, gen_truthy
+from .expr import gen_expr
 
 
 @gen_expr.register
-def get_subscript(node: ast.Subscript):
+def gen_subscript(node: ast.Subscript):
     # TODO: handle slice, ctx
-    js_value = gen_expr(node.value)
-    js_slice = gen_expr(node.slice)
-    return f"{js_slice}[{js_value}]"
+    value, slice = node.value, node.slice
+    js_value = gen_expr(value)
+    js_slice = gen_expr(slice)
+    return f"{js_value}[{js_slice}]"
 
 
 @gen_expr.register
@@ -73,9 +74,7 @@ def gen_bin_op(node: ast.BinOp) -> str | list:
 
     elif type(op) == ast.Mult:
         C = ast.Num
-        if ctx._pscript_overload and not (
-            isinstance(left, C) and isinstance(right, C)
-        ):
+        if ctx._pscript_overload and not (isinstance(left, C) and isinstance(right, C)):
             return call_std_function("op_mult", [js_left, js_right])
 
     elif type(op) == ast.Pow:
