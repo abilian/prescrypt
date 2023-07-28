@@ -7,8 +7,8 @@ from . import stdlib_js
 from .ast import ast
 from .base_compiler import BaseCompiler
 from .constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
-                                 JS_RESERVED_NAMES, NAME_MAP, RETURNING_BOOL,
-                                 UNARY_OP, isidentifier1)
+                        JS_RESERVED_NAMES, NAME_MAP, RETURNING_BOOL, UNARY_OP,
+                        isidentifier1)
 from .exceptions import JSError
 from .stdlib_js import FUNCTION_PREFIX
 from .stdlib_py import Stdlib

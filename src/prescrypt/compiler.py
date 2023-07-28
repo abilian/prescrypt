@@ -16,6 +16,14 @@ class Compiler(StatementCompiler):
         full_code = self.get_preamble() + "\n" + js_code
         return full_code
 
+    # def compile(self, expression: str) -> str:
+    #     tree = ast.parse(expression)
+    #     assert isinstance(tree, ast.Module)
+    #     # tree = cast(ast.Module, desugar(tree))
+    #     expr = cast(ast.expr, tree.body[0].value)
+    #     js_code = self.gen_expr(expr)
+    #     return flatten(js_code)
+
     def get_preamble(self) -> str:
         stdlib_js = Path(__file__).parent / "stdlibjs"
         preamble_js = (stdlib_js / "_stdlib.js").read_text()

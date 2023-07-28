@@ -19,9 +19,10 @@ unparse = _ast.unparse
 
 '''
 
-POSTAMBLE = '''\
+POSTAMBLE = """\
 from .converter import parse
-'''
+"""
+
 
 def main():
     print(PREAMBLE)

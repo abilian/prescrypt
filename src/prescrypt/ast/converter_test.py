@@ -1,7 +1,7 @@
 import ast
 
-from .converter import convert
 from . import ast as my_ast
+from .converter import convert
 
 
 def test_converter():

@@ -1,34 +1,11 @@
+from devtools import debug
+
 from prescrypt.ast import ast
 
 from .base import Transformer
 
 
 class DesugarVisitor(Transformer):
-    # def __desugar_IntString(self, right, left):
-    #     st = right if right.typ == String else left
-    #     num = right if right.typ == Int else left
-    #     # FIXME: st/num can also be Subscript, Name, Function...
-    #     match st, num:
-    #         case ast.Constant, ast.Constant:
-    #             return ast.Constant(st.value * num.value)
-    #         case _:
-    #             return None
-    #
-    # def visit_BinOp(self, node):
-    #     """
-    #     @brief          Desugaring common BinOp tricks, such as `a * "a"`
-    #     @param  node    BinOp to be visited
-    #     """
-    #     if type(node.op) != ast.Mult:
-    #         return node
-    #
-    #     match (node.left.typ, node.right.typ):
-    #         case (String, Int) | (Int, String):
-    #             res = self.__desugar_IntString(node.right, node.left)
-    #             return res if res is not None else node
-    #         case _:
-    #             return node
-
     def visit_Compare(self, node: ast.Compare):
         """
         Turns `a < b < c` into `a < b and b < c` (from Python doc).
@@ -56,7 +33,12 @@ class DesugarVisitor(Transformer):
         if isinstance(copy, ast.Name):
             copy.ctx = ast.Load()
 
-        return ast.Assign([node.target], ast.BinOp(copy, node.op, node.value))
+        new_node = ast.Assign(
+            [node.target],
+            ast.BinOp(copy, node.op, node.value),
+        )
+        new_node.lineno = getattr(node, "lineno", 0)
+        return new_node
 
     def visit_UnaryOp(self, node):
         """

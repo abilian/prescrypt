@@ -12,7 +12,7 @@ class Visitor(ast.NodeVisitor):
 
         `node` should be os type `AST` but we have to add other types because of a bug in PyCharm.
         """
-        super().visit(node)
+        return super().visit(node)
 
     def visit_list(self, node_list: list[ast.AST | ast.expr]):
         for node in node_list:
@@ -30,8 +30,7 @@ class Transformer(ast.NodeTransformer):
 
         `node` should be os type `AST` but we have to add other types because of a bug in PyCharm.
         """
-        super().visit(node)
+        return super().visit(node)
 
     def visit_list(self, node_list: list[ast.AST | ast.expr]):
-        for node in node_list:
-            self.visit(node)
+        return [self.visit(node) for node in node_list]

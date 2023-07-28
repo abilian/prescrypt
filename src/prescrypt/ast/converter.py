@@ -22,8 +22,17 @@ def convert(node: ast.mod | ast.AST) -> my_ast.AST:
             case _:
                 raise ValueError(f"Unknown type: {type(v)}")
 
-    return cls(**kwargs)
+    new_node = cls(**kwargs)
+
+    lineno = getattr(node, "lineno", 0)
+    node.lineno = lineno
+
+    new_node._orig_node = node
+
+    return new_node
 
 
-def parse(source: str):
-    return convert(ast.parse(source))
+def parse(source: str) -> my_ast.Module:
+    tree = convert(ast.parse(source))
+    assert isinstance(tree, my_ast.Module)
+    return tree

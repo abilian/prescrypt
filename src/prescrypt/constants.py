@@ -1,7 +1,7 @@
 import re
 
-from .ast import ast
 from . import stdlib_js
+from .ast import ast
 
 NAME_MAP = {
     "True": "true",
