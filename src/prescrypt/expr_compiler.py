@@ -1,6 +1,6 @@
 from .ast import ast
 from .base_compiler import BaseCompiler
-from .generator.gen_expr import gen_expr
+from .generator import gen_expr
 from .utils import flatten
 
 

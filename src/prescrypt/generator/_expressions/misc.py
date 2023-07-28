@@ -3,10 +3,11 @@
 #
 from buildstr import Builder
 
-from ..ast import ast
-from ..utils import unify
-from .gen_expr import gen_expr
-from .utilities import gen_truthy
+from prescrypt.ast import ast
+from prescrypt.utils import unify
+
+from .expr import gen_expr
+from ..utilities import gen_truthy
 
 
 @gen_expr.register

@@ -1,9 +1,14 @@
+import re
+
 from prescrypt.ast import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX
 from prescrypt.utils import unify
 
+from ..constants import RETURNING_BOOL
 from ..exceptions import JSError
-from .gen_expr import gen_expr
+from .context import ctx
+from .stdlib import call_std_function
+from . import gen_expr
 
 
 #
@@ -13,7 +18,7 @@ def gen_truthy(node: ast.expr) -> str | list:
     """Wraps an operation in a truthy call, unless it's not necessary."""
     eq_name = FUNCTION_PREFIX + "op_equals"
     test = "".join(gen_expr(node))
-    if not self._pscript_overload:
+    if not ctx._pscript_overload:
         return unify(test)
     elif (
         test.endswith(".length")
@@ -31,7 +36,7 @@ def gen_truthy(node: ast.expr) -> str | list:
     ):
         return unify(test)
     else:
-        return self.call_std_function("truthy", [test])
+        return call_std_function("truthy", [test])
 
 
 def _format_string(self, left, right):

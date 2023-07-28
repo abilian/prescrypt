@@ -3,7 +3,9 @@ from prescrypt.stdlib_js import FUNCTION_PREFIX
 from prescrypt.stdlib_py import stdlib
 from prescrypt.utils import unify
 
-from .gen_expr import gen_expr
+from ..compiler import compiler
+from .expr import gen_expr
+from ..stdlib import call_std_function
 
 
 @gen_expr.register
@@ -41,7 +43,7 @@ def gen_call(node: ast.Call) -> str | list:
 
     if method_name:
         if builtin_meth := builtins.get_method(method_name):
-            if res := builtin_meth(obj_js, args, keywords):
+            if res := builtin_meth(compiler, obj_js, args, keywords):
                 return res
 
         args_js = [obj_js] + [unify(gen_expr(arg)) for arg in args]
@@ -50,7 +52,7 @@ def gen_call(node: ast.Call) -> str | list:
 
     elif func_name:
         if builtin_func := builtins.get_function(func_name):
-            if res := builtin_func(args, keywords):
+            if res := builtin_func(compiler, args, keywords):
                 return res
 
         args_js = [unify(gen_expr(arg)) for arg in args]

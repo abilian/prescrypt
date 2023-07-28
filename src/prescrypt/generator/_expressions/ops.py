@@ -2,15 +2,9 @@ from prescrypt.ast import ast
 from prescrypt.constants import BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.utils import unify
 
-from .gen_expr import gen_expr
-from .utilities import _format_string, gen_truthy
-
-
-class Context:
-    _pscript_overload = False
-
-
-ctx = Context()
+from .expr import gen_expr
+from ..stdlib import call_std_function
+from ..utilities import _format_string, ctx, gen_truthy
 
 
 @gen_expr.register
@@ -75,11 +69,11 @@ def gen_bin_op(node: ast.BinOp) -> str | list:
                 and "op_add" not in right
             )
         ):
-            return self.call_std_function("op_add", [js_left, js_right])
+            return call_std_function("op_add", [js_left, js_right])
 
     elif type(op) == ast.Mult:
         C = ast.Num
-        if self._pscript_overload and not (
+        if ctx._pscript_overload and not (
             isinstance(left, C) and isinstance(right, C)
         ):
             return call_std_function("op_mult", [js_left, js_right])
@@ -105,7 +99,7 @@ def gen_compare(node: ast.Compare) -> str | list:
     op = ops[0]
 
     if type(op) in (ast.Eq, ast.NotEq) and not js_left.endswith(".length"):
-        if self._pscript_overload:
+        if ctx._pscript_overload:
             code = call_std_function("op_equals", [js_left, js_right])
             if type(op) == ast.NotEq:
                 code = "!" + code

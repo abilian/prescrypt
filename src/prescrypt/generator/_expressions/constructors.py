@@ -6,14 +6,23 @@ from prescrypt.exceptions import JSError
 from prescrypt.stdlib_js import FUNCTION_PREFIX
 from prescrypt.utils import unify
 
-from .gen_expr import gen_expr
+from .expr import gen_expr
 
 
 @gen_expr.register
-def gen_list_or_tuple(node: ast.List | ast.Tuple):
+def gen_list(node: ast.List):
     code = Builder()
     with code(surround=("[", "]"), separator=", "):
         code << [gen_expr(el) for el in node.elts]
+    return code.build()
+
+
+@gen_expr.register
+def gen_tuple(node: ast.Tuple):
+    code = Builder()
+    with code(surround=("[", "]"), separator=", "):
+        code << [gen_expr(el) for el in node.elts]
+    return code.build()
 
 
 @gen_expr.register

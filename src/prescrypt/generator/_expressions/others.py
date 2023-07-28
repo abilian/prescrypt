@@ -1,11 +1,11 @@
 from buildstr import Builder
 
-from ..ast import ast
-from ..constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES, NAME_MAP
-from ..exceptions import JSError
-from ..utils import unify
-from .gen_expr import gen_expr
-from .utilities import gen_truthy
+from prescrypt.ast import ast
+from prescrypt.constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES, NAME_MAP
+from prescrypt.exceptions import JSError
+from prescrypt.utils import unify
+
+from .expr import gen_expr
 
 
 @gen_expr.register
@@ -30,7 +30,10 @@ def gen_joinstr(node: ast.JoinedStr):
 @gen_expr.register
 def gen_subscript(node: ast.Subscript):
     # TODO: handle slice, ctx
-    return f"{self.gen_expr(value)}[{self.gen_expr(slice)}]"
+    value, slice = node.value, node.slice
+    js_value = gen_expr(value)
+    js_slice = gen_expr(slice)
+    return f"{js_value}[{js_slice}]"
 
 
 @gen_expr.register

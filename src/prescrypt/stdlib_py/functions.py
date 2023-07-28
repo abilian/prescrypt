@@ -1,5 +1,6 @@
 from ..ast import ast
 from ..exceptions import JSError
+from ..generator.stdlib import call_std_function
 from ..utils import flatten, unify
 
 
@@ -165,13 +166,13 @@ def function_ord(compiler, args, kwargs) -> str:
 def function_range(compiler, args, kwargs):
     match args:
         case [a]:
-            args = ast.Num(0), a, ast.Num(1)
-            return compiler.call_std_function("range", args)
+            args = [ast.Num(0), a, ast.Num(1)]
+            return call_std_function("range", args)
         case [a, b]:
-            args = a, b, ast.Num(1)
-            return compiler.call_std_function("range", args)
+            args = [a, b, ast.Num(1)]
+            return call_std_function("range", args)
         case [_a, _b, _c]:
-            return compiler.call_std_function("range", args)
+            return call_std_function("range", args)
         case _:
             raise JSError("range() needs 1, 2 or 3 arguments")
 
@@ -189,4 +190,4 @@ def function_sorted(compiler, args, kwargs):
         else:
             raise JSError(f"Invalid keyword argument for sorted: {kw.name!r}")
 
-    return compiler.call_std_function("sorted", [args[0], key, reverse])
+    return call_std_function("sorted", [args[0], key, reverse])

@@ -7,7 +7,7 @@ from ..utils import unify
 #
 # Contructors
 #
-def function_str(args, _kwargs):
+def function_str(compiler, args, _kwargs):
     match args:
         case []:
             return '""'
@@ -18,7 +18,7 @@ def function_str(args, _kwargs):
             return call_std_function("str", args)
 
 
-def function_bool(args, _kwargs):
+def function_bool(compiler, args, _kwargs):
     match args:
         case []:
             return "false"
@@ -29,7 +29,7 @@ def function_bool(args, _kwargs):
             raise JSError("bool() at most one argument")
 
 
-def function_int(args, _kwargs):
+def function_int(compiler, args, _kwargs):
     match args:
         case []:
             return "0"
@@ -51,7 +51,7 @@ def function_float(compiler, args, _kwargs):
             raise JSError("float() at most one argument")
 
 
-def function_dict(args, kwargs):
+def function_dict(compiler, args, kwargs):
     match args, kwargs:
         case [], []:
             return "({})"
@@ -65,7 +65,7 @@ def function_dict(args, kwargs):
             raise JSError("dict() takes at most one argument")
 
 
-def function_list(args, _kwargs):
+def function_list(compiler, args, _kwargs):
     match args:
         case []:
             return "[]"
@@ -74,5 +74,5 @@ def function_list(args, _kwargs):
             return call_std_function("list", js_args)
 
 
-def function_tuple(args, kwargs):
-    return function_list(args, kwargs)
+def function_tuple(compiler, args, kwargs):
+    return function_list(compiler, args, kwargs)

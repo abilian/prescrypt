@@ -1,5 +1,6 @@
 from prescrypt.ast import ast
-from prescrypt.generator import gen_expr
+
+from .expr import gen_expr
 
 
 @gen_expr.register
