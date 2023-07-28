@@ -3,16 +3,7 @@ import ast
 import pytest
 from devtools import debug
 
-from prescrypt.stmt_compiler import StatementCompiler
-
-
-class Compiler(StatementCompiler):
-
-    def compile(self, statement: str) -> str:
-        tree = ast.parse(statement).body
-        js_code = self.gen_stmt(tree)
-        return self.flatten(js_code)
-
+from prescrypt.compiler import Compiler
 
 simple_statements = [
     "pass",

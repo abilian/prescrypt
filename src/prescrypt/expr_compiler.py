@@ -10,6 +10,7 @@ from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
                                  JS_RESERVED_NAMES, NAME_MAP, RETURNING_BOOL,
                                  UNARY_OP, isidentifier1)
 from prescrypt.exceptions import JSError
+from prescrypt.stdlib_js import FUNCTION_PREFIX
 from prescrypt.stdlib_py import Stdlib
 from prescrypt.utils import flatten, js_repr, unify
 
@@ -78,7 +79,7 @@ class ExpressionCompiler(BaseCompiler):
             case ast.Str(s):
                 return repr(s)
 
-            case ast.Bytes(b):
+            case ast.Bytes():
                 raise JSError("No Bytes in JS")
 
             case ast.NameConstant(value):
@@ -205,8 +206,8 @@ class ExpressionCompiler(BaseCompiler):
                 unify(self.gen_expr(key)),
                 unify(self.gen_expr(val)),
             ]
-        self.call_std_function("create_dict", [])
-        return stdlib.FUNCTION_PREFIX + "create_dict(" + ", ".join(func_args) + ")"
+        # self.call_std_function("create_dict", [])
+        return FUNCTION_PREFIX + "create_dict(" + ", ".join(func_args) + ")"
 
     #
     # Ops

@@ -1,123 +1,18 @@
 import ast
 
-from devtools import debug
-
-from .exceptions import JSError
-from .utils import flatten, unify
-
-
-def function_this_is_js(compiler, args):
-    # Note that we handle this_is_js() shortcuts in the if-statement
-    # directly. This replacement with a string is when this_is_js()
-    # is used outside an if statement.
-    if len(args) != 0:
-        raise JSError("this_is_js() expects zero arguments.")
-    return '"this_is_js()"'
-
-
-def function_RawJS(compilet, args):
-    if len(args) != 1:
-        return None  # maybe RawJS is a thing
-
-    if not isinstance(args[0], ast.Str):
-        raise JSError(
-            "RawJS needs a verbatim string (use multiple "
-            "args to bypass PScript's RawJS)."
-        )
-
-    lines = RawJS._str2lines(node.arg_nodes[0].value.strip())
-    nl = "\n" + (compiler._indent * 4) * " "
-    return nl.join(lines)
-
-
-# Python builtin functions
-
-
-#
-# Contructors
-#
-def function_str(compiler, args, kwargs):
-    match args:
-        case []:
-            return '""'
-        case [arg]:
-            js_arg = unify(compiler.gen_expr(arg))
-            return f"({js_arg}).toString()"
-        case [*_]:
-            return compiler.call_std_function("str", args)
-
-
-def function_bool(compiler, args, kwargs):
-    match args:
-        case []:
-            return "false"
-        case [arg]:
-            js_expr = compiler.call_std_function("truthy", args)
-            return f"!!({js_expr})"
-        case _:
-            raise JSError("bool() at most one argument")
-
-
-def function_int(compiler, args, kwargs):
-    match args:
-        case []:
-            return "0"
-        case [arg]:
-            js_arg = unify(compiler.gen_expr(arg))
-            return f"parseInt({js_arg})"
-        case _:
-            raise JSError("int() at most one argument")
-
-
-def function_float(compiler, args, kwargs):
-    match args:
-        case []:
-            return "0.0"
-        case [arg]:
-            js_arg = unify(compiler.gen_expr(arg))
-            return f"parseFloat({js_arg})"
-        case _:
-            raise JSError("float() at most one argument")
-
-
-def function_dict(compiler, args, kwargs):
-    match args, kwargs:
-        case [], []:
-            return "({})"
-        case [], [*_]:
-            js_kwargs = [
-                f"{arg.arg}: {unify(compiler.gen_expr(arg.value))}" for arg in kwargs
-            ]
-            return "({%s})" % ", ".join(js_kwargs)
-        case [*_], []:
-            return compiler.call_std_function("dict", args)
-        case _, _:
-            # TODO
-            raise JSError("dict() takes at most one argument")
-
-
-def function_list(compiler, args, kwargs):
-    match args:
-        case []:
-            return "[]"
-        case [*_]:
-            js_args = [compiler.gen_expr(arg) for arg in args]
-            return compiler.call_std_function("list", js_args)
-
-
-def function_tuple(compiler, args, kwargs):
-    return function_list(compiler, args, kwargs)
+from ..exceptions import JSError
+from ..utils import flatten, unify
 
 
 #
 # Other builtin functions
 #
-def function_isinstance(node):
-    if len(node.arg_nodes) != 2:
+def function_isinstance(compiler, args, kwargs):
+    if len(args) != 2:
         raise JSError("isinstance() expects two arguments.")
 
-    ob = unify(self.parse(node.arg_nodes[0]))
-    cls = unify(self.parse(node.arg_nodes[1]))
+    ob = unify(compiler.gen_expr(args[0]))
+    cls = unify(compiler.gen_expr(args[1]))
     if cls[0] in "\"'":
         cls = cls[1:-1]  # remove quotes
 
@@ -175,13 +70,13 @@ def function_isinstance(node):
         return ob, " instanceof ", cmp
 
 
-def function_issubclass(node):
+def function_issubclass(compiler, args, kwargs):
     # issubclass only needs to work on custom classes
-    if len(node.arg_nodes) != 2:
+    if len(args) != 2:
         raise JSError("issubclass() expects two arguments.")
 
-    cls1 = unify(self.parse(node.arg_nodes[0]))
-    cls2 = unify(self.parse(node.arg_nodes[1]))
+    cls1 = unify(compiler.gen_expr(args[0]))
+    cls2 = unify(compiler.gen_expr(args[1]))
     if cls2 == "object":
         cls2 = "Object"
     return f"({cls1}.prototype instanceof {cls2})"
@@ -296,52 +191,3 @@ def function_sorted(compiler, args, kwargs):
             raise JSError(f"Invalid keyword argument for sorted: {kw.name!r}")
 
     return compiler.call_std_function("sorted", [args[0], key, reverse])
-
-
-# Methods of list/dict/str
-
-
-def method_sort(compiler, args, kwargs, base):
-    if len(args) == 0:  # sorts args are keyword-only
-        key, reverse = ast.Name("undefined"), ast.NameConstant(False)
-        for kw in kwargs:
-            if kw.name == "key":
-                key = kw.value_node
-            elif kw.name == "reverse":
-                reverse = kw.value_node
-            else:
-                raise JSError(f"Invalid keyword argument for sort: {kw.name!r}")
-        return compiler.call_std_method(base, "sort", [key, reverse])
-
-
-def method_format(compiler, args, kwargs, base):
-    if kwargs:
-        raise JSError("Method format() currently does not support keyword args.")
-
-    return compiler.call_std_method(base, "format", args)
-
-
-#
-
-
-class Stdlib:
-    def __init__(self):
-        self._std_functions = {}
-        self._std_methods = {}
-
-        for name, obj in globals().items():
-            if not callable(obj):
-                continue
-
-            if name.startswith("function_"):
-                self._std_functions[name[9:]] = obj
-            elif name.startswith("method_"):
-                self._std_methods[name[7:]] = obj
-            else:
-                pass
-
-    def get_function(self, name, default=None):
-        return self._std_functions.get(name, default)
-
-    def get_method(self, name, default=None):
-        return self._std_methods.get(name, default)
