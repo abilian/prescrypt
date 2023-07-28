@@ -1,4 +1,6 @@
-from prescrypt import evalpy
+import dukpy
+
+from prescrypt import py2js
 
 from .util import gen_expr
 
@@ -12,7 +14,10 @@ def test_gen():
         except Exception:
             continue
 
-        js_result = evalpy(expr)
+        jscode = py2js(expr)
+        interpreter = dukpy.JSInterpreter()
+        js_result = interpreter.evaljs(jscode)
+
         assert js_equals(py_result, js_result)
 
 
