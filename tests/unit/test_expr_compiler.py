@@ -1,4 +1,3 @@
-import ast
 from pathlib import Path
 from typing import cast
 
@@ -7,6 +6,7 @@ import pytest
 from devtools import debug
 from dukpy import JSRuntimeError
 
+from prescrypt.ast import ast
 from prescrypt.expr_compiler import ExpressionCompiler
 from prescrypt.passes.desugar import desugar
 from prescrypt.utils import flatten
@@ -19,7 +19,8 @@ class Compiler(ExpressionCompiler):
 
     def compile(self, expression: str) -> str:
         tree = ast.parse(expression)
-        tree = cast(ast.Module, desugar(tree))
+        assert isinstance(tree, ast.Module)
+        # tree = cast(ast.Module, desugar(tree))
         expr = cast(ast.expr, tree.body[0].value)
         js_code = self.gen_expr(expr)
         return flatten(js_code)

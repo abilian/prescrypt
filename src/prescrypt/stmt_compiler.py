@@ -1,6 +1,5 @@
-import ast
-
 from . import stdlib_js
+from .ast import ast
 from .exceptions import JSError
 from .expr_compiler import ExpressionCompiler
 from .utils import flatten, js_repr, unify
@@ -152,8 +151,8 @@ class StatementCompiler(ExpressionCompiler):
             # Control flow
             case ast.If(test, body, orelse):
                 return self.gen_if(test, body, orelse)
-            case ast.For(target, iter_node, body, orelse, type_comment):
-                return self.gen_for(target, iter_node, body, orelse, type_comment)
+            case ast.For(target, iter, body, orelse, type_comment):
+                return self.gen_for(target, iter, body, orelse, type_comment)
             case ast.AsyncFor(target, iter_node, body, orelse, type_comment):
                 raise NotImplementedError("AsyncFor is not supported.")
             case ast.While(test, body, orelse):
@@ -450,7 +449,7 @@ class StatementCompiler(ExpressionCompiler):
         code.append(self.lf("}"))  # last part (popped in elif parsing)
         return code
 
-    def gen_for(self, node):
+    def gen_for(self, target, iter, body, orelse, type_comment):
         # Note that enumerate, reversed, sorted, filter, map are handled in parser3
 
         METHODS = "keys", "values", "items"
@@ -460,11 +459,11 @@ class StatementCompiler(ExpressionCompiler):
         sure_is_range = False  # dito for range
 
         # First see if this for-loop is something that we support directly
-        if isinstance(node.iter_node, ast.Call):
-            f = node.iter_node.func_node
+        if isinstance(iter, ast.Call):
+            f = iter.func_node
             if (
                 isinstance(f, ast.Attribute)
-                and not node.iter_node.arg_nodes
+                and not iter.arg_nodes
                 and f.attr in METHODS
             ):
                 sure_is_dict = f.attr
@@ -480,17 +479,17 @@ class StatementCompiler(ExpressionCompiler):
             iter = "".join(self.parse(node.iter_node))
 
         # Get target
-        if isinstance(node.target_node, ast.Name):
-            target = [node.target_node.name]
+        if isinstance(target, ast.Name):
+            target_name = [target.id]
             if sure_is_dict == "values":
-                target.append(target[0])
+                target.append(target_name[0])
             elif sure_is_dict == "items":
                 raise JSError(
                     "Iteration over a dict with .items() " "needs two iterators."
                 )
 
-        elif isinstance(node.target_node, ast.Tuple):
-            target = ["".join(self.parse(t)) for t in node.target_node.element_nodes]
+        elif isinstance(target, ast.Tuple):
+            target = ["".join(self.gen_expr(t)) for t in target.elts]
             if sure_is_dict:
                 if not (sure_is_dict == "items" and len(target) == 2):
                     raise JSError(

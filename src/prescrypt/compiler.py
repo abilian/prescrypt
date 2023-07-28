@@ -1,7 +1,7 @@
-import ast
 from pathlib import Path
 from typing import cast
 
+from .ast import ast
 from .passes.desugar import desugar
 from .stmt_compiler import StatementCompiler
 from .utils import flatten

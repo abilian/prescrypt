@@ -1,8 +1,9 @@
-import ast
-from ast import NodeTransformer
+from prescrypt.ast import ast
+
+from .base import Transformer
 
 
-class DesugarVisitor(NodeTransformer):
+class DesugarVisitor(Transformer):
     # def __desugar_IntString(self, right, left):
     #     st = right if right.typ == String else left
     #     num = right if right.typ == Int else left

@@ -1,5 +1,5 @@
-import ast
 
+from ..ast import ast
 from ..exceptions import JSError
 from ..utils import flatten, unify
 

@@ -1,13 +1,14 @@
-import ast
+from prescrypt.ast import ast
 
+from .base import Visitor
 from .errors import UnknownSymbolError
 from .scopes import ScopedMap
 from .symbol import Symbol
 
 
-class Binder(ast.NodeVisitor):
+class Binder(Visitor):
     """
-    First visitor to be ran. Adds an attribute `definition` to ast nodes.
+    First visitor to run. Adds an attribute `definition` to ast nodes.
     """
 
     def __init__(self):

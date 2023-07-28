@@ -1,7 +1,7 @@
-import ast
 import re
 
-from prescrypt import stdlib_js
+from .ast import ast
+from . import stdlib_js
 
 NAME_MAP = {
     "True": "true",

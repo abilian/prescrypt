@@ -1,5 +1,6 @@
-import ast
+from prescrypt.ast import ast
 
+from .base import Visitor
 from .types import Bool, Float, Int, String
 
 TYPE_MAP = {
@@ -10,7 +11,7 @@ TYPE_MAP = {
 }
 
 
-class TypeInference(ast.NodeVisitor):
+class TypeInference(Visitor):
     """
     Visitor that adds a `_type` attribute into nodes, holding the type
     """

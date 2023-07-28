@@ -1,18 +1,18 @@
-import ast
 import re
 
 from buildstr import Builder
 from devtools import debug
 
-from prescrypt import stdlib_js
-from prescrypt.base_compiler import BaseCompiler
-from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
+from . import stdlib_js
+from .ast import ast
+from .base_compiler import BaseCompiler
+from .constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
                                  JS_RESERVED_NAMES, NAME_MAP, RETURNING_BOOL,
                                  UNARY_OP, isidentifier1)
-from prescrypt.exceptions import JSError
-from prescrypt.stdlib_js import FUNCTION_PREFIX
-from prescrypt.stdlib_py import Stdlib
-from prescrypt.utils import flatten, js_repr, unify
+from .exceptions import JSError
+from .stdlib_js import FUNCTION_PREFIX
+from .stdlib_py import Stdlib
+from .utils import flatten, js_repr, unify
 
 
 class ExpressionCompiler(BaseCompiler):
@@ -62,7 +62,7 @@ class ExpressionCompiler(BaseCompiler):
         self._stack = []
 
     def gen_expr(self, expr_node: ast.expr) -> str:
-        assert isinstance(expr_node, ast.expr)
+        assert isinstance(expr_node, ast.expr), expr_node
         code = self._gen_expr(expr_node)
         return flatten(code)
 
@@ -73,6 +73,21 @@ class ExpressionCompiler(BaseCompiler):
             #
             # Constants / literals
             #
+            case ast.Constant(bool(value)):
+                return "true" if value else "false"
+
+            case ast.Constant(int(n)):
+                return str(n)
+
+            case ast.Constant(str(s)):
+                return repr(s)
+
+            case ast.Constant(float(s)):
+                return str(s)
+
+            case ast.Str(s):
+                return repr(s)
+
             case ast.Num(n):
                 return str(n)
 
@@ -163,6 +178,7 @@ class ExpressionCompiler(BaseCompiler):
             # Error
             #
             case _:
+                debug(ast.dump(expr_node))
                 raise NotImplementedError("Unknown expression type: " + str(expr_node))
 
     #
@@ -580,7 +596,7 @@ class ExpressionCompiler(BaseCompiler):
         else:
             # register use of merge_dicts(), but we build the string ourselves
             self.call_std_function("merge_dicts", [])
-            return stdlib.FUNCTION_PREFIX + "merge_dicts(" + ", ".join(kwargs) + ")"
+            return FUNCTION_PREFIX + "merge_dicts(" + ", ".join(kwargs) + ")"
 
     #
     # The rest

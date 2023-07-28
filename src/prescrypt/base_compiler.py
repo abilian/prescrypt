@@ -8,10 +8,10 @@ Useful links:
 Main limiting features for browsers (not sure if this is 100% complete):
 * Object.keys supported from IE 9 - we use it in method_keys()
 """
-import ast
 from abc import abstractmethod
 
 from . import stdlib_js
+from .ast import ast
 from .namespace import NameSpace
 from .utils import unify
 

@@ -1,5 +1,4 @@
-import ast
-
+from ..ast import ast
 from ..exceptions import JSError
 
 
