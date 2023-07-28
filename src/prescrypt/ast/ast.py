@@ -517,23 +517,23 @@ class Param(_ast.Param, expr_context, Mixin):
     pass
 
 
-class Num(_ast.Num, expr, Mixin):
+class Num(_ast.Num, Constant, expr, Mixin):
     pass
 
 
-class Str(_ast.Str, expr, Mixin):
+class Str(_ast.Str, Constant, expr, Mixin):
     pass
 
 
-class Bytes(_ast.Bytes, expr, Mixin):
+class Bytes(_ast.Bytes, Constant, expr, Mixin):
     pass
 
 
-class NameConstant(_ast.NameConstant, expr, Mixin):
+class NameConstant(_ast.NameConstant, Constant, expr, Mixin):
     pass
 
 
-class Ellipsis(_ast.Ellipsis, expr, Mixin):
+class Ellipsis(_ast.Ellipsis, Constant, expr, Mixin):
     pass
 
 

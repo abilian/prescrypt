@@ -40,23 +40,27 @@ def main():
     classes.sort(key=lambda x: len(inspect.getmro(x)))
 
     for cls in classes:
-        name = cls.__name__
-
-        # debug(cls, inspect.getmro(cls), name)
-
-        parents = []
-        for cls2 in inspect.getmro(cls)[1:-1]:
-            if cls2.__name__[0].isupper():
-                continue
-            parents.append(cls2.__name__)
-
-        parents += ["Mixin"]
+        cls_name = cls.__name__
+        parents = get_parents(cls)
         parents_str = ", ".join(parents)
 
-        print(f"class {name}(_ast.{name}, {parents_str}):")
+        print(f"class {cls_name}(_ast.{cls_name}, {parents_str}):")
         print("    pass\n\n")
 
     print(POSTAMBLE, end="")
+
+
+def get_parents(cls):
+    for parent in inspect.getmro(cls)[1:-1]:
+        parent_name = parent.__name__
+
+        if parent_name == "Constant":
+            yield "Constant"
+
+        if parent_name[0].islower():
+            yield parent_name
+
+    yield "Mixin"
 
 
 if __name__ == "__main__":
