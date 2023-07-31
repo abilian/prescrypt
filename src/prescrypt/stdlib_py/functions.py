@@ -1,5 +1,4 @@
 from ..ast import ast
-from ..codegen.stdlib import call_std_function
 from ..exceptions import JSError
 from ..utils import flatten, unify
 

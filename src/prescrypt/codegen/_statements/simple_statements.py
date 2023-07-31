@@ -1,6 +1,7 @@
 
 from prescrypt.ast import ast
 from prescrypt.codegen.main import gen_stmt, CodeGen
+from prescrypt.utils import flatten
 
 
 @gen_stmt.register
@@ -10,7 +11,7 @@ def _gen_pass(node: ast.Pass, codegen: CodeGen):
 
 @gen_stmt.register
 def _gen_expr(node: ast.Expr, codegen: CodeGen):
-    return codegen.gen_expr(node.value) + ";\n"
+    return flatten(codegen.gen_expr(node.value)) + ";\n"
 
 
 @gen_stmt.register

@@ -2,15 +2,14 @@
 # Exceptions
 #
 from prescrypt.ast import ast
-from prescrypt.codegen import gen_expr, gen_stmt
 from prescrypt.exceptions import JSError
 from prescrypt.utils import js_repr, unify
 
-from ..context import Context
+from ..main import gen_expr, gen_stmt, CodeGen
 
 
 @gen_stmt.register
-def gen_raise(node: ast.Raise, ctx: Context):
+def gen_raise(node: ast.Raise, codegen: CodeGen):
     # We raise the exception as an Error object
 
     exc_node, cause_node = node.exc, node.cause
@@ -27,7 +26,7 @@ def gen_raise(node: ast.Raise, ctx: Context):
     match exc_node:
         case ast.Name(id):
             if id.islower():  # raise an (error) object
-                return [ctx.lf("throw " + id + ";")]
+                return [codegen.lf("throw " + id + ";")]
             err_cls = id
         case ast.Call(func, args, keywords):
             err_cls = func.name
@@ -35,20 +34,20 @@ def gen_raise(node: ast.Raise, ctx: Context):
         case _:
             err_msg = "".join(gen_expr(exc_node))
 
-    err_name = "err_%i" % ctx._indent
-    ctx.vars.add(err_name)
+    err_name = "err_%i" % codegen._indent
+    codegen.vars.add(err_name)
 
     # Build code to throw
     if err_cls:
-        code = ctx.call_std_function("op_error", [f"'{err_cls}'", err_msg or '""'])
+        code = codegen.call_std_function("op_error", [f"'{err_cls}'", err_msg or '""'])
     else:
         code = err_msg
 
-    return [ctx.lf("throw " + code + ";")]
+    return [codegen.lf("throw " + code + ";")]
 
 
 @gen_stmt.register
-def gen_assert(node: ast.Assert, ctx: Context):
+def gen_assert(node: ast.Assert, codegen: CodeGen):
     test_node, msg_node = node.test, node.msg
 
     js_test = gen_expr(test_node)
@@ -57,18 +56,18 @@ def gen_assert(node: ast.Assert, ctx: Context):
         js_msg = gen_expr(msg_node)
 
     code = []
-    code.append(ctx.lf("if (!("))
+    code.append(codegen.lf("if (!("))
     code += js_test
     code.append(")) { throw ")
     code.append(
-        ctx.call_std_function("op_error", ["'AssertionError'", js_repr(js_msg)])
+        codegen.call_std_function("op_error", ["'AssertionError'", js_repr(js_msg)])
     )
     code.append(";}")
     return code
 
 
 @gen_stmt.register
-def gen_try(node: ast.Try, ctx: Context):
+def gen_try(node: ast.Try, codegen: CodeGen):
     body, handlers, orelse, finalbody = (
         node.body,
         node.handlers,
@@ -82,56 +81,56 @@ def gen_try(node: ast.Try, ctx: Context):
 
     # Try
     if True:
-        code.append(ctx.lf("try {"))
-        ctx._indent += 1
+        code.append(codegen.lf("try {"))
+        codegen._indent += 1
         for n in body:
-            code += ctx.gen_stmt(n)
-        ctx._indent -= 1
-        code.append(ctx.lf("}"))
+            code += codegen.gen_stmt(n)
+        codegen._indent -= 1
+        code.append(codegen.lf("}"))
 
     # Except
     if handlers:
-        ctx._indent += 1
-        err_name = "err_%i" % ctx._indent
+        codegen._indent += 1
+        err_name = "err_%i" % codegen._indent
         code.append(" catch(%s) {" % err_name)
         subcode = []
         for i, handler in enumerate(handlers):
             if i == 0:
-                code.append(ctx.lf(""))
+                code.append(codegen.lf(""))
             else:
                 code.append(" else ")
-            subcode = ctx.gen_stmt(handler)
+            subcode = codegen.gen_stmt(handler)
             code += subcode
 
         # Rethrow?
         if subcode and subcode[0].startswith("if"):
             code.append(" else { throw %s; }" % err_name)
 
-        ctx._indent -= 1
-        code.append(ctx.lf("}"))  # end catch
+        codegen._indent -= 1
+        code.append(codegen.lf("}"))  # end catch
 
     # Finally
     if finalbody:
         code.append(" finally {")
-        ctx._indent += 1
+        codegen._indent += 1
         for n in finalbody:
-            code += ctx.gen_stmt(n)
-        ctx._indent -= 1
-        code.append(ctx.lf("}"))  # end finally
+            code += codegen.gen_stmt(n)
+        codegen._indent -= 1
+        code.append(codegen.lf("}"))  # end finally
 
     return code
 
 
 @gen_stmt.register
-def gen_excepthandler(node: ast.ExceptHandler, ctx: Context):
+def gen_excepthandler(node: ast.ExceptHandler, codegen: CodeGen):
     type, name, body = node.type, node.name, node.body
 
-    err_name = "err_%i" % ctx._indent
+    err_name = "err_%i" % codegen._indent
 
     # Set up the catch
     code = []
-    err_type = unify(ctx.gen_stmt(type)) if node.type_node else ""
-    ctx.vars.discard(err_type)
+    err_type = unify(codegen.gen_stmt(type)) if node.type_node else ""
+    codegen.vars.discard(err_type)
     if err_type and err_type != "Exception":
         code.append(
             'if (%s instanceof Error && %s.name === "%s") {'
@@ -139,15 +138,15 @@ def gen_excepthandler(node: ast.ExceptHandler, ctx: Context):
         )
     else:
         code.append("{")
-    ctx._indent += 1
+    codegen._indent += 1
     if node.name:
-        code.append(ctx.lf(f"{node.name} = {err_name};"))
-        ctx.vars.add(node.name)
+        code.append(codegen.lf(f"{node.name} = {err_name};"))
+        codegen.vars.add(node.name)
 
     # Insert the body
     for n in node.body_nodes:
         code += gen_stmt(n)
-    ctx._indent -= 1
+    codegen._indent -= 1
 
-    code.append(ctx.lf("}"))
+    code.append(codegen.lf("}"))
     return code

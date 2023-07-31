@@ -6,18 +6,17 @@ from buildstr import Builder
 from prescrypt.ast import ast
 from prescrypt.utils import unify
 
-from ..utilities import gen_truthy
-from .expr import gen_expr
+from ..main import gen_expr, CodeGen
 
 
 @gen_expr.register
-def gen_if_exp(node: ast.IfExp) -> list[str]:
+def gen_if_exp(node: ast.IfExp, codegen: CodeGen) -> list[str]:
     # in "a if b else c"
     body, test, orelse = node.body, node.test, node.orelse
 
-    js_body = gen_expr(body)
-    js_test = gen_truthy(test)
-    js_else = gen_expr(orelse)
+    js_body = codegen.gen_expr(body)
+    js_test = codegen.gen_truthy(test)
+    js_else = codegen.gen_expr(orelse)
 
     code = Builder()
     with code(surround="()"):
@@ -32,13 +31,13 @@ def gen_if_exp(node: ast.IfExp) -> list[str]:
 
 
 @gen_expr.register
-def gen_list_comp(node: ast.ListComp) -> list[str]:
+def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
     # Note: generators is a list of ast.comprehension
     # ast.comprehension has attrs: 'target', 'iter', 'ifs', 'is_async',
     elt, generators = node.elt, node.generators
 
     self.push_stack("function", "listcomp")
-    elt = "".join(gen_expr(elt))
+    elt = "".join(codegen.gen_expr(elt))
     code = ["(function list_comprehension (iter0) {", "var res = [];"]
     vars = []
 

@@ -41,7 +41,7 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
 
     if method_name:
         if builtin_meth := builtins.get_method(method_name):
-            if res := builtin_meth(compiler, obj_js, args, keywords):
+            if res := builtin_meth(codegen, obj_js, args, keywords):
                 return res
 
         args_js = [obj_js] + [unify(codegen.gen_expr(arg)) for arg in args]
@@ -50,7 +50,7 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
 
     elif func_name:
         if builtin_func := builtins.get_function(func_name):
-            if res := builtin_func(compiler, args, keywords):
+            if res := builtin_func(codegen, args, keywords):
                 return res
 
         args_js = [unify(codegen.gen_expr(arg)) for arg in args]

@@ -2,7 +2,6 @@ from prescrypt.ast import ast
 from prescrypt.constants import BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.utils import unify
 
-from ..utilities import _format_string, gen_truthy
 from ..main import gen_expr, CodeGen
 
 
@@ -21,7 +20,7 @@ def gen_unary_op(node: ast.UnaryOp, codegen: CodeGen) -> str | list:
     operand = node.operand
 
     if type(op) is ast.Not:
-        return ["!", gen_truthy(operand)]
+        return ["!", codegen.gen_truthy(operand)]
     else:
         js_op = UNARY_OP[op]
         right = unify(codegen.gen_expr(operand))
@@ -35,10 +34,10 @@ def gen_bool_op(node: ast.BoolOp, codegen: CodeGen) -> str | list:
 
     js_op = f" {BOOL_OP[op]} "
     if type(op) == ast.Or:  # allow foo = bar or []
-        js_values = [unify(gen_truthy(val)) for val in values[:-1]]
+        js_values = [unify(codegen.gen_truthy(val)) for val in values[:-1]]
         js_values += [unify(codegen.gen_expr(values[-1]))]
     else:
-        js_values = [unify(gen_truthy(val)) for val in values]
+        js_values = [unify(codegen.gen_truthy(val)) for val in values]
     return js_op.join(js_values)
 
 
@@ -48,14 +47,14 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
 
     if type(op) == ast.Mod and isinstance(left, ast.Str):
         # Modulo on a string is string formatting in Python
-        return _format_string(left, right)
+        return codegen._format_string(left, right)
 
     js_left = unify(codegen.gen_expr(left))
     js_right = unify(codegen.gen_expr(right))
 
     if type(op) == ast.Add:
         C = ast.Num, ast.Str
-        if ctx._pscript_overload and not (
+        if codegen._pscript_overload and not (
             isinstance(left, C)
             or isinstance(right, C)
             or (
@@ -73,7 +72,7 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
 
     elif type(op) == ast.Mult:
         C = ast.Num
-        if ctx._pscript_overload and not (isinstance(left, C) and isinstance(right, C)):
+        if codegen._pscript_overload and not (isinstance(left, C) and isinstance(right, C)):
             return codegen.call_std_function("op_mult", [js_left, js_right])
 
     elif type(op) == ast.Pow:
@@ -97,7 +96,7 @@ def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
     op = ops[0]
 
     if type(op) in (ast.Eq, ast.NotEq) and not js_left.endswith(".length"):
-        if ctx._pscript_overload:
+        if codegen._pscript_overload:
             code = codegen.call_std_function("op_equals", [js_left, js_right])
             if type(op) == ast.NotEq:
                 code = "!" + code
