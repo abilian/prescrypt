@@ -93,7 +93,6 @@ class CodeGen:
         mangled_name = FUNCTION_PREFIX + name
         return f"{mangled_name}({', '.join(self.gen_js_args(args))})"
 
-
     def call_std_method(self, base, name: str, args: list) -> str:
         """Generate a method call from the Prescrypt standard library."""
         mangled_name = METHOD_PREFIX + name
@@ -101,7 +100,6 @@ class CodeGen:
         # FIXME: what does this do?
         # args.insert(0, base)
         return f"{mangled_name}.call({', '.join(js_args)})"
-
 
     def gen_js_args(self, args) -> Iterator[str]:
         for arg in args:
@@ -137,7 +135,6 @@ class CodeGen:
             return unify(test)
         else:
             return self.call_std_function("truthy", [test])
-
 
     def _format_string(self, left, right):
         """Format a string using the old-school `%` operator."""

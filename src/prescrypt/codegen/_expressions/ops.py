@@ -2,7 +2,7 @@ from prescrypt.ast import ast
 from prescrypt.constants import BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.utils import unify
 
-from ..main import gen_expr, CodeGen
+from ..main import CodeGen, gen_expr
 
 
 @gen_expr.register
@@ -72,7 +72,9 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
 
     elif type(op) == ast.Mult:
         C = ast.Num
-        if codegen._pscript_overload and not (isinstance(left, C) and isinstance(right, C)):
+        if codegen._pscript_overload and not (
+            isinstance(left, C) and isinstance(right, C)
+        ):
             return codegen.call_std_function("op_mult", [js_left, js_right])
 
     elif type(op) == ast.Pow:

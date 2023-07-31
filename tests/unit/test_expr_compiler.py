@@ -1,36 +1,12 @@
 from pathlib import Path
-from typing import cast
 
 import dukpy
 import pytest
 from devtools import debug
 from dukpy import JSRuntimeError
 
-from prescrypt.ast import ast
-from prescrypt.expr_compiler import ExpressionCompiler
+from prescrypt.compiler import py2js
 from prescrypt.testing.data import EXPRESSIONS
-from prescrypt.utils import flatten
-
-
-class Compiler(ExpressionCompiler):
-
-    def gen_stmt(self, node) -> str:
-        """Not needed"""
-
-    def compile(self, expression: str) -> str:
-        tree = ast.parse(expression)
-        assert isinstance(tree, ast.Module)
-        # tree = cast(ast.Module, desugar(tree))
-        expr = cast(ast.expr, tree.body[0].value)
-        js_code = self.gen_expr(expr)
-        return flatten(js_code)
-
-
-
-# Syntactically correct but will fail at runtime
-simple_expressions2 = [
-    "a.a"
-]
 
 stdlib_js = Path(__file__).parent / ".." / ".." / "src" / "prescrypt" / "stdlibjs"
 preamble_js = (stdlib_js / "_stdlib.js").read_text()
@@ -55,8 +31,7 @@ def test_expressions(expression: str):
     py_code = expression
     py_result = eval(expression)
 
-    compiler = Compiler()
-    js_code = compiler.compile(expression)
+    js_code = py2js(py_code)
 
     debug(py_code, js_code)
 
@@ -70,11 +45,3 @@ def test_expressions(expression: str):
         raise
 
     assert js_eq(js_result, py_result), f"{expression} : {js_result} != {py_result}"
-
-
-@pytest.mark.parametrize("expression", simple_expressions2)
-def test_expressions2(expression: str):
-    compiler = Compiler()
-    js_code = compiler.compile(expression)
-
-    debug(expression, js_code)

@@ -6,7 +6,7 @@ from buildstr import Builder
 from prescrypt.ast import ast
 from prescrypt.utils import unify
 
-from ..main import gen_expr, CodeGen
+from ..main import CodeGen, gen_expr
 
 
 @gen_expr.register

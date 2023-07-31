@@ -217,7 +217,9 @@ def _get_keyword_args(codegen: CodeGen, keywords: list[ast.keyword]):
         else:  # foo=xx
             if not (kwargs and isinstance(kwargs[-1], list)):
                 kwargs.append([])
-            kwargs[-1].append(f"{keyword.arg}: {unify(codegen.gen_expr(keyword.value))}")
+            kwargs[-1].append(
+                f"{keyword.arg}: {unify(codegen.gen_expr(keyword.value))}"
+            )
 
     # Resolve sequneces of loose kwargs
     for i in range(len(kwargs)):

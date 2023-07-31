@@ -3,7 +3,7 @@ import ast
 import pytest
 from devtools import debug
 
-from prescrypt.compiler import Compiler
+from prescrypt.compiler import Compiler, py2js
 
 simple_statements = [
     "pass",
@@ -27,6 +27,5 @@ simple_statements = [
 
 @pytest.mark.parametrize("statement", simple_statements)
 def test_statement(statement: str):
-    compiler = Compiler()
-    js_code = compiler.compile(statement)
+    js_code = py2js(statement)
     debug(statement, js_code)

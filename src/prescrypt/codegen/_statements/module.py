@@ -1,8 +1,8 @@
 from prescrypt.ast import ast
 from prescrypt.utils import flatten
 
-from .stmt import gen_stmt
 from ..context import Context
+from .stmt import gen_stmt
 
 
 @gen_stmt.register

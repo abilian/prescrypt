@@ -1,6 +1,6 @@
 from prescrypt.ast import ast
 
-from ..main import gen_expr, CodeGen
+from ..main import CodeGen, gen_expr
 
 
 @gen_expr.register

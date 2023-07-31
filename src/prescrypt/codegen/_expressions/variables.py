@@ -5,7 +5,7 @@ from prescrypt.constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES, NAME_MAP
 from prescrypt.exceptions import JSError
 from prescrypt.utils import js_repr, unify
 
-from ..main import gen_expr, CodeGen
+from ..main import CodeGen, gen_expr
 
 
 @gen_expr.register

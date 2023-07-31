@@ -1,6 +1,5 @@
-
 from prescrypt.ast import ast
-from prescrypt.codegen.main import gen_stmt, CodeGen
+from prescrypt.codegen.main import CodeGen, gen_stmt
 from prescrypt.utils import flatten
 
 
@@ -18,4 +17,3 @@ def _gen_expr(node: ast.Expr, codegen: CodeGen):
 def _gen_return(node: ast.Return, codegen: CodeGen):
     js_value = codegen.gen_expr(node.value)
     return f"return {js_value};\n"
-

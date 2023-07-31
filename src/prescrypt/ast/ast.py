@@ -4,8 +4,8 @@ Custom AST.
 """
 
 import ast as _ast
-from prescrypt.ast.mixin import Mixin
 
+from prescrypt.ast.mixin import Mixin
 
 NodeVisitor = _ast.NodeVisitor
 NodeTransformer = _ast.NodeTransformer

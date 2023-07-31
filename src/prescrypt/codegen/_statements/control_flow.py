@@ -1,6 +1,7 @@
 from prescrypt.ast import ast
 from prescrypt.codegen.context import Context
 from prescrypt.exceptions import JSError
+
 from .stmt import gen_stmt
 
 
@@ -9,10 +10,10 @@ def gen_if(node: ast.If, ctx: Context):
     test, body, orelse = node.test, node.body, node.orelse
 
     if (
-            True
-            and isinstance(test, ast.Compare)
-            and isinstance(test.left, ast.Name)
-            and test.left.name == "__name__"
+        True
+        and isinstance(test, ast.Compare)
+        and isinstance(test.left, ast.Name)
+        and test.left.name == "__name__"
     ):
         # Ignore ``__name__ == '__main__'``, since it may be
         # used inside a PScript file for the compiling.
@@ -20,10 +21,10 @@ def gen_if(node: ast.If, ctx: Context):
 
     # Shortcut for this_is_js() cases, discarting the else to reduce code
     if (
-            True
-            and isinstance(test, ast.Call)
-            and isinstance(test.func, ast.Name)
-            and test.func.id == "this_is_js"
+        True
+        and isinstance(test, ast.Call)
+        and isinstance(test.func, ast.Name)
+        and test.func.id == "this_is_js"
     ):
         code = [ctx.lf("if ("), "true", ") ", "{ /* if this_is_js() */"]
         ctx._indent += 1
@@ -35,12 +36,12 @@ def gen_if(node: ast.If, ctx: Context):
 
     # Disable body if "not this_is_js()"
     if (
-            True
-            and isinstance(test, ast.UnaryOp)
-            and type(test.op) == ast.Not()
-            and isinstance(test.right, ast.Call)
-            and isinstance(test.right.func, ast.Name)
-            and test.right.func.id == "this_is_js"
+        True
+        and isinstance(test, ast.UnaryOp)
+        and type(test.op) == ast.Not()
+        and isinstance(test.right, ast.Call)
+        and isinstance(test.right.func, ast.Name)
+        and test.right.func.id == "this_is_js"
     ):
         body = []
 
@@ -67,7 +68,13 @@ def gen_if(node: ast.If, ctx: Context):
 
 @gen_stmt.register
 def gen_for(node: ast.For, ctx: Context):
-    target, iter, body, orelse, type_comment = node.target, node.iter, node.body, node.orelse, node.type_comment
+    target, iter, body, orelse, type_comment = (
+        node.target,
+        node.iter,
+        node.body,
+        node.orelse,
+        node.type_comment,
+    )
 
     # Note that enumerate, reversed, sorted, filter, map are handled in parser3
 
@@ -80,17 +87,11 @@ def gen_for(node: ast.For, ctx: Context):
     # First see if this for-loop is something that we support directly
     if isinstance(iter, ast.Call):
         f = iter.func_node
-        if (
-                isinstance(f, ast.Attribute)
-                and not iter.arg_nodes
-                and f.attr in METHODS
-        ):
+        if isinstance(f, ast.Attribute) and not iter.arg_nodes and f.attr in METHODS:
             sure_is_dict = f.attr
             iter = "".join(gen_expr(f.value_node))
         elif isinstance(f, ast.Name) and f.name in ("xrange", "range"):
-            sure_is_range = [
-                "".join(gen_expr(arg)) for arg in node.iter_node.arg_nodes
-            ]
+            sure_is_range = ["".join(gen_expr(arg)) for arg in node.iter_node.arg_nodes]
             iter = "range"  # stub to prevent the parsing of iter_node below
 
     # Otherwise we parse the iter
@@ -103,9 +104,7 @@ def gen_for(node: ast.For, ctx: Context):
         if sure_is_dict == "values":
             target.append(target_name[0])
         elif sure_is_dict == "items":
-            raise JSError(
-                "Iteration over a dict with .items() " "needs two iterators."
-            )
+            raise JSError("Iteration over a dict with .items() " "needs two iterators.")
 
     elif isinstance(target, ast.Tuple):
         target = ["".join(gen_expr(t)) for t in target.elts]
@@ -172,9 +171,7 @@ def gen_for(node: ast.For, ctx: Context):
         # The loop
         code += ctx.lf(), "for (", target[0], " in ", d_seq, ") {"
         ctx._indent += 1
-        code.append(
-            ctx.lf(f"if (!{d_seq}.hasOwnProperty({target[0]})){{ continue; }}")
-        )
+        code.append(ctx.lf(f"if (!{d_seq}.hasOwnProperty({target[0]})){{ continue; }}"))
         # Set second/alt iteration variable
         if len(target) > 1:
             code.append(ctx.lf(f"{target[1]} = {d_seq}[{target[0]}];"))

@@ -8,6 +8,7 @@ from prescrypt.ast import ast
 
 # from .base import Transformer
 
+
 def desugar(tree: ast.Module) -> ast.Module:
     return cast(ast.Module, _desugar(tree))
 

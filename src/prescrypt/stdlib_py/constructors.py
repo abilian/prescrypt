@@ -57,7 +57,9 @@ def function_dict(codegen: CodeGen, args, kwargs):
         case [], []:
             return "({})"
         case [], [*_]:
-            js_kwargs = [f"{arg.arg}: {unify(codegen.gen_expr(arg.value))}" for arg in kwargs]
+            js_kwargs = [
+                f"{arg.arg}: {unify(codegen.gen_expr(arg.value))}" for arg in kwargs
+            ]
             return "({%s})" % ", ".join(js_kwargs)
         case [*_], []:
             return codegen.call_std_function("dict", args)

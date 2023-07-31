@@ -9,7 +9,7 @@ EXPRESSIONS1 = [
     "'a'",
     '"a"',
     "f'a'",
-    # Arithmetic
+    # Arithmetic ops
     "1+1",
     "2 * 3 + 5 * 6",
     "'a' + 'b'",
@@ -17,29 +17,45 @@ EXPRESSIONS1 = [
     '"a" + "b"',
     "1 // 2",
     "1 % 2",
+    # Boolean ops
+    "True or False",
+    "True and False",
+    # Bitwise ops
+    "1 | 2",
+    "1 & 2",
+    "1 ^ 2",
+    "1 << 2",
+    "1 >> 2",
+    # Comparison ops
+    "1 == 2",
+    "1 != 2",
+    "1 < 2",
+    "1 <= 2",
+    "1 > 2",
+    "1 >= 2",
     # Constructors
-    "str()",
-    "str(1)",
-    "int(1)",
-    "int('1')",
-    "float('1.0')",
-    "bool(1)",
-    "bool(0)",
-    "bool(1.0)",
-    "bool(0.0)",
-    "bool('a')",
     "bool('')",
+    "bool('a')",
+    "bool(0)",
+    "bool(0.0)",
+    "bool(1)",
+    "bool(1.0)",
     "bool([1])",
     "bool([])",
+    "dict()",
+    "float('1.0')",
+    "int('1')",
+    "int(1)",
+    "list((1, 2))",
+    "list((1,))",
     "list()",
     "list([1])",
-    "list((1,))",
-    "list((1, 2))",
+    "str()",
+    "str(1)",
+    "tuple((1, 2))",
+    "tuple((1,))",
     "tuple()",
     "tuple([1])",
-    "tuple((1,))",
-    "tuple((1, 2))",
-    "dict()",
     # Tuple is translated to array.
     # "tuple()",
     # Other builtin functions
@@ -56,38 +72,6 @@ EXPRESSIONS1 = [
     "sorted([2, 1])",
     # Lambda
     "(lambda x: x)(3)",
-    # Boolean expressions
-    "True or False",
-    "True and False",
-    # Bitwise expressions
-    "1 | 2",
-    "1 & 2",
-    "1 ^ 2",
-    "1 << 2",
-    "1 >> 2",
-    # Comparison expressions
-    "1 == 2",
-    "1 != 2",
-    "1 < 2",
-    "1 <= 2",
-    "1 > 2",
-    "1 >= 2",
-    # In expressions
-    "1 in [1, 2]",
-    "1 not in [1, 2]",
-    "1 in (1, 2)",
-    "1 not in (1, 2)",
-    "1 in {1: 1}",
-    "1 not in {1: 1}",
-    "'a' in 'abc'",
-    "'a' not in 'abc'",
-    "'a' in ['a', 'b']",
-    "'a' not in ['a', 'b']",
-    "'a' in ('a', 'b')",
-    "'a' not in ('a', 'b')",
-    # If expressions
-    "1 if True else 2",
-    "1 if False else 2",
     # List and tuples expressions
     "[]",
     "[1]",
@@ -115,7 +99,6 @@ EXPRESSIONS1 = [
     # "{1, 2} == {2, 1}",
     #
     # Dicts + dict methods
-    #
     "{}",
     "{'a': 1}",
     "dict(a=1)",
@@ -145,69 +128,36 @@ EXPRESSIONS1 = [
     # "tuple([1, 2]) == (1, 2)",
     # "set([1, 2]) == {1, 2}",
     #
-    # Strings
-    #
+    # Strings methods
     "'Ab+'.lower()",
     "'Ab+'.upper()",
-    #
     # Functions from stdlib
-    #
     "list(reversed([1, 2]))",
     "sorted([0, 4, 3, 1, 2])",
     "list(enumerate(['a', 'b', 'c']))",
     "list(zip([1, 2, 3], ['a', 'b', 'c']))",
+    # In expressions
+    "1 in [1, 2]",
+    "1 not in [1, 2]",
+    "1 in (1, 2)",
+    "1 not in (1, 2)",
+    "1 in {1: 1}",
+    "1 not in {1: 1}",
+    "'a' in 'abc'",
+    "'a' not in 'abc'",
+    "'a' in ['a', 'b']",
+    "'a' not in ['a', 'b']",
+    "'a' in ('a', 'b')",
+    "'a' not in ('a', 'b')",
+    # If expressions
+    "1 if True else 2",
+    "1 if False else 2",
 ]
 
 # TODO: merge
 EXPRESSIONS2 = [
-    # Literals
-    "1",
-    "1.0",
-    "1e3",
-    "1e-3",
-    "True",
-    "False",
-    "'a'",
-    '"a"',
-    "f'a'",
-    # Arithmetic
-    "1+1",
-    "2 * 3 + 5 * 6",
-    "'a' + 'b'",
-    "3 * 'a'",
-    '"a" + "b"',
-    "1 // 2",
-    "1 % 2",
-    # Constructors
-    "str(1)",
-    "int('1')",
-    "float('1.0')",
-    "bool(1)",
-    "bool(0)",
-    "bool(1.0)",
-    "bool(0.0)",
-    "bool('a')",
-    "bool('')",
-    "bool([1])",
-    "bool([])",
     # Lambda
     "(lambda x: x)(3)",
-    # Boolean expressions
-    "True or False",
-    "True and False",
-    # Bitwise expressions
-    "1 | 2",
-    "1 & 2",
-    "1 ^ 2",
-    "1 << 2",
-    "1 >> 2",
-    # Comparison expressions
-    "1 == 2",
-    "1 != 2",
-    "1 < 2",
-    "1 <= 2",
-    "1 > 2",
-    "1 >= 2",
     # In expressions
     "1 in [1, 2]",
     "1 not in [1, 2]",

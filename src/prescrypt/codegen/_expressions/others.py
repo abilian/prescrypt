@@ -1,8 +1,8 @@
 from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
 
-from ..main import gen_expr, CodeGen
 from ...utils import js_repr
+from ..main import CodeGen, gen_expr
 
 
 @gen_expr.register
