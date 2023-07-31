@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from ..codegen.main import CodeGen
-from ..exceptions import JSError
+from prescrypt.exceptions import JSError
+
+from ..main import CodeGen
 from ..utils import unify
 
 

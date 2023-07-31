@@ -1,7 +1,7 @@
-from prescrypt.codegen.main import CodeGen
+from prescrypt.ast import ast
+from prescrypt.exceptions import JSError
 
-from ..ast import ast
-from ..exceptions import JSError
+from ..main import CodeGen
 from ..utils import flatten, unify
 
 

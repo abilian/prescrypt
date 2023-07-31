@@ -1,8 +1,8 @@
 from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
 
-from ...utils import js_repr
 from ..main import CodeGen, gen_expr
+from ..utils import js_repr
 
 
 @gen_expr.register
@@ -15,7 +15,7 @@ def gen_joinstr(node: ast.JoinedStr, codegen: CodeGen):
             case ast.Str(s):
                 parts.append(s)
             case ast.FormattedValue(value, conversion, format_spec):
-                parts.append("{" + _parse_FormattedValue_fmt(n) + "}")
+                parts.append("{" + c_parse_FormattedValue_fmt(n) + "}")
                 value_nodes.append(value)
             case _:
                 raise JSError("Unknown JoinedStr part: " + str(n))

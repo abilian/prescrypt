@@ -1,9 +1,9 @@
 from prescrypt.ast import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX
-from prescrypt.stdlib_py import stdlib
-from prescrypt.utils import unify
 
 from ..main import CodeGen, gen_expr
+from ..stdlib_py import stdlib
+from ..utils import unify
 
 
 @gen_expr.register

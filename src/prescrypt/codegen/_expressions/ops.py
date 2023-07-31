@@ -1,8 +1,8 @@
 from prescrypt.ast import ast
 from prescrypt.constants import BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
-from prescrypt.utils import unify
 
 from ..main import CodeGen, gen_expr
+from ..utils import unify
 
 
 @gen_expr.register

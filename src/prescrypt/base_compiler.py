@@ -10,10 +10,8 @@ Main limiting features for browsers (not sure if this is 100% complete):
 """
 from abc import abstractmethod
 
-from . import stdlib_js
 from .ast import ast
 from .namespace import NameSpace
-from .utils import unify
 
 
 class BaseCompiler:

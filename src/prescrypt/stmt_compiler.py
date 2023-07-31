@@ -1,8 +1,7 @@
 from . import stdlib_js
 from .ast import ast
+from .codegen.utils import flatten, js_repr, unify
 from .exceptions import JSError
-from .expr_compiler import ExpressionCompiler
-from .utils import flatten, js_repr, unify
 
 RAW_DOC_WARNING = (
     "Function %s only has a docstring, which used to be "
@@ -12,7 +11,7 @@ RAW_DOC_WARNING = (
 )
 
 
-class StatementCompiler(ExpressionCompiler):
+class StatementCompiler:
     """Parser that adds control flow, functions, classes, and exceptions.
 
     Must parse:

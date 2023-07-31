@@ -1,6 +1,7 @@
 from prescrypt.ast import ast
-from prescrypt.codegen.main import CodeGen, gen_stmt
-from prescrypt.utils import flatten
+
+from ..main import CodeGen, gen_stmt
+from ..utils import flatten
 
 
 @gen_stmt.register

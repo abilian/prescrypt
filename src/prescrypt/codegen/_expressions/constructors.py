@@ -4,9 +4,9 @@ from prescrypt.ast import ast
 from prescrypt.constants import isidentifier1
 from prescrypt.exceptions import JSError
 from prescrypt.stdlib_js import FUNCTION_PREFIX
-from prescrypt.utils import unify
 
 from ..main import CodeGen, gen_expr
+from ..utils import unify
 
 
 @gen_expr.register

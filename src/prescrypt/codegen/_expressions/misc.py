@@ -4,9 +4,9 @@
 from buildstr import Builder
 
 from prescrypt.ast import ast
-from prescrypt.utils import unify
 
 from ..main import CodeGen, gen_expr
+from ..utils import unify
 
 
 @gen_expr.register

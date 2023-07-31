@@ -3,9 +3,9 @@
 #
 from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
-from prescrypt.utils import js_repr, unify
 
 from ..main import CodeGen, gen_expr, gen_stmt
+from ..utils import js_repr, unify
 
 
 @gen_stmt.register

@@ -11,7 +11,8 @@ from prescrypt.constants import RETURNING_BOOL
 from prescrypt.exceptions import JSError
 from prescrypt.passes.scope import Scope
 from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX
-from prescrypt.utils import flatten, unify
+
+from .utils import flatten, unify
 
 
 @singledispatch
