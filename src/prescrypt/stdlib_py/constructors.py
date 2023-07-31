@@ -1,6 +1,6 @@
-from ..exceptions import JSError
 from ..codegen import gen_expr
 from ..codegen.stdlib import call_std_function
+from ..exceptions import JSError
 from ..utils import unify
 
 

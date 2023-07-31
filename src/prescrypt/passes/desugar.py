@@ -1,21 +1,22 @@
+import ast as _ast
+
 from prescrypt.ast import ast
 
-from .base import Transformer
+# from prescrypt.ast.ast import Function
 
 
-def desugar(t):
-    return ast.fix_missing_locations(Desugarer().visit(t))
+# from .base import Transformer
+
+
+def desugar(tree: ast.AST) -> ast.AST:
+    return _ast.fix_missing_locations(Desugarer().visit(tree))
 
 
 def rewriter(rewrite):
     def visit(self, t):
-        return ast.copy_location(rewrite(self, self.generic_visit(t)), t)
+        return _ast.copy_location(rewrite(self, self.generic_visit(t)), t)
 
     return visit
-
-
-def Call(fn, args):
-    return ast.Call(fn, args, [], None, None)
 
 
 load, store = ast.Load(), ast.Store()
@@ -23,13 +24,13 @@ load, store = ast.Load(), ast.Store()
 
 class Desugarer(ast.NodeTransformer):
     @rewriter
-    def visit_Assert(self, t):
+    def visit_Assert(self, t: ast.Assert):
         return ast.If(
             t.test,
             [],
             [
                 ast.Raise(
-                    Call(
+                    ast.Call(
                         ast.Name("AssertionError", load),
                         [] if t.msg is None else [t.msg],
                     ),
@@ -38,40 +39,30 @@ class Desugarer(ast.NodeTransformer):
             ],
         )
 
-    @rewriter
-    def visit_Lambda(self, t):
-        return Function("<lambda>", t.args, [ast.Return(t.body)])
+    # @rewriter
+    # def visit_Lambda(self, node: ast.Lambda):
+    #     return Function("<lambda>", node.args, [ast.Return(node.body)])
+
+    # @rewriter
+    # def visit_FunctionDef(self, node: ast.FunctionDef):
+    #     fn = Function(node.name, node.args, node.body)
+    #     for d in reversed(node.decorator_list):
+    #         fn = ast.Call(d, [fn])
+    #     return ast.Assign([ast.Name(node.name, store)], fn)
+
+    # @rewriter
+    # def visit_ListComp(self, t):
+    #     result_append = ast.Attribute(ast.Name(".0", load), "append", load)
+    #     body = ast.Expr(ast.Call(result_append, [t.elt]))
+    #     for loop in reversed(t.generators):
+    #         for test in reversed(loop.ifs):
+    #             body = ast.If(test, [body], [])
+    #         body = ast.For(loop.target, loop.iter, [body], [])
+    #     fn = [body, ast.Return(ast.Name(".0", load))]
+    #     args = ast.arguments([ast.arg(".0", None)], None, [], None, [], [])
+    #     return ast.Call(Function("<listcomp>", args, fn), [ast.List([], load)])
 
     @rewriter
-    def visit_FunctionDef(self, t):
-        fn = Function(t.name, t.args, t.body)
-        for d in reversed(t.decorator_list):
-            fn = Call(d, [fn])
-        return ast.Assign([ast.Name(t.name, store)], fn)
-
-    @rewriter
-    def visit_ListComp(self, t):
-        result_append = ast.Attribute(ast.Name(".0", load), "append", load)
-        body = ast.Expr(Call(result_append, [t.elt]))
-        for loop in reversed(t.generators):
-            for test in reversed(loop.ifs):
-                body = ast.If(test, [body], [])
-            body = ast.For(loop.target, loop.iter, [body], [])
-        fn = [body, ast.Return(ast.Name(".0", load))]
-        args = ast.arguments([ast.arg(".0", None)], None, [], None, [], [])
-        return Call(Function("<listcomp>", args, fn), [ast.List([], load)])
-
-
-
-
-
-
-
-
-
-
-
-class DesugarVisitor(Transformer):
     def visit_Compare(self, node: ast.Compare):
         """
         Turns `a < b < c` into `a < b and b < c` (from Python doc).
@@ -91,6 +82,7 @@ class DesugarVisitor(Transformer):
         # desugaring the And list as we go
         return self.visit(ast.BoolOp(ast.And(), groups))
 
+    @rewriter
     def visit_AugAssign(self, node: ast.AugAssign):
         """
         Transforms `a += b` in `a = a + b`.
@@ -106,6 +98,7 @@ class DesugarVisitor(Transformer):
         new_node.lineno = getattr(node, "lineno", 0)
         return new_node
 
+    @rewriter
     def visit_UnaryOp(self, node):
         """
         Transforms `-X` to `(0 - X)` and `+X` to `X`.
@@ -116,6 +109,7 @@ class DesugarVisitor(Transformer):
             case ast.USub:
                 return ast.BinOp(ast.Constant(0), ast.Sub(), node.operand)
 
+    @rewriter
     def visit_BoolOp(self, node: ast.BoolOp):
         """
         Turns a BoolOp with more than 2 values into multiple BoolOp within each other.
@@ -133,10 +127,3 @@ class DesugarVisitor(Transformer):
         right = self.visit(node)
 
         return ast.BoolOp(node.op, [left, right])
-
-
-def desugar(tree: ast.AST) -> ast.AST:
-    """
-    Desugar the tree in place.
-    """
-    return DesugarVisitor().visit(tree)

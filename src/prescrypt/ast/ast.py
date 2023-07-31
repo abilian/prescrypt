@@ -537,4 +537,8 @@ class Ellipsis(_ast.Ellipsis, Constant, expr, Mixin):
     pass
 
 
+class Function(FunctionDef):
+    _fields = ("name", "args", "body")
+
+
 from .converter import parse
