@@ -1,5 +1,15 @@
+"""
+Compute scopes (statically) for a given AST.
+
+Code based on
+
+- Tailbiter (Darius Bacon, https://github.com/darius/tailbiter)
+- Compylo (Ethan Zouzoulkowsky & Abilian, https://github.com/abilian/compylo)
+"""
+
 from prescrypt.ast import ast
 from prescrypt.ast.ast import Function
+from prescrypt.passes.base import Visitor
 
 
 def get_top_scope(tree):
@@ -9,7 +19,7 @@ def get_top_scope(tree):
     return top
 
 
-class Scope(ast.NodeVisitor):
+class Scope(Visitor):
     def __init__(self, node, defs):
         self.t = node
         self.children = {}  # Enclosed sub-scopes
