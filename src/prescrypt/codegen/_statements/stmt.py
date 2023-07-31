@@ -1,7 +1,7 @@
 from functools import singledispatch
 
 from prescrypt.ast import ast
-from prescrypt.generator import gen_expr
+from prescrypt.codegen import gen_expr
 
 
 @singledispatch

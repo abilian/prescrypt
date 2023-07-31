@@ -3,7 +3,7 @@
 #
 from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
-from prescrypt.generator import gen_expr
+from prescrypt.codegen import gen_expr
 from prescrypt.utils import js_repr, unify
 
 from .. import gen_stmt

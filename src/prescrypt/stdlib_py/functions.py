@@ -1,6 +1,6 @@
 from ..ast import ast
 from ..exceptions import JSError
-from ..generator.stdlib import call_std_function
+from ..codegen.stdlib import call_std_function
 from ..utils import flatten, unify
 
 
