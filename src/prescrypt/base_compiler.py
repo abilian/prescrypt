@@ -173,16 +173,6 @@ class BaseCompiler:
             code.insert(0, self.lf(f"var {', '.join(loose_vars)};"))
         return "".join(code)
 
-    def with_prefix(self, name, new=False):
-        """Add class prefix to a variable name if necessary."""
-        nstype, nsname, ns = self._stack[-1]
-        if nstype == "class":
-            if name.startswith("__") and not name.endswith("__"):
-                name = "_" + nsname + name  # Double underscore name mangling
-            return nsname + ".prototype." + name
-        else:
-            return name
-
     @property
     def vars(self):
         """NameSpace instance for the current stack."""

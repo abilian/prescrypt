@@ -1,38 +1,52 @@
 from prescrypt.ast import ast
-from prescrypt.codegen.context import Context
 from prescrypt.exceptions import JSError
 
-from .stmt import gen_stmt
+from ..main import CodeGen, gen_stmt
 
 
 @gen_stmt.register
-def gen_if(node: ast.If, ctx: Context):
+def gen_if(node: ast.If, codegen: CodeGen):
     test, body, orelse = node.test, node.body, node.orelse
 
-    if (
-        True
-        and isinstance(test, ast.Compare)
-        and isinstance(test.left, ast.Name)
-        and test.left.name == "__name__"
-    ):
+    match test:
         # Ignore ``__name__ == '__main__'``, since it may be
         # used inside a PScript file for the compiling.
-        return []
+        case ast.Compare(ast.Name("__name__"), ast.Eq(), [ast.Str("__main__")]):
+            return []
 
-    # Shortcut for this_is_js() cases, discarting the else to reduce code
-    if (
-        True
-        and isinstance(test, ast.Call)
-        and isinstance(test.func, ast.Name)
-        and test.func.id == "this_is_js"
-    ):
-        code = [ctx.lf("if ("), "true", ") ", "{ /* if this_is_js() */"]
-        ctx._indent += 1
-        for stmt in body:
-            code += ctx.gen_stmt(stmt)
-        ctx._indent -= 1
-        code.append(ctx.lf("}"))
-        return code
+        # if (
+        #     True
+        #     and isinstance(test, ast.Compare)
+        #     and isinstance(test.left, ast.Name)
+        #     and test.left.name == "__name__"
+        # ):
+        #     # Ignore ``__name__ == '__main__'``, since it may be
+        #     # used inside a PScript file for the compiling.
+        #     return []
+
+        case ast.Call(ast.Name("this_is_js"), [], []):
+            code = [codegen.lf("if ("), "true", ") ", "{ /* if this_is_js() */"]
+            codegen.indent()
+            for stmt in body:
+                code += codegen.gen_stmt(stmt)
+            codegen.dedent()
+            code.append(codegen.lf("}"))
+            return code
+
+    # # Shortcut for this_is_js() cases, discarting the else to reduce code
+    # if (
+    #     True
+    #     and isinstance(test, ast.Call)
+    #     and isinstance(test.func, ast.Name)
+    #     and test.func.id == "this_is_js"
+    # ):
+    #     code = [codegen.lf("if ("), "true", ") ", "{ /* if this_is_js() */"]
+    #     codegen.indent()
+    #     for stmt in body:
+    #         code += codegen.gen_stmt(stmt)
+    #     codegen.dedent()
+    #     code.append(codegen.lf("}"))
+    #     return code
 
     # Disable body if "not this_is_js()"
     if (
@@ -45,29 +59,39 @@ def gen_if(node: ast.If, ctx: Context):
     ):
         body = []
 
-    code = [ctx.lf("if (")]  # first part (popped in elif parsing)
-    code.append(ctx.gen_truthy(test))
+    code = [codegen.lf("if (")]  # first part (popped in elif parsing)
+    code.append(codegen.gen_truthy(test))
     code.append(") {")
-    ctx._indent += 1
+    codegen.indent()
     for stmt in body:
-        code += ctx.gen_stmt(stmt)
-    ctx._indent -= 1
+        code += codegen.gen_stmt(stmt)
+    codegen.dedent()
     if orelse:
         if len(orelse) == 1 and isinstance(orelse[0], ast.If):
-            code.append(ctx.lf("} else if ("))
-            code += ctx.gen_stmt(orelse[0])[1:-1]  # skip first and last
+            code.append(codegen.lf("} else if ("))
+            code += codegen.gen_stmt(orelse[0])[1:-1]  # skip first and last
         else:
-            code.append(ctx.lf("} else {"))
-            ctx._indent += 1
+            code.append(codegen.lf("} else {"))
+            codegen.indent()
             for stmt in orelse:
-                code += ctx.gen_stmt(stmt)
-            ctx._indent -= 1
-    code.append(ctx.lf("}"))  # last part (popped in elif parsing)
+                code += codegen.gen_stmt(stmt)
+            codegen.dedent()
+    code.append(codegen.lf("}"))  # last part (popped in elif parsing)
     return code
 
 
 @gen_stmt.register
-def gen_for(node: ast.For, ctx: Context):
+def gen_break(node: ast.Break, codegen: CodeGen):
+    return "break;" + "\n"
+
+
+@gen_stmt.register
+def gen_continue(node: ast.Continue, codegen: CodeGen):
+    return "continue;" + "\n"
+
+
+@gen_stmt.register
+def gen_for(node: ast.For, codegen: CodeGen):
     target, iter, body, orelse, type_comment = (
         node.target,
         node.iter,
@@ -89,14 +113,16 @@ def gen_for(node: ast.For, ctx: Context):
         f = iter.func_node
         if isinstance(f, ast.Attribute) and not iter.arg_nodes and f.attr in METHODS:
             sure_is_dict = f.attr
-            iter = "".join(gen_expr(f.value_node))
+            iter = "".join(codegen.gen_expr(f.value_node))
         elif isinstance(f, ast.Name) and f.name in ("xrange", "range"):
-            sure_is_range = ["".join(gen_expr(arg)) for arg in node.iter_node.arg_nodes]
+            sure_is_range = [
+                "".join(codegen.gen_expr(arg)) for arg in node.iter_node.arg_nodes
+            ]
             iter = "range"  # stub to prevent the parsing of iter_node below
 
     # Otherwise we parse the iter
     if iter is None:
-        iter = "".join(gen_expr(node.iter_node))
+        iter = "".join(codegen.gen_expr(node.iter_node))
 
     # Get target
     if isinstance(target, ast.Name):
@@ -107,7 +133,7 @@ def gen_for(node: ast.For, ctx: Context):
             raise JSError("Iteration over a dict with .items() " "needs two iterators.")
 
     elif isinstance(target, ast.Tuple):
-        target = ["".join(gen_expr(t)) for t in target.elts]
+        target = ["".join(codegen.gen_expr(t)) for t in target.elts]
         if sure_is_dict:
             if not (sure_is_dict == "items" and len(target) == 2):
                 raise JSError(
@@ -123,24 +149,24 @@ def gen_for(node: ast.For, ctx: Context):
     # Collect body and else-body
     for_body = []
     for_else = []
-    ctx._indent += 1
+    codegen.indent()
     for n in node.body_nodes:
         for_body += self.parse(n)
     for n in node.else_nodes:
-        for_else += ctx.parse(n)
-    ctx._indent -= 1
+        for_else += codegen.parse(n)
+    codegen.dedent()
 
     # Init code
     code = []
 
     # Prepare variable to detect else
     if node.else_nodes:
-        else_dummy = ctx.dummy("els")
-        code.append(ctx.lf(f"{else_dummy} = true;"))
+        else_dummy = codegen.dummy("els")
+        code.append(codegen.lf(f"{else_dummy} = true;"))
 
     # Declare iteration variables if necessary
     for t in target:
-        ctx.vars.add(t)
+        codegen.vars.add(t)
 
     if sure_is_range:  # Explicit iteration
         # Get range args
@@ -161,20 +187,22 @@ def gen_for(node: ast.For, ctx: Context):
             t = t.replace("<", ">")
         assert len(target) == 1
         t = t.format(i=target[0], start=start, end=end, step=step) + " {"
-        code.append(ctx.lf(t))
-        ctx._indent += 1
+        code.append(codegen.lf(t))
+        codegen.indent()
 
     elif sure_is_dict:  # Enumeration over an object (i.e. a dict)
         # Create dummy vars
-        d_seq = ctx.dummy("seq")
-        code.append(ctx.lf(f"{d_seq} = {iter};"))
+        d_seq = codegen.dummy("seq")
+        code.append(codegen.lf(f"{d_seq} = {iter};"))
         # The loop
-        code += ctx.lf(), "for (", target[0], " in ", d_seq, ") {"
-        ctx._indent += 1
-        code.append(ctx.lf(f"if (!{d_seq}.hasOwnProperty({target[0]})){{ continue; }}"))
+        code += codegen.lf(), "for (", target[0], " in ", d_seq, ") {"
+        codegen.indent()
+        code.append(
+            codegen.lf(f"if (!{d_seq}.hasOwnProperty({target[0]})){{ continue; }}")
+        )
         # Set second/alt iteration variable
         if len(target) > 1:
-            code.append(ctx.lf(f"{target[1]} = {d_seq}[{target[0]}];"))
+            code.append(codegen.lf(f"{target[1]} = {d_seq}[{target[0]}];"))
 
     else:  # Enumeration
         # We cannot know whether the thing to iterate over is an
@@ -186,35 +214,35 @@ def gen_for(node: ast.For, ctx: Context):
         # objects probably slightly less.
 
         # Create dummy vars
-        d_seq = ctx.dummy("seq")
-        d_iter = ctx.dummy("itr")
-        d_target = target[0] if (len(target) == 1) else ctx.dummy("tgt")
+        d_seq = codegen.dummy("seq")
+        d_iter = codegen.dummy("itr")
+        d_target = target[0] if (len(target) == 1) else codegen.dummy("tgt")
 
         # Ensure our iterable is indeed iterable
-        code.append(ctx._make_iterable(iter, d_seq))
+        code.append(_make_iterable(codegen, iter, d_seq))
 
         # The loop
         code.append(
-            ctx.lf(
+            codegen.lf(
                 "for (%s = 0; %s < %s.length; %s += 1) {"
                 % (d_iter, d_iter, d_seq, d_iter)
             )
         )
-        ctx._indent += 1
-        code.append(ctx.lf(f"{d_target} = {d_seq}[{d_iter}];"))
+        codegen.indent()
+        code.append(codegen.lf(f"{d_target} = {d_seq}[{d_iter}];"))
         if len(target) > 1:
-            code.append(ctx.lf(ctx._iterator_assign(d_target, *target)))
+            code.append(codegen.lf(codegen._iterator_assign(d_target, *target)))
 
     # The body of the loop
     code += for_body
-    ctx._indent -= 1
-    code.append(ctx.lf("}"))
+    codegen.dedent()
+    code.append(codegen.lf("}"))
 
     # Handle else
     if node.else_nodes:
         code.append(" if (%s) {" % else_dummy)
         code += for_else
-        code.append(ctx.lf("}"))
+        code.append(codegen.lf("}"))
         # Update all breaks to set the dummy. We overwrite the
         # "break;" so it will not be detected by a parent loop
         ii = [i for i, part in enumerate(code) if part == "break;"]
@@ -224,9 +252,9 @@ def gen_for(node: ast.For, ctx: Context):
     return code
 
 
-def _make_iterable(ctx, name1, name2, newlines=True):
+def _make_iterable(codegen: CodeGen, name1, name2, newlines=True):
     code = []
-    lf = ctx.lf
+    lf = codegen.lf
     if not newlines:  # pragma: no cover
         lf = lambda x: x  # noqa
 
@@ -244,40 +272,37 @@ def _make_iterable(ctx, name1, name2, newlines=True):
 
 
 @gen_stmt.register
-def gen_while(node: ast.While, ctx: Context):
-    test, body, orelse = node.test, node.body, node.orelse
-    js_test = "".join(ctx.gen_expr(test))
+def gen_while(node: ast.While, codegen: CodeGen):
+    test_node, body_nodes, orelse_nodes = node.test, node.body, node.orelse
+    js_test = "".join(codegen.gen_expr(test_node))
 
     # Collect body and else-body
-    for_body = []
-    for_else = []
-    ctx._indent += 1
-    for n in body:
-        for_body += ctx.gen_stmt(n)
-    for n in orelse:
-        for_else += ctx.gen_stmt(n)
-    ctx._indent -= 1
+    js_for_body = []
+    codegen.indent()
+    js_for_body = [codegen.gen_stmt(n) for n in body_nodes]
+    js_or_else = [codegen.gen_stmt(n) for n in orelse_nodes]
+    codegen.dedent()
 
     # Init code
     code = []
 
     # Prepare variable to detect else
-    if orelse:
-        else_dummy = ctx.dummy("els")
-        code.append(ctx.lf(f"{else_dummy} = true;"))
+    if orelse_nodes:
+        else_dummy = codegen.dummy("els")
+        code.append(codegen.lf(f"{else_dummy} = true;"))
 
     # The loop itself
-    code.append(ctx.lf("while (%s) {" % js_test))
-    ctx._indent += 1
-    code += for_body
-    ctx._indent -= 1
-    code.append(ctx.lf("}"))
+    code.append(codegen.lf("while (%s) {" % js_test))
+    codegen.indent()
+    code += js_for_body
+    codegen.dedent()
+    code.append(codegen.lf("}"))
 
     # Handle else
-    if orelse:
+    if orelse_nodes:
         code.append(" if (%s) {" % else_dummy)
-        code += for_else
-        code.append(ctx.lf("}"))
+        code += js_or_else
+        code.append(codegen.lf("}"))
         # Update all breaks to set the dummy. We overwrite the
         # "break;" so it will not be detected by a parent loop
         ii = [i for i, part in enumerate(code) if part == "break;"]

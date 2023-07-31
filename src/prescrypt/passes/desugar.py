@@ -3,11 +3,6 @@ from typing import cast
 
 from prescrypt.ast import ast
 
-# from prescrypt.ast.ast import Function
-
-
-# from .base import Transformer
-
 
 def desugar(tree: ast.Module) -> ast.Module:
     return cast(ast.Module, _desugar(tree))
@@ -30,19 +25,10 @@ load, store = ast.Load(), ast.Store()
 class Desugarer(ast.NodeTransformer):
     @rewriter
     def visit_Assert(self, t: ast.Assert):
-        return ast.If(
-            t.test,
-            [],
-            [
-                ast.Raise(
-                    ast.Call(
-                        ast.Name("AssertionError", load),
-                        [] if t.msg is None else [t.msg],
-                    ),
-                    None,
-                )
-            ],
-        )
+        args = [] if t.msg is None else [t.msg]
+        keywords = []
+        call = ast.Call(ast.Name("AssertionError", load), args, keywords)
+        return ast.If(t.test, [], [ast.Raise(call, None)])
 
     # @rewriter
     # def visit_Lambda(self, node: ast.Lambda):

@@ -1,6 +1,8 @@
 import json
 import re
 
+from devtools import debug
+
 
 def unify(x):
     """Turn string or list of strings parts into string.
@@ -32,10 +34,13 @@ def js_repr(obj):
 
 def flatten(js_code: list | str) -> str:
     """Flatten a list of strings or a single string to a single string."""
+    debug(js_code)
+    assert isinstance(js_code, (list, str))
     match js_code:
         case str(s):
             return s
         case [*x]:
+            assert x[0] != "\nA"
             return "".join(flatten(s) for s in x)
         case _:
             raise ValueError(f"Unexpected type: {type(js_code)}")

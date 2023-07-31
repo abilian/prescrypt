@@ -3,7 +3,7 @@ from prescrypt.stdlib_js import FUNCTION_PREFIX
 
 from ..main import CodeGen, gen_expr
 from ..stdlib_py import stdlib
-from ..utils import unify
+from ..utils import flatten, unify
 
 
 @gen_expr.register
@@ -165,7 +165,7 @@ def _get_positional_args(codegen: CodeGen, args: list[ast.expr]):
     for arg in args:
         match arg:
             case ast.Starred(value):
-                starname = "".join(codegen.gen_expr(value))
+                starname = flatten(codegen.gen_expr(value))
                 arglists.append(starname)
                 argswithcommas = []
                 arglists.append(argswithcommas)
@@ -185,7 +185,7 @@ def _get_positional_args(codegen: CodeGen, args: list[ast.expr]):
     if len(arglists) == 0:
         return "", "[]"
     elif len(arglists) == 1 and isinstance(arglists[0], list):
-        args_simple = "".join(argswithcommas)
+        args_simple = flatten(argswithcommas)
         return args_simple, "[" + args_simple + "]"
     elif len(arglists) == 1:
         assert isinstance(arglists[0], str)
@@ -200,7 +200,7 @@ def _get_positional_args(codegen: CodeGen, args: list[ast.expr]):
             code += [", "]
         code.pop(-1)
         code += ")"
-        return None, "".join(code)
+        return None, flatten(code)
 
 
 def _get_keyword_args(codegen: CodeGen, keywords: list[ast.keyword]):

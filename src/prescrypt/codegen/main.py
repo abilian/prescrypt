@@ -32,6 +32,8 @@ class CodeGen:
     def __init__(self, module: ast.Module, scope: Scope):
         self.module = module
         self.scope = scope
+        self._stack = []
+        self.push_ns("module", "module")
 
         assert isinstance(self.module, ast.Module)
 
@@ -51,8 +53,8 @@ class CodeGen:
     # Deferred initialization of dispatched functions
     #
     def _init_dispatch(self):
-        import prescrypt.codegen._expressions
-        import prescrypt.codegen._statements
+        import prescrypt.codegen._expressions  # noqa: F401
+        import prescrypt.codegen._statements  # noqa: F401
 
     # Modules are not statements
     def gen(self):
@@ -63,6 +65,7 @@ class CodeGen:
             debug(statement)
             code += [self.gen_stmt(statement)]
 
+        debug(code)
         return flatten(code)
 
     def gen_expr(self, node: ast.expr):
@@ -175,6 +178,54 @@ class CodeGen:
             parts.append("{%s}" % fmt)
             start = m.end()
         parts.append(left[start:])
-        thestring = sep + "".join(parts) + sep
+        thestring = sep + flatten(parts) + sep
 
         return self.call_std_method(thestring, "format", value_nodes)
+
+    def dummy(self, name=""):
+        """Get a unique name.
+
+        The name is added to vars.
+        """
+        self._dummy_counter += 1
+        name = f"stub{self._dummy_counter:d}_{name}"
+        self.vars.add(name)
+        return name
+
+    #
+    # Namespace management
+    #
+    def add_var(self, var):
+        """Add a variable to the current scope."""
+        self.ns.add(var)
+        self.scope.defs.add(var)
+        pass
+
+    def with_prefix(self, name, new=False):
+        """Add class prefix to a variable name if necessary."""
+        return f"XXX_{name}"
+        # TODO
+        # nstype, nsname, ns = self._stack[-1]
+        # if nstype == "class":
+        #     if name.startswith("__") and not name.endswith("__"):
+        #         name = "_" + nsname + name  # Double underscore name mangling
+        #     return nsname + ".prototype." + name
+        # else:
+        #     return name
+
+    def push_ns(self, type, name):
+        self._stack.append(NameSpace(type, name))
+        self.ns = self._stack[-1]
+
+    def pop_ns(self):
+        self.ns = self._stack.pop()
+
+
+class NameSpace:
+    def __init__(self, type, name):
+        self.type = type
+        self.name = name
+        self._vars = set()
+
+    def add(self, var):
+        self._vars.add(var)
