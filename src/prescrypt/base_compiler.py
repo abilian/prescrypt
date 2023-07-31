@@ -190,10 +190,6 @@ class BaseCompiler:
         """NameSpace instance for the current stack."""
         return self._stack[-1][2]
 
-    def lf(self, code=""):
-        """Line feed - create a new line with the correct indentation."""
-        return "\n" + self._indent * "    " + code
-
     def pop_docstring(self, node):
         """If a docstring is present in the body of the given node, remove
         that string node and return it as a string, corrected for indentation

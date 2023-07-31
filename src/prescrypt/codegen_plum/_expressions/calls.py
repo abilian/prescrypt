@@ -1,13 +1,16 @@
+from plum import dispatch
+
 from prescrypt.ast import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX
 from prescrypt.stdlib_py import stdlib
 from prescrypt.utils import unify
 
-from ..main import CodeGen, gen_expr
+from ..stdlib import call_std_function
+from ..context import Context
 
 
-@gen_expr.register
-def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
+@dispatch
+def gen_expr(ctx: Context, node: ast.Call) -> str | list:
     """Generate code for a function call."""
 
     func, args, keywords = node.func, node.args, node.keywords
@@ -22,11 +25,11 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
             # we asume for now that the left side is an object and the call
             # a method call.
             method_name = attr
-            obj_js = codegen.gen_expr(value)
+            obj_js = gen_expr(value)
 
         case ast.Subscript(value, slice, ctx):
-            base_name = unify(codegen.gen_expr(value))
-            full_name = unify(codegen.gen_expr(func))
+            base_name = unify(gen_expr(value))
+            full_name = unify(gen_expr(func))
             method_name = ""
 
         case ast.Name(id):
@@ -35,7 +38,7 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
         case _:
             method_name = ""
             base_name = ""
-            full_name = unify(codegen.gen_expr(func))
+            full_name = unify(gen_expr(func))
 
     builtins = stdlib
 
@@ -44,7 +47,7 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
             if res := builtin_meth(compiler, obj_js, args, keywords):
                 return res
 
-        args_js = [obj_js] + [unify(codegen.gen_expr(arg)) for arg in args]
+        args_js = [obj_js] + [unify(gen_expr(arg)) for arg in args]
 
         return f"_pymeth_{method_name}.apply({', '.join(args_js)})"
 
@@ -53,7 +56,7 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
             if res := builtin_func(compiler, args, keywords):
                 return res
 
-        args_js = [unify(codegen.gen_expr(arg)) for arg in args]
+        args_js = [unify(gen_expr(arg)) for arg in args]
 
         return f"_pyfunc_{func_name}({', '.join(args_js)})"
 
@@ -99,7 +102,7 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
     return code
 
 
-def _get_args(codegen, args, keywords, base_name, use_call_or_apply=False):
+def _get_args(args, keywords, base_name, use_call_or_apply=False):
     """Get arguments for function call.
 
     Does checking for keywords and handles starargs. The first
@@ -117,8 +120,8 @@ def _get_args(codegen, args, keywords, base_name, use_call_or_apply=False):
     base_name = base_name or "null"
 
     # Get arguments
-    args_simple, args_array = _get_positional_args(codegen, args)
-    kwargs = _get_keyword_args(codegen, keywords)
+    args_simple, args_array = _get_positional_args(args)
+    kwargs = _get_keyword_args(keywords)
 
     if kwargs is not None:
         # Keyword arguments need a whole special treatment
@@ -148,7 +151,7 @@ def _get_args(codegen, args, keywords, base_name, use_call_or_apply=False):
         return ["(", args_simple, ")"]
 
 
-def _get_positional_args(codegen: CodeGen, args: list[ast.expr]):
+def _get_positional_args(args: list[ast.expr]):
     """Returns:
     * a string args_simple, which represents the positional args in comma
       separated form. Can be None if the args cannot be represented that
@@ -165,12 +168,12 @@ def _get_positional_args(codegen: CodeGen, args: list[ast.expr]):
     for arg in args:
         match arg:
             case ast.Starred(value):
-                starname = "".join(codegen.gen_expr(value))
+                starname = "".join(gen_expr(value))
                 arglists.append(starname)
                 argswithcommas = []
                 arglists.append(argswithcommas)
             case _:
-                argswithcommas.extend(codegen.gen_expr(arg))
+                argswithcommas.extend(gen_expr(arg))
                 argswithcommas.append(", ")
 
     # Clear empty lists and trailing commas
@@ -203,7 +206,7 @@ def _get_positional_args(codegen: CodeGen, args: list[ast.expr]):
         return None, "".join(code)
 
 
-def _get_keyword_args(codegen: CodeGen, keywords: list[ast.keyword]):
+def _get_keyword_args(keywords: list[ast.keyword]):
     """Get a string that represents the dictionary of keyword arguments, or
     None if there are no keyword arguments (normal nor double-star)."""
 
@@ -213,11 +216,11 @@ def _get_keyword_args(codegen: CodeGen, keywords: list[ast.keyword]):
     kwargs = []
     for keyword in keywords:
         if not keyword.arg:  # **xx
-            kwargs.append(unify(codegen.gen_expr(keyword.value)))
+            kwargs.append(unify(gen_expr(keyword.value)))
         else:  # foo=xx
             if not (kwargs and isinstance(kwargs[-1], list)):
                 kwargs.append([])
-            kwargs[-1].append(f"{keyword.arg}: {unify(codegen.gen_expr(keyword.value))}")
+            kwargs[-1].append(f"{keyword.arg}: {unify(gen_expr(keyword.value))}")
 
     # Resolve sequneces of loose kwargs
     for i in range(len(kwargs)):
@@ -231,5 +234,5 @@ def _get_keyword_args(codegen: CodeGen, keywords: list[ast.keyword]):
         return kwargs[0]
     else:
         # register use of merge_dicts(), but we build the string ourselves
-        codegen.call_std_function("merge_dicts", [])
+        call_std_function("merge_dicts", [])
         return FUNCTION_PREFIX + "merge_dicts(" + ", ".join(kwargs) + ")"

@@ -1,4 +1,5 @@
 import ast as _ast
+from typing import cast
 
 from prescrypt.ast import ast
 
@@ -7,8 +8,11 @@ from prescrypt.ast import ast
 
 # from .base import Transformer
 
+def desugar(tree: ast.Module) -> ast.Module:
+    return cast(ast.Module, _desugar(tree))
 
-def desugar(tree: ast.AST) -> ast.AST:
+
+def _desugar(tree: ast.AST) -> ast.AST:
     return _ast.fix_missing_locations(Desugarer().visit(tree))
 
 

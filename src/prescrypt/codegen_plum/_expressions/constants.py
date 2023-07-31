@@ -1,10 +1,12 @@
+from plum import dispatch
+
 from prescrypt.ast import ast
 
-from ..main import gen_expr, CodeGen
+from ..context import Context
 
 
-@gen_expr.register
-def gen_constant(node: ast.Constant, codegen: CodeGen):
+@dispatch
+def gen_expr(ctx: Context, node: ast.Constant):
     match node:
         case ast.Constant(bool(value)):
             return "true" if value else "false"

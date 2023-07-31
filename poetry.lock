@@ -129,6 +129,24 @@ toml = ["tomli (>=1.1.0)"]
 yaml = ["PyYAML"]
 
 [[package]]
+name = "beartype"
+version = "0.15.0"
+description = "Unbearably fast runtime type checking in pure Python."
+optional = false
+python-versions = ">=3.8.0"
+files = [
+    {file = "beartype-0.15.0-py3-none-any.whl", hash = "sha256:52cd2edea72fdd84e4e7f8011a9e3007bf0125c3d6d7219e937b9d8868169177"},
+    {file = "beartype-0.15.0.tar.gz", hash = "sha256:2af6a8d8a7267ccf7d271e1a3bd908afbc025d2a09aa51123567d7d7b37438df"},
+]
+
+[package.extras]
+all = ["typing-extensions (>=3.10.0.0)"]
+dev = ["autoapi (>=0.9.0)", "coverage (>=5.5)", "mypy (>=0.800)", "numpy", "pandera", "pydata-sphinx-theme (<=0.7.2)", "pytest (>=4.0.0)", "sphinx", "sphinx (>=4.2.0,<6.0.0)", "sphinxext-opengraph (>=0.7.5)", "tox (>=3.20.1)", "typing-extensions (>=3.10.0.0)"]
+doc-rtd = ["autoapi (>=0.9.0)", "pydata-sphinx-theme (<=0.7.2)", "sphinx (>=4.2.0,<6.0.0)", "sphinxext-opengraph (>=0.7.5)"]
+test-tox = ["mypy (>=0.800)", "numpy", "pandera", "pytest (>=4.0.0)", "sphinx", "typing-extensions (>=3.10.0.0)"]
+test-tox-coverage = ["coverage (>=5.5)"]
+
+[[package]]
 name = "binaryornot"
 version = "0.4.4"
 description = "Ultra-lightweight pure Python package to check if a file is binary or text."
@@ -1630,6 +1648,23 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "plum-dispatch"
+version = "2.1.1"
+description = "Multiple dispatch in Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "plum_dispatch-2.1.1-py3-none-any.whl", hash = "sha256:7b997ff3d94ac6afa42b8b8c5b3f61b3bbb3917f65883e1fa268c362e8429773"},
+    {file = "plum_dispatch-2.1.1.tar.gz", hash = "sha256:97973464d306d6f547e237a4fc01db0b85e7f3c4bb482a834e770e5a015d2e36"},
+]
+
+[package.dependencies]
+beartype = "*"
+
+[package.extras]
+dev = ["black (==22.10.0)", "build", "coveralls", "ghp-import", "ipython", "jupyter-book", "numpy", "pre-commit", "pytest (>=6)", "pytest-cov", "tox", "wheel"]
+
+[[package]]
 name = "pre-commit"
 version = "3.3.3"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -2261,4 +2296,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ffdd272a03ef25e30c33bfdd4dae6d3c7f3493fdcc5615e1560d4d27397ff019"
+content-hash = "e8b48c5e175153d2904891d6612f4231575253a05eb67f3f39896125822ad626"

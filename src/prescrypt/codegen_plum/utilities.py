@@ -6,6 +6,8 @@ from prescrypt.utils import unify
 
 from ..constants import RETURNING_BOOL
 from ..exceptions import JSError
+from . import gen_expr
+from .context import ctx
 from .stdlib import call_std_function, call_std_method
 
 

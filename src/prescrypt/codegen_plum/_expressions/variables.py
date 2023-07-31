@@ -5,11 +5,12 @@ from prescrypt.constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES, NAME_MAP
 from prescrypt.exceptions import JSError
 from prescrypt.utils import js_repr, unify
 
-from ..main import gen_expr, CodeGen
+from ..stdlib import call_std_method
+from .expr import gen_expr
 
 
 @gen_expr.register
-def gen_joinstr(node: ast.JoinedStr, codegen: CodeGen):
+def gen_joinstr(node: ast.JoinedStr):
     values = node.values
 
     parts, value_nodes = [], []
@@ -19,16 +20,16 @@ def gen_joinstr(node: ast.JoinedStr, codegen: CodeGen):
                 parts.append(s)
             case ast.FormattedValue(value, conversion, format_spec):
                 parts.append("{" + _parse_FormattedValue_fmt(n) + "}")
-                value_nodes.append(value)
+                value_nodes.append(n.value_node)
             case _:
                 raise JSError("Unknown JoinedStr part: " + str(n))
 
     thestring = js_repr("".join(parts))
-    return codegen.call_std_method(thestring, "format", value_nodes)
+    return call_std_method(thestring, "format", value_nodes)
 
 
 @gen_expr.register
-def gen_name(node: ast.Name, codegen: CodeGen) -> str:
+def gen_name(node: ast.Name) -> str:
     name = node.id
     # ctx can be Load, Store, Del -> can be of use somewhere?
     if name in JS_RESERVED_NAMES:
@@ -58,7 +59,7 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
 
 
 @gen_expr.register
-def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
+def gen_attribute(node: ast.Attribute) -> str:
     value, attr, ctx = node.value, node.attr, node.ctx
 
     fullname = attr + "." + fullname if fullname else attr
@@ -68,7 +69,7 @@ def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
         case ast.Attribute():
             base_name = self.gen_attribute(value, ctx, fullname)
         case _:
-            base_name = unify(codegen.gen_expr(value))
+            base_name = unify(gen_expr(value))
 
     # Double underscore name mangling
     if attr.startswith("__") and not attr.endswith("__") and base_name == "this":

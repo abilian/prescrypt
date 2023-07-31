@@ -11,61 +11,6 @@ RAW_DOC_WARNING = (
     "this behavior."
 )
 
-JS_RESERVED_WORDS = set()
-
-
-# https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar
-RESERVED = {
-    "true",
-    "false",
-    "null",
-    # Reserved keywords as of ECMAScript 6
-    "break",
-    "case",
-    "catch",
-    "class",
-    "const",
-    "continue",
-    "debugger",
-    "default",
-    "delete",
-    "do",
-    "else",
-    "export",
-    "extends",
-    "finally",
-    "for",
-    "function",
-    "if",
-    "import",
-    "in",
-    "instanceof",
-    "new",
-    "return",
-    "super",
-    "switch",
-    "this",
-    "throw",
-    "try",
-    "typeof",
-    "var",
-    "void",
-    "while",
-    "with",
-    "yield",
-    # Future reserved keywords
-    "implements",
-    "interface",
-    "let",
-    "package",
-    "private",
-    "protected",
-    "public",
-    "static",
-    "enum",
-    "await",  # only in module code
-}
-
 
 class StatementCompiler(ExpressionCompiler):
     """Parser that adds control flow, functions, classes, and exceptions.

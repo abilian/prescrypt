@@ -14,6 +14,7 @@ py2js = "prescrypt.main:main"
 [tool.poetry.dependencies]
 python = "^3.10"
 buildstr = "^0.1.0"
+plum-dispatch = "^2.1.1"
 
 [tool.poetry.group.dev.dependencies]
 abilian-devtools = "^0.5.2"

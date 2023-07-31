@@ -6,6 +6,8 @@ from prescrypt.ast import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX
 from prescrypt.utils import unify
 
+from . import gen_expr
+
 
 def call_std_function(name: str, args: list[str | ast.expr]) -> str:
     """Generate a function call from the Prescrypt standard library."""
