@@ -15,12 +15,14 @@ py2js = "prescrypt.main:main"
 python = "^3.10"
 buildstr = "^0.1.0"
 plum-dispatch = "^2.1.1"
+mkdocs-material = "9.2.0b2"
 
 [tool.poetry.group.dev.dependencies]
 abilian-devtools = "^0.5.2"
 dukpy = "^0.3.0"
 devtools = "^0.11.0"
 attrs = "^23.1.0"
+mkdocs-material = "^9.1.21"
 
 [build-system]
 requires = ["poetry-core"]
