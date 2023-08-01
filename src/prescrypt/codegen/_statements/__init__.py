@@ -41,7 +41,7 @@ Must support:
 
 """
 
-from . import (assignments, classes, control_flow, exceptions, functions,
-               simple_statements)
+from . import (assignments, classes, control_flow, exceptions,  # noqa
+               functions, simple_statements)
 
 # from . import module

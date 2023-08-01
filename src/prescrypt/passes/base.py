@@ -10,7 +10,8 @@ class Visitor(ast.NodeVisitor):
         """
         Override the default visit method and add a type sugnature.
 
-        `node` should be os type `AST` but we have to add other types because of a bug in PyCharm.
+        `node` should be os type `AST` but we have to add other types because
+        of a bug in PyCharm.
         """
         return super().visit(node)
 
@@ -28,7 +29,8 @@ class Transformer(ast.NodeTransformer):
         """
         Override the default visit method and add a type sugnature.
 
-        `node` should be os type `AST` but we have to add other types because of a bug in PyCharm.
+        `node` should be os type `AST` but we have to add other types because
+        of a bug in PyCharm.
         """
         return super().visit(node)
 

@@ -1,14 +1,3 @@
-"""
-Compute scopes (statically) for a given AST.
-
-Code based on
-
-- Tailbiter (Darius Bacon, https://github.com/darius/tailbiter)
-- Compylo (Ethan Zouzoulkowsky & Abilian, https://github.com/abilian/compylo)
-
-"""
-
-import ast
 from textwrap import dedent
 
 import pytest

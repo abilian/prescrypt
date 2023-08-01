@@ -98,7 +98,9 @@ EXPRESSIONS1 = [
     # "1 not in {1}",
     # "{1, 2} == {2, 1}",
     #
+    #
     # Dicts + dict methods
+    #
     "{}",
     "{'a': 1}",
     "dict(a=1)",
@@ -106,6 +108,9 @@ EXPRESSIONS1 = [
     "list({'a': 1})",
     "list({'a': 1}.keys())",
     "list({'a': 1}.values())",
+    "{'a': 1} == {'a': 1}",
+    "dict(a=1) == {'a': 1}",
+    "dict([('a', 1)]) == {'a': 1}",
     #
     # Subscripts
     #
@@ -129,9 +134,12 @@ EXPRESSIONS1 = [
     # "set([1, 2]) == {1, 2}",
     #
     # Strings methods
+    #
     "'Ab+'.lower()",
     "'Ab+'.upper()",
+    #
     # Functions from stdlib
+    #
     "list(reversed([1, 2]))",
     "sorted([0, 4, 3, 1, 2])",
     "list(enumerate(['a', 'b', 'c']))",
@@ -199,15 +207,6 @@ EXPRESSIONS2 = [
     # "1 in {1}",
     # "1 not in {1}",
     # "{1, 2} == {2, 1}",
-    # Dict
-    "{}",
-    "{'a': 1}",
-    "list({'a': 1})",
-    "list({'a': 1}.keys())",
-    "list({'a': 1}.values())",
-    "{'a': 1} == {'a': 1}",
-    "dict(a=1) == {'a': 1}",
-    "dict([('a', 1)]) == {'a': 1}",
     # Fail
     # "{1: 1}",
     # "list({'a': 1}.items())",

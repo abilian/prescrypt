@@ -2,8 +2,10 @@
 
 Custom AST.
 """
+from __future__ import annotations
 
 import ast as _ast
+from typing import Any
 
 from prescrypt.ast.mixin import Mixin
 
@@ -50,7 +52,10 @@ class cmpop(_ast.cmpop, Mixin):
 
 
 class comprehension(_ast.comprehension, Mixin):
-    pass
+    target: expr
+    iter: expr
+    ifs: list[expr]
+    is_async: int
 
 
 class excepthandler(_ast.excepthandler, Mixin):
@@ -58,27 +63,40 @@ class excepthandler(_ast.excepthandler, Mixin):
 
 
 class arguments(_ast.arguments, Mixin):
-    pass
+    posonlyargs: list[arg]
+    args: list[arg]
+    vararg: None | arg
+    kwonlyargs: list[arg]
+    kw_defaults: list[None] | list[expr]
+    kwarg: None | arg
+    defaults: list[expr]
 
 
 class arg(_ast.arg, Mixin):
-    pass
+    arg: ellipsis
+    annotation: None | expr
+    type_comment: None
 
 
 class keyword(_ast.keyword, Mixin):
-    pass
+    arg: None | ellipsis
+    value: expr
 
 
 class alias(_ast.alias, Mixin):
-    pass
+    name: ellipsis
+    asname: None | ellipsis
 
 
 class withitem(_ast.withitem, Mixin):
-    pass
+    context_expr: expr
+    optional_vars: None | expr
 
 
 class match_case(_ast.match_case, Mixin):
-    pass
+    pattern: pattern
+    guard: None
+    body: list[stmt]
 
 
 class pattern(_ast.pattern, Mixin):
@@ -94,115 +112,165 @@ class slice(_ast.slice, Mixin):
 
 
 class Module(_ast.Module, mod, Mixin):
-    pass
+    body: list[stmt]
+    type_ignores: Any
 
 
 class Interactive(_ast.Interactive, mod, Mixin):
-    pass
+    body: Any
 
 
 class Expression(_ast.Expression, mod, Mixin):
-    pass
+    body: Any
 
 
 class FunctionType(_ast.FunctionType, mod, Mixin):
-    pass
+    argtypes: Any
+    returns: Any
 
 
 class FunctionDef(_ast.FunctionDef, stmt, Mixin):
-    pass
+    name: ellipsis
+    args: arguments
+    body: list[stmt]
+    decorator_list: list[expr]
+    returns: None | expr
+    type_comment: None
 
 
 class AsyncFunctionDef(_ast.AsyncFunctionDef, stmt, Mixin):
-    pass
+    name: ellipsis
+    args: arguments
+    body: list[stmt]
+    decorator_list: list[expr]
+    returns: None | expr
+    type_comment: None
 
 
 class ClassDef(_ast.ClassDef, stmt, Mixin):
-    pass
+    name: ellipsis
+    bases: list[expr]
+    keywords: list[keyword]
+    body: list[stmt]
+    decorator_list: list[expr]
 
 
 class Return(_ast.Return, stmt, Mixin):
-    pass
+    value: None | expr
 
 
 class Delete(_ast.Delete, stmt, Mixin):
-    pass
+    targets: list[expr]
 
 
 class Assign(_ast.Assign, stmt, Mixin):
-    pass
+    targets: list[expr]
+    value: expr
+    type_comment: None
 
 
 class AugAssign(_ast.AugAssign, stmt, Mixin):
-    pass
+    target: expr
+    op: operator
+    value: expr
 
 
 class AnnAssign(_ast.AnnAssign, stmt, Mixin):
-    pass
+    target: expr
+    annotation: expr
+    value: None | expr
+    simple: int
 
 
 class For(_ast.For, stmt, Mixin):
-    pass
+    target: expr
+    iter: expr
+    body: list[stmt]
+    orelse: list[stmt]
+    type_comment: None
 
 
 class AsyncFor(_ast.AsyncFor, stmt, Mixin):
-    pass
+    target: expr
+    iter: expr
+    body: list[stmt]
+    orelse: list[stmt]
+    type_comment: None
 
 
 class While(_ast.While, stmt, Mixin):
-    pass
+    test: expr
+    body: list[stmt]
+    orelse: list[stmt]
 
 
 class If(_ast.If, stmt, Mixin):
-    pass
+    test: expr
+    body: list[stmt]
+    orelse: list[stmt]
 
 
 class With(_ast.With, stmt, Mixin):
-    pass
+    items: list[withitem]
+    body: list[stmt]
+    type_comment: None
 
 
 class AsyncWith(_ast.AsyncWith, stmt, Mixin):
-    pass
+    items: list[withitem]
+    body: list[stmt]
+    type_comment: None
 
 
 class Match(_ast.Match, stmt, Mixin):
-    pass
+    subject: expr
+    cases: list[match_case]
 
 
 class Raise(_ast.Raise, stmt, Mixin):
-    pass
+    exc: None | expr
+    cause: None | expr
 
 
 class Try(_ast.Try, stmt, Mixin):
-    pass
+    body: list[stmt]
+    handlers: list[excepthandler]
+    orelse: list[stmt]
+    finalbody: list[stmt]
 
 
 class TryStar(_ast.TryStar, stmt, Mixin):
-    pass
+    body: Any
+    handlers: Any
+    orelse: Any
+    finalbody: Any
 
 
 class Assert(_ast.Assert, stmt, Mixin):
-    pass
+    test: expr
+    msg: None | expr
 
 
 class Import(_ast.Import, stmt, Mixin):
-    pass
+    names: list[alias]
 
 
 class ImportFrom(_ast.ImportFrom, stmt, Mixin):
-    pass
+    module: None | ellipsis
+    names: list[alias]
+    level: int
 
 
 class Global(_ast.Global, stmt, Mixin):
-    pass
+    names: list[ellipsis]
 
 
 class Nonlocal(_ast.Nonlocal, stmt, Mixin):
-    pass
+    names: list[ellipsis]
 
 
 class Expr(_ast.Expr, stmt, Mixin):
-    pass
+    value: expr
 
 
 class Pass(_ast.Pass, stmt, Mixin):
@@ -218,111 +286,142 @@ class Continue(_ast.Continue, stmt, Mixin):
 
 
 class BoolOp(_ast.BoolOp, expr, Mixin):
-    pass
+    op: boolop
+    values: list[expr]
 
 
 class NamedExpr(_ast.NamedExpr, expr, Mixin):
-    pass
+    target: expr
+    value: expr
 
 
 class BinOp(_ast.BinOp, expr, Mixin):
-    pass
+    left: expr
+    op: operator
+    right: expr
 
 
 class UnaryOp(_ast.UnaryOp, expr, Mixin):
-    pass
+    op: unaryop
+    operand: expr
 
 
 class Lambda(_ast.Lambda, expr, Mixin):
-    pass
+    args: arguments
+    body: expr
 
 
 class IfExp(_ast.IfExp, expr, Mixin):
-    pass
+    test: expr
+    body: expr
+    orelse: expr
 
 
 class Dict(_ast.Dict, expr, Mixin):
-    pass
+    keys: list[None] | list[expr]
+    values: list[expr]
 
 
 class Set(_ast.Set, expr, Mixin):
-    pass
+    elts: list[expr]
 
 
 class ListComp(_ast.ListComp, expr, Mixin):
-    pass
+    elt: expr
+    generators: list[comprehension]
 
 
 class SetComp(_ast.SetComp, expr, Mixin):
-    pass
+    elt: expr
+    generators: list[comprehension]
 
 
 class DictComp(_ast.DictComp, expr, Mixin):
-    pass
+    key: expr
+    value: expr
+    generators: list[comprehension]
 
 
 class GeneratorExp(_ast.GeneratorExp, expr, Mixin):
-    pass
+    elt: expr
+    generators: list[comprehension]
 
 
 class Await(_ast.Await, expr, Mixin):
-    pass
+    value: expr
 
 
 class Yield(_ast.Yield, expr, Mixin):
-    pass
+    value: None | expr
 
 
 class YieldFrom(_ast.YieldFrom, expr, Mixin):
-    pass
+    value: expr
 
 
 class Compare(_ast.Compare, expr, Mixin):
-    pass
+    left: expr
+    ops: list[cmpop]
+    comparators: list[expr]
 
 
 class Call(_ast.Call, expr, Mixin):
-    pass
+    func: expr
+    args: list[expr]
+    keywords: list[keyword]
 
 
 class FormattedValue(_ast.FormattedValue, expr, Mixin):
-    pass
+    value: expr
+    conversion: int
+    format_spec: None | expr
 
 
 class JoinedStr(_ast.JoinedStr, expr, Mixin):
-    pass
+    values: list[expr]
 
 
 class Constant(_ast.Constant, expr, Mixin):
-    pass
+    value: None | bytes | complex | ellipsis | float | int
+    kind: None | ellipsis
 
 
 class Attribute(_ast.Attribute, expr, Mixin):
-    pass
+    value: expr
+    attr: ellipsis
+    ctx: expr_context
 
 
 class Subscript(_ast.Subscript, expr, Mixin):
-    pass
+    value: expr
+    slice: expr
+    ctx: expr_context
 
 
 class Starred(_ast.Starred, expr, Mixin):
-    pass
+    value: expr
+    ctx: expr_context
 
 
 class Name(_ast.Name, expr, Mixin):
-    pass
+    id: ellipsis
+    ctx: expr_context
 
 
 class List(_ast.List, expr, Mixin):
-    pass
+    elts: list[expr]
+    ctx: expr_context
 
 
 class Tuple(_ast.Tuple, expr, Mixin):
-    pass
+    elts: list[expr]
+    ctx: expr_context
 
 
 class Slice(_ast.Slice, expr, Mixin):
-    pass
+    lower: None | expr
+    upper: None | expr
+    step: None | expr
 
 
 class Load(_ast.Load, expr_context, Mixin):
@@ -454,43 +553,52 @@ class NotIn(_ast.NotIn, cmpop, Mixin):
 
 
 class ExceptHandler(_ast.ExceptHandler, excepthandler, Mixin):
-    pass
+    type: None | expr
+    name: None | ellipsis
+    body: list[stmt]
 
 
 class MatchValue(_ast.MatchValue, pattern, Mixin):
-    pass
+    value: expr
 
 
 class MatchSingleton(_ast.MatchSingleton, pattern, Mixin):
-    pass
+    value: None | int
 
 
 class MatchSequence(_ast.MatchSequence, pattern, Mixin):
-    pass
+    patterns: list[pattern]
 
 
 class MatchMapping(_ast.MatchMapping, pattern, Mixin):
-    pass
+    keys: list[expr]
+    patterns: list[pattern]
+    rest: ellipsis
 
 
 class MatchClass(_ast.MatchClass, pattern, Mixin):
-    pass
+    cls: expr
+    patterns: list[pattern]
+    kwd_attrs: list[ellipsis]
+    kwd_patterns: list[pattern]
 
 
 class MatchStar(_ast.MatchStar, pattern, Mixin):
-    pass
+    name: None | ellipsis
 
 
 class MatchAs(_ast.MatchAs, pattern, Mixin):
-    pass
+    pattern: None
+    name: None | ellipsis
 
 
 class MatchOr(_ast.MatchOr, pattern, Mixin):
-    pass
+    patterns: list[pattern]
 
 
 class TypeIgnore(_ast.TypeIgnore, type_ignore, Mixin):
-    pass
+    lineno: Any
+    tag: Any
 
 
 class Index(_ast.Index, slice, Mixin):
@@ -518,19 +626,20 @@ class Param(_ast.Param, expr_context, Mixin):
 
 
 class Num(_ast.Num, Constant, expr, Mixin):
-    pass
+    n: Any
 
 
 class Str(_ast.Str, Constant, expr, Mixin):
-    pass
+    s: Any
 
 
 class Bytes(_ast.Bytes, Constant, expr, Mixin):
-    pass
+    s: Any
 
 
 class NameConstant(_ast.NameConstant, Constant, expr, Mixin):
-    pass
+    value: Any
+    kind: Any
 
 
 class Ellipsis(_ast.Ellipsis, Constant, expr, Mixin):
@@ -541,4 +650,4 @@ class Function(FunctionDef):
     _fields = ("name", "args", "body")
 
 
-from .converter import parse
+from .converter import parse  # noqa

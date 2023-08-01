@@ -1,6 +1,6 @@
 """
 Draw inheritance hierarchies via Dot (http://www.graphviz.org/)
-Author: M. Simionato
+Original Author: M. Simionato
 E-mail: mis6@pitt.edu
 Date: August 2003
 License: Python-like

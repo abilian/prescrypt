@@ -1,4 +1,5 @@
-from . import calls, constants, constructors, misc, ops, others, variables
+from . import (calls, constants, constructors, misc, ops, others,  # noqa
+               variables)
 
 """
 + Constant(constant value, string? kind)
