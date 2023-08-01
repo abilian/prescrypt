@@ -47,7 +47,7 @@ class TypeInference(Visitor):
         """
         Sets the node's type to its definition's
         """
-        node._type = node.definition._type
+        node._type = node._definition._type
         self.visit_list(node.args)
 
     def visit_AnnAssign(self, node: ast.AnnAssign):
@@ -80,7 +80,7 @@ class TypeInference(Visitor):
         """
         match node.ctx:
             case ast.Load():
-                node._type = node.definition._type
+                node._type = node._definition._type
             case ast.Store():
                 pass  # Means we're in left side of an assign, will be set by caller
             case _:

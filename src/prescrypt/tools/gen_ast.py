@@ -245,7 +245,10 @@ def get_parents(cls):
         if parent_name[0].islower():
             yield parent_name
 
-    yield "Mixin"
+    if cls.__name__ == "AST":
+        yield "Mixin"
+    else:
+        yield "AST"
 
 
 if __name__ == "__main__":

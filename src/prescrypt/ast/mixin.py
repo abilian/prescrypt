@@ -2,6 +2,6 @@ from typing import Any
 
 
 class Mixin:
-    _definition: Any
-    _type: Any
-    _info: dict
+    _definition: Any = None
+    _type: Any = None
+    _info: dict|None = None

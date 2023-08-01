@@ -4,6 +4,8 @@ from . import ast as my_ast
 
 
 def convert(node: ast.mod | ast.AST) -> my_ast.AST:
+    """Converts a "native Python" AST tree to a Prescrypt AST node."""
+
     class_name = node.__class__.__name__
     cls = getattr(my_ast, class_name)
 

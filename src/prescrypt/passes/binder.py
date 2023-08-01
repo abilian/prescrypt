@@ -1,9 +1,13 @@
+import builtins
+
 from prescrypt.ast import ast
 
 from .base import Visitor
 from .errors import UnknownSymbolError
 from .scopes import ScopedMap
 from .symbol import Symbol
+
+builtin_names = {name for name in dir(builtins)}
 
 
 class Binder(Visitor):
@@ -61,7 +65,7 @@ class Binder(Visitor):
         self.visit(node.target)
         self.visit(node.value)
 
-    def visit_Name(self, node):
+    def visit_Name(self, node: ast.Name):
         """
         If the context is ast.Load, check for the symbol in the
         symbol table, raise UnknownSymbolError if not found,
@@ -69,16 +73,20 @@ class Binder(Visitor):
         If the context is ast.Store, creates a new symbol and
         sets the node's definition to itself.
         """
-        sym = self.map.find(node.id, False)
+        name = node.id
+        if name in builtin_names:
+            return
+
+        sym = self.map.find(name, False)
         if sym is not None:
             node._definition = sym._definition
             return
 
         match node.ctx:
             case ast.Load():
-                raise UnknownSymbolError(node.id)
+                raise UnknownSymbolError(name)
             case ast.Store():
-                sym = Symbol(node.id, node)
+                sym = Symbol(name, node)
                 self.map.append(sym)
                 node._definition = node
             case _:

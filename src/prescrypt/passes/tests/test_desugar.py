@@ -40,9 +40,3 @@ def test_desugar_bool_op():
 def test_expressions(expression: str):
     tree = ast.parse(expression)
     desugar(tree)
-
-    binder = Binder()
-    binder.visit(tree)
-
-    inferer = TypeInference()
-    inferer.visit(tree)

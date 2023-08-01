@@ -3,11 +3,10 @@
 Custom AST.
 """
 from __future__ import annotations
-
-import ast as _ast
 from typing import Any
-
+import ast as _ast
 from prescrypt.ast.mixin import Mixin
+
 
 NodeVisitor = _ast.NodeVisitor
 NodeTransformer = _ast.NodeTransformer
@@ -21,50 +20,50 @@ class AST(_ast.AST, Mixin):
     pass
 
 
-class mod(_ast.mod, Mixin):
+class mod(_ast.mod, AST):
     pass
 
 
-class stmt(_ast.stmt, Mixin):
+class stmt(_ast.stmt, AST):
     pass
 
 
-class expr(_ast.expr, Mixin):
+class expr(_ast.expr, AST):
     pass
 
 
-class expr_context(_ast.expr_context, Mixin):
+class expr_context(_ast.expr_context, AST):
     pass
 
 
-class boolop(_ast.boolop, Mixin):
+class boolop(_ast.boolop, AST):
     pass
 
 
-class operator(_ast.operator, Mixin):
+class operator(_ast.operator, AST):
     pass
 
 
-class unaryop(_ast.unaryop, Mixin):
+class unaryop(_ast.unaryop, AST):
     pass
 
 
-class cmpop(_ast.cmpop, Mixin):
+class cmpop(_ast.cmpop, AST):
     pass
 
 
-class comprehension(_ast.comprehension, Mixin):
+class comprehension(_ast.comprehension, AST):
     target: expr
     iter: expr
     ifs: list[expr]
     is_async: int
 
 
-class excepthandler(_ast.excepthandler, Mixin):
+class excepthandler(_ast.excepthandler, AST):
     pass
 
 
-class arguments(_ast.arguments, Mixin):
+class arguments(_ast.arguments, AST):
     posonlyargs: list[arg]
     args: list[arg]
     vararg: None | arg
@@ -74,64 +73,64 @@ class arguments(_ast.arguments, Mixin):
     defaults: list[expr]
 
 
-class arg(_ast.arg, Mixin):
+class arg(_ast.arg, AST):
     arg: str
     annotation: None | expr
     type_comment: None
 
 
-class keyword(_ast.keyword, Mixin):
+class keyword(_ast.keyword, AST):
     arg: None | str
     value: expr
 
 
-class alias(_ast.alias, Mixin):
+class alias(_ast.alias, AST):
     name: str
     asname: None | str
 
 
-class withitem(_ast.withitem, Mixin):
+class withitem(_ast.withitem, AST):
     context_expr: expr
     optional_vars: None | expr
 
 
-class match_case(_ast.match_case, Mixin):
+class match_case(_ast.match_case, AST):
     pattern: pattern
     guard: None
     body: list[stmt]
 
 
-class pattern(_ast.pattern, Mixin):
+class pattern(_ast.pattern, AST):
     pass
 
 
-class type_ignore(_ast.type_ignore, Mixin):
+class type_ignore(_ast.type_ignore, AST):
     pass
 
 
-class slice(_ast.slice, Mixin):
+class slice(_ast.slice, AST):
     pass
 
 
-class Module(_ast.Module, mod, Mixin):
+class Module(_ast.Module, mod, AST):
     body: list[stmt]
     type_ignores: Any
 
 
-class Interactive(_ast.Interactive, mod, Mixin):
+class Interactive(_ast.Interactive, mod, AST):
     body: Any
 
 
-class Expression(_ast.Expression, mod, Mixin):
+class Expression(_ast.Expression, mod, AST):
     body: Any
 
 
-class FunctionType(_ast.FunctionType, mod, Mixin):
+class FunctionType(_ast.FunctionType, mod, AST):
     argtypes: Any
     returns: Any
 
 
-class FunctionDef(_ast.FunctionDef, stmt, Mixin):
+class FunctionDef(_ast.FunctionDef, stmt, AST):
     name: str
     args: arguments
     body: list[stmt]
@@ -140,7 +139,7 @@ class FunctionDef(_ast.FunctionDef, stmt, Mixin):
     type_comment: None
 
 
-class AsyncFunctionDef(_ast.AsyncFunctionDef, stmt, Mixin):
+class AsyncFunctionDef(_ast.AsyncFunctionDef, stmt, AST):
     name: str
     args: arguments
     body: list[stmt]
@@ -149,7 +148,7 @@ class AsyncFunctionDef(_ast.AsyncFunctionDef, stmt, Mixin):
     type_comment: None
 
 
-class ClassDef(_ast.ClassDef, stmt, Mixin):
+class ClassDef(_ast.ClassDef, stmt, AST):
     name: str
     bases: list[expr]
     keywords: list[keyword]
@@ -157,34 +156,34 @@ class ClassDef(_ast.ClassDef, stmt, Mixin):
     decorator_list: list[expr]
 
 
-class Return(_ast.Return, stmt, Mixin):
+class Return(_ast.Return, stmt, AST):
     value: None | expr
 
 
-class Delete(_ast.Delete, stmt, Mixin):
+class Delete(_ast.Delete, stmt, AST):
     targets: list[expr]
 
 
-class Assign(_ast.Assign, stmt, Mixin):
+class Assign(_ast.Assign, stmt, AST):
     targets: list[expr]
     value: expr
     type_comment: None
 
 
-class AugAssign(_ast.AugAssign, stmt, Mixin):
+class AugAssign(_ast.AugAssign, stmt, AST):
     target: expr
     op: operator
     value: expr
 
 
-class AnnAssign(_ast.AnnAssign, stmt, Mixin):
+class AnnAssign(_ast.AnnAssign, stmt, AST):
     target: expr
     annotation: expr
     value: None | expr
     simple: int
 
 
-class For(_ast.For, stmt, Mixin):
+class For(_ast.For, stmt, AST):
     target: expr
     iter: expr
     body: list[stmt]
@@ -192,7 +191,7 @@ class For(_ast.For, stmt, Mixin):
     type_comment: None
 
 
-class AsyncFor(_ast.AsyncFor, stmt, Mixin):
+class AsyncFor(_ast.AsyncFor, stmt, AST):
     target: expr
     iter: expr
     body: list[stmt]
@@ -200,451 +199,451 @@ class AsyncFor(_ast.AsyncFor, stmt, Mixin):
     type_comment: None
 
 
-class While(_ast.While, stmt, Mixin):
+class While(_ast.While, stmt, AST):
     test: expr
     body: list[stmt]
     orelse: list[stmt]
 
 
-class If(_ast.If, stmt, Mixin):
+class If(_ast.If, stmt, AST):
     test: expr
     body: list[stmt]
     orelse: list[stmt]
 
 
-class With(_ast.With, stmt, Mixin):
+class With(_ast.With, stmt, AST):
     items: list[withitem]
     body: list[stmt]
     type_comment: None
 
 
-class AsyncWith(_ast.AsyncWith, stmt, Mixin):
+class AsyncWith(_ast.AsyncWith, stmt, AST):
     items: list[withitem]
     body: list[stmt]
     type_comment: None
 
 
-class Match(_ast.Match, stmt, Mixin):
+class Match(_ast.Match, stmt, AST):
     subject: expr
     cases: list[match_case]
 
 
-class Raise(_ast.Raise, stmt, Mixin):
+class Raise(_ast.Raise, stmt, AST):
     exc: None | expr
     cause: None | expr
 
 
-class Try(_ast.Try, stmt, Mixin):
+class Try(_ast.Try, stmt, AST):
     body: list[stmt]
     handlers: list[excepthandler]
     orelse: list[stmt]
     finalbody: list[stmt]
 
 
-class TryStar(_ast.TryStar, stmt, Mixin):
+class TryStar(_ast.TryStar, stmt, AST):
     body: Any
     handlers: Any
     orelse: Any
     finalbody: Any
 
 
-class Assert(_ast.Assert, stmt, Mixin):
+class Assert(_ast.Assert, stmt, AST):
     test: expr
     msg: None | expr
 
 
-class Import(_ast.Import, stmt, Mixin):
+class Import(_ast.Import, stmt, AST):
     names: list[alias]
 
 
-class ImportFrom(_ast.ImportFrom, stmt, Mixin):
+class ImportFrom(_ast.ImportFrom, stmt, AST):
     module: None | str
     names: list[alias]
     level: int
 
 
-class Global(_ast.Global, stmt, Mixin):
+class Global(_ast.Global, stmt, AST):
     names: list[str]
 
 
-class Nonlocal(_ast.Nonlocal, stmt, Mixin):
+class Nonlocal(_ast.Nonlocal, stmt, AST):
     names: list[str]
 
 
-class Expr(_ast.Expr, stmt, Mixin):
+class Expr(_ast.Expr, stmt, AST):
     value: expr
 
 
-class Pass(_ast.Pass, stmt, Mixin):
+class Pass(_ast.Pass, stmt, AST):
     pass
 
 
-class Break(_ast.Break, stmt, Mixin):
+class Break(_ast.Break, stmt, AST):
     pass
 
 
-class Continue(_ast.Continue, stmt, Mixin):
+class Continue(_ast.Continue, stmt, AST):
     pass
 
 
-class BoolOp(_ast.BoolOp, expr, Mixin):
+class BoolOp(_ast.BoolOp, expr, AST):
     op: boolop
     values: list[expr]
 
 
-class NamedExpr(_ast.NamedExpr, expr, Mixin):
+class NamedExpr(_ast.NamedExpr, expr, AST):
     target: expr
     value: expr
 
 
-class BinOp(_ast.BinOp, expr, Mixin):
+class BinOp(_ast.BinOp, expr, AST):
     left: expr
     op: operator
     right: expr
 
 
-class UnaryOp(_ast.UnaryOp, expr, Mixin):
+class UnaryOp(_ast.UnaryOp, expr, AST):
     op: unaryop
     operand: expr
 
 
-class Lambda(_ast.Lambda, expr, Mixin):
+class Lambda(_ast.Lambda, expr, AST):
     args: arguments
     body: expr
 
 
-class IfExp(_ast.IfExp, expr, Mixin):
+class IfExp(_ast.IfExp, expr, AST):
     test: expr
     body: expr
     orelse: expr
 
 
-class Dict(_ast.Dict, expr, Mixin):
+class Dict(_ast.Dict, expr, AST):
     keys: list[None] | list[expr]
     values: list[expr]
 
 
-class Set(_ast.Set, expr, Mixin):
+class Set(_ast.Set, expr, AST):
     elts: list[expr]
 
 
-class ListComp(_ast.ListComp, expr, Mixin):
+class ListComp(_ast.ListComp, expr, AST):
     elt: expr
     generators: list[comprehension]
 
 
-class SetComp(_ast.SetComp, expr, Mixin):
+class SetComp(_ast.SetComp, expr, AST):
     elt: expr
     generators: list[comprehension]
 
 
-class DictComp(_ast.DictComp, expr, Mixin):
+class DictComp(_ast.DictComp, expr, AST):
     key: expr
     value: expr
     generators: list[comprehension]
 
 
-class GeneratorExp(_ast.GeneratorExp, expr, Mixin):
+class GeneratorExp(_ast.GeneratorExp, expr, AST):
     elt: expr
     generators: list[comprehension]
 
 
-class Await(_ast.Await, expr, Mixin):
+class Await(_ast.Await, expr, AST):
     value: expr
 
 
-class Yield(_ast.Yield, expr, Mixin):
+class Yield(_ast.Yield, expr, AST):
     value: None | expr
 
 
-class YieldFrom(_ast.YieldFrom, expr, Mixin):
+class YieldFrom(_ast.YieldFrom, expr, AST):
     value: expr
 
 
-class Compare(_ast.Compare, expr, Mixin):
+class Compare(_ast.Compare, expr, AST):
     left: expr
     ops: list[cmpop]
     comparators: list[expr]
 
 
-class Call(_ast.Call, expr, Mixin):
+class Call(_ast.Call, expr, AST):
     func: expr
     args: list[expr]
     keywords: list[keyword]
 
 
-class FormattedValue(_ast.FormattedValue, expr, Mixin):
+class FormattedValue(_ast.FormattedValue, expr, AST):
     value: expr
     conversion: int
     format_spec: None | expr
 
 
-class JoinedStr(_ast.JoinedStr, expr, Mixin):
+class JoinedStr(_ast.JoinedStr, expr, AST):
     values: list[expr]
 
 
-class Constant(_ast.Constant, expr, Mixin):
+class Constant(_ast.Constant, expr, AST):
     value: None | bytes | complex | ellipsis | float | int | str
     kind: None | str
 
 
-class Attribute(_ast.Attribute, expr, Mixin):
+class Attribute(_ast.Attribute, expr, AST):
     value: expr
     attr: str
     ctx: expr_context
 
 
-class Subscript(_ast.Subscript, expr, Mixin):
+class Subscript(_ast.Subscript, expr, AST):
     value: expr
     slice: expr
     ctx: expr_context
 
 
-class Starred(_ast.Starred, expr, Mixin):
+class Starred(_ast.Starred, expr, AST):
     value: expr
     ctx: expr_context
 
 
-class Name(_ast.Name, expr, Mixin):
+class Name(_ast.Name, expr, AST):
     id: str
     ctx: expr_context
 
 
-class List(_ast.List, expr, Mixin):
+class List(_ast.List, expr, AST):
     elts: list[expr]
     ctx: expr_context
 
 
-class Tuple(_ast.Tuple, expr, Mixin):
+class Tuple(_ast.Tuple, expr, AST):
     elts: list[expr]
     ctx: expr_context
 
 
-class Slice(_ast.Slice, expr, Mixin):
+class Slice(_ast.Slice, expr, AST):
     lower: None | expr
     upper: None | expr
     step: None | expr
 
 
-class Load(_ast.Load, expr_context, Mixin):
+class Load(_ast.Load, expr_context, AST):
     pass
 
 
-class Store(_ast.Store, expr_context, Mixin):
+class Store(_ast.Store, expr_context, AST):
     pass
 
 
-class Del(_ast.Del, expr_context, Mixin):
+class Del(_ast.Del, expr_context, AST):
     pass
 
 
-class And(_ast.And, boolop, Mixin):
+class And(_ast.And, boolop, AST):
     pass
 
 
-class Or(_ast.Or, boolop, Mixin):
+class Or(_ast.Or, boolop, AST):
     pass
 
 
-class Add(_ast.Add, operator, Mixin):
+class Add(_ast.Add, operator, AST):
     pass
 
 
-class Sub(_ast.Sub, operator, Mixin):
+class Sub(_ast.Sub, operator, AST):
     pass
 
 
-class Mult(_ast.Mult, operator, Mixin):
+class Mult(_ast.Mult, operator, AST):
     pass
 
 
-class MatMult(_ast.MatMult, operator, Mixin):
+class MatMult(_ast.MatMult, operator, AST):
     pass
 
 
-class Div(_ast.Div, operator, Mixin):
+class Div(_ast.Div, operator, AST):
     pass
 
 
-class Mod(_ast.Mod, operator, Mixin):
+class Mod(_ast.Mod, operator, AST):
     pass
 
 
-class Pow(_ast.Pow, operator, Mixin):
+class Pow(_ast.Pow, operator, AST):
     pass
 
 
-class LShift(_ast.LShift, operator, Mixin):
+class LShift(_ast.LShift, operator, AST):
     pass
 
 
-class RShift(_ast.RShift, operator, Mixin):
+class RShift(_ast.RShift, operator, AST):
     pass
 
 
-class BitOr(_ast.BitOr, operator, Mixin):
+class BitOr(_ast.BitOr, operator, AST):
     pass
 
 
-class BitXor(_ast.BitXor, operator, Mixin):
+class BitXor(_ast.BitXor, operator, AST):
     pass
 
 
-class BitAnd(_ast.BitAnd, operator, Mixin):
+class BitAnd(_ast.BitAnd, operator, AST):
     pass
 
 
-class FloorDiv(_ast.FloorDiv, operator, Mixin):
+class FloorDiv(_ast.FloorDiv, operator, AST):
     pass
 
 
-class Invert(_ast.Invert, unaryop, Mixin):
+class Invert(_ast.Invert, unaryop, AST):
     pass
 
 
-class Not(_ast.Not, unaryop, Mixin):
+class Not(_ast.Not, unaryop, AST):
     pass
 
 
-class UAdd(_ast.UAdd, unaryop, Mixin):
+class UAdd(_ast.UAdd, unaryop, AST):
     pass
 
 
-class USub(_ast.USub, unaryop, Mixin):
+class USub(_ast.USub, unaryop, AST):
     pass
 
 
-class Eq(_ast.Eq, cmpop, Mixin):
+class Eq(_ast.Eq, cmpop, AST):
     pass
 
 
-class NotEq(_ast.NotEq, cmpop, Mixin):
+class NotEq(_ast.NotEq, cmpop, AST):
     pass
 
 
-class Lt(_ast.Lt, cmpop, Mixin):
+class Lt(_ast.Lt, cmpop, AST):
     pass
 
 
-class LtE(_ast.LtE, cmpop, Mixin):
+class LtE(_ast.LtE, cmpop, AST):
     pass
 
 
-class Gt(_ast.Gt, cmpop, Mixin):
+class Gt(_ast.Gt, cmpop, AST):
     pass
 
 
-class GtE(_ast.GtE, cmpop, Mixin):
+class GtE(_ast.GtE, cmpop, AST):
     pass
 
 
-class Is(_ast.Is, cmpop, Mixin):
+class Is(_ast.Is, cmpop, AST):
     pass
 
 
-class IsNot(_ast.IsNot, cmpop, Mixin):
+class IsNot(_ast.IsNot, cmpop, AST):
     pass
 
 
-class In(_ast.In, cmpop, Mixin):
+class In(_ast.In, cmpop, AST):
     pass
 
 
-class NotIn(_ast.NotIn, cmpop, Mixin):
+class NotIn(_ast.NotIn, cmpop, AST):
     pass
 
 
-class ExceptHandler(_ast.ExceptHandler, excepthandler, Mixin):
+class ExceptHandler(_ast.ExceptHandler, excepthandler, AST):
     type: None | expr
     name: None | str
     body: list[stmt]
 
 
-class MatchValue(_ast.MatchValue, pattern, Mixin):
+class MatchValue(_ast.MatchValue, pattern, AST):
     value: expr
 
 
-class MatchSingleton(_ast.MatchSingleton, pattern, Mixin):
+class MatchSingleton(_ast.MatchSingleton, pattern, AST):
     value: None | int
 
 
-class MatchSequence(_ast.MatchSequence, pattern, Mixin):
+class MatchSequence(_ast.MatchSequence, pattern, AST):
     patterns: list[pattern]
 
 
-class MatchMapping(_ast.MatchMapping, pattern, Mixin):
+class MatchMapping(_ast.MatchMapping, pattern, AST):
     keys: list[expr]
     patterns: list[pattern]
     rest: str
 
 
-class MatchClass(_ast.MatchClass, pattern, Mixin):
+class MatchClass(_ast.MatchClass, pattern, AST):
     cls: expr
     patterns: list[pattern]
     kwd_attrs: list[str]
     kwd_patterns: list[pattern]
 
 
-class MatchStar(_ast.MatchStar, pattern, Mixin):
+class MatchStar(_ast.MatchStar, pattern, AST):
     name: None | str
 
 
-class MatchAs(_ast.MatchAs, pattern, Mixin):
+class MatchAs(_ast.MatchAs, pattern, AST):
     pattern: None
     name: None | str
 
 
-class MatchOr(_ast.MatchOr, pattern, Mixin):
+class MatchOr(_ast.MatchOr, pattern, AST):
     patterns: list[pattern]
 
 
-class TypeIgnore(_ast.TypeIgnore, type_ignore, Mixin):
+class TypeIgnore(_ast.TypeIgnore, type_ignore, AST):
     lineno: Any
     tag: Any
 
 
-class Index(_ast.Index, slice, Mixin):
+class Index(_ast.Index, slice, AST):
     pass
 
 
-class ExtSlice(_ast.ExtSlice, slice, Mixin):
+class ExtSlice(_ast.ExtSlice, slice, AST):
     pass
 
 
-class Suite(_ast.Suite, mod, Mixin):
+class Suite(_ast.Suite, mod, AST):
     pass
 
 
-class AugLoad(_ast.AugLoad, expr_context, Mixin):
+class AugLoad(_ast.AugLoad, expr_context, AST):
     pass
 
 
-class AugStore(_ast.AugStore, expr_context, Mixin):
+class AugStore(_ast.AugStore, expr_context, AST):
     pass
 
 
-class Param(_ast.Param, expr_context, Mixin):
+class Param(_ast.Param, expr_context, AST):
     pass
 
 
-class Num(_ast.Num, Constant, expr, Mixin):
+class Num(_ast.Num, Constant, expr, AST):
     n: Any
 
 
-class Str(_ast.Str, Constant, expr, Mixin):
+class Str(_ast.Str, Constant, expr, AST):
     s: Any
 
 
-class Bytes(_ast.Bytes, Constant, expr, Mixin):
+class Bytes(_ast.Bytes, Constant, expr, AST):
     s: Any
 
 
-class NameConstant(_ast.NameConstant, Constant, expr, Mixin):
+class NameConstant(_ast.NameConstant, Constant, expr, AST):
     value: Any
     kind: Any
 
 
-class Ellipsis(_ast.Ellipsis, Constant, expr, Mixin):
+class Ellipsis(_ast.Ellipsis, Constant, expr, AST):
     pass
 
 
