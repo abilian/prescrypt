@@ -43,49 +43,35 @@ def gen_bool_op(node: ast.BoolOp, codegen: CodeGen) -> str | list:
 
 @gen_expr.register
 def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
-    left, op, right = node.left, node.op, node.right
+    left_node, op, right_node = node.left, node.op, node.right
 
-    if type(op) == ast.Mod and isinstance(left, ast.Str):
-        # Modulo on a string is string formatting in Python
-        return codegen._format_string(left, right)
+    match op, left_node:
+        case ast.Mod(), ast.Constant(str(s)):
+            # Modulo on a string is string formatting in Python
+            return codegen._format_string(left_node, right_node)
 
-    js_left = unify(codegen.gen_expr(left))
-    js_right = unify(codegen.gen_expr(right))
+    js_left = unify(codegen.gen_expr(left_node))
+    js_right = unify(codegen.gen_expr(right_node))
 
-    if type(op) == ast.Add:
-        C = ast.Num, ast.Str
-        if codegen._pscript_overload and not (
-            isinstance(left, C)
-            or isinstance(right, C)
-            or (
-                isinstance(left, ast.BinOp)
-                and type(left.op) == ast.Add
-                and "op_add" not in left
-            )
-            or (
-                isinstance(right, ast.BinOp)
-                and type(right.op) == ast.Add
-                and "op_add" not in right
-            )
-        ):
+    match op:
+        case ast.Add():
+            # TODO: type inference
             return codegen.call_std_function("op_add", [js_left, js_right])
 
-    elif type(op) == ast.Mult:
-        C = ast.Num
-        if codegen._pscript_overload and not (
-            isinstance(left, C) and isinstance(right, C)
-        ):
+        case ast.Mult():
+            # TODO: type inference
             return codegen.call_std_function("op_mult", [js_left, js_right])
 
-    elif type(op) == ast.Pow:
-        return ["Math.pow(", js_left, ", ", js_right, ")"]
+        case ast.Pow():
+            return ["Math.pow(", js_left, ", ", js_right, ")"]
 
-    elif type(op) == ast.FloorDiv:
-        return ["Math.floor(", js_left, "/", js_right, ")"]
+        case ast.FloorDiv():
+            return ["Math.floor(", js_left, "/", js_right, ")"]
 
-    # Default
-    js_op = f" {BINARY_OP[op]} "
-    return [js_left, js_op, js_right]
+        case _:
+            # Default
+            js_op = f" {BINARY_OP[op]} "
+            return [js_left, js_op, js_right]
 
 
 @gen_expr.register

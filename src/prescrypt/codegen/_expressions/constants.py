@@ -20,5 +20,8 @@ def gen_constant(node: ast.Constant, codegen: CodeGen):
         case ast.Constant(float(s)):
             return str(s)
 
+        case ast.Constant(None):
+            return "null"
+
         case ast.NameConstant(value):
             return MAP[value]

@@ -32,29 +32,32 @@ def gen_set(node: ast.Set, codegen: CodeGen):
 
 @gen_expr.register
 def gen_dict(node: ast.Dict, codegen: CodeGen):
-    # Oh JS; without the outer braces, it would only be an Object if used
-    # in an assignment ...
-    code = ["({"]
-    for key, val in zip(node.keys, node.values):
-        if isinstance(key, (ast.Num, ast.NameConstant)):
-            code += codegen.gen_expr(key)
-        elif (
-            isinstance(key, ast.Str)
-            and isidentifier1.match(key.value)
-            and key.value[0] not in "0123456789"
-        ):
-            code += key.value
-        else:
-            return _gen_dict_fallback(codegen, node.keys, node.values)
+    return _gen_dict_fallback(codegen, node.keys, node.values)
 
-        code.append(": ")
-        code += codegen.gen_expr(val)
-        code.append(", ")
-    if node.keys:
-        code.pop(-1)  # skip last comma
-    code.append("})")
-
-    return code
+    # TODO: doesn't work, ast.Num, ast.Str are not used anymore
+    # # Oh JS; without the outer braces, it would only be an Object if used
+    # # in an assignment ...
+    # code = ["({"]
+    # for key, val in zip(node.keys, node.values):
+    #     if isinstance(key, (ast.Num, ast.NameConstant)):
+    #         code += codegen.gen_expr(key)
+    #     elif (
+    #         isinstance(key, ast.Str)
+    #         and isidentifier1.match(key.value)
+    #         and key.value[0] not in "0123456789"
+    #     ):
+    #         code += key.value
+    #     else:
+    #         return _gen_dict_fallback(codegen, node.keys, node.values)
+    #
+    #     code.append(": ")
+    #     code += codegen.gen_expr(val)
+    #     code.append(", ")
+    # if node.keys:
+    #     code.pop(-1)  # skip last comma
+    # code.append("})")
+    #
+    # return code
 
 
 def _gen_dict_fallback(codegen, keys: list[ast.expr], values: list[ast.expr]) -> str:

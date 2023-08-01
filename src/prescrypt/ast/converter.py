@@ -14,7 +14,7 @@ def convert(node: ast.mod | ast.AST) -> my_ast.AST:
     for k in fields:
         v = getattr(node, k)
         match v:
-            case [*l]:
+            case list():
                 assert all(isinstance(y, ast.AST) for y in v)
                 kwargs[k] = [convert(x) for x in v]
             case ast.AST():

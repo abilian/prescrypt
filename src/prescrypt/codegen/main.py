@@ -139,7 +139,7 @@ class CodeGen:
         else:
             return self.call_std_function("truthy", [test])
 
-    def _format_string(self, left, right):
+    def _format_string(self, left: ast.expr, right: ast.expr) -> str:
         """Format a string using the old-school `%` operator."""
 
         # Get value_nodes
@@ -155,7 +155,7 @@ class CodeGen:
         #     thestring += ".replace(/%([0-9\.\+\-\#]*[srdeEfgGioxXc])/g, '{:$1}')"
         #     return self.use_std_method(thestring, 'format', value_nodes)
 
-        assert isinstance(left, ast.Str)
+        assert isinstance(left, ast.Constant) and isinstance(left.value, str)
         js_left = "".join(self.gen_expr(left))
         sep, js_left = js_left[0], js_left[1:-1]
 
@@ -174,7 +174,7 @@ class CodeGen:
             fmt = {"%r": "!r", "%s": ""}.get(fmt, ":" + fmt[1:])
             # Add the part in front of the match (and after prev match)
             parts.append(left[start : m.start()])
-            parts.append("{%s}" % fmt)
+            parts.append(f"{fmt}")
             start = m.end()
         parts.append(left[start:])
         thestring = sep + flatten(parts) + sep

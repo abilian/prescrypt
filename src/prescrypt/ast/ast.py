@@ -118,19 +118,6 @@ class Module(_ast.Module, mod, AST):
     type_ignores: Any
 
 
-class Interactive(_ast.Interactive, mod, AST):
-    body: Any
-
-
-class Expression(_ast.Expression, mod, AST):
-    body: Any
-
-
-class FunctionType(_ast.FunctionType, mod, AST):
-    argtypes: Any
-    returns: Any
-
-
 class FunctionDef(_ast.FunctionDef, stmt, AST):
     name: str
     args: arguments
@@ -239,13 +226,6 @@ class Try(_ast.Try, stmt, AST):
     handlers: list[excepthandler]
     orelse: list[stmt]
     finalbody: list[stmt]
-
-
-class TryStar(_ast.TryStar, stmt, AST):
-    body: Any
-    handlers: Any
-    orelse: Any
-    finalbody: Any
 
 
 class Assert(_ast.Assert, stmt, AST):
@@ -596,56 +576,6 @@ class MatchAs(_ast.MatchAs, pattern, AST):
 
 class MatchOr(_ast.MatchOr, pattern, AST):
     patterns: list[pattern]
-
-
-class TypeIgnore(_ast.TypeIgnore, type_ignore, AST):
-    lineno: Any
-    tag: Any
-
-
-class Index(_ast.Index, slice, AST):
-    pass
-
-
-class ExtSlice(_ast.ExtSlice, slice, AST):
-    pass
-
-
-class Suite(_ast.Suite, mod, AST):
-    pass
-
-
-class AugLoad(_ast.AugLoad, expr_context, AST):
-    pass
-
-
-class AugStore(_ast.AugStore, expr_context, AST):
-    pass
-
-
-class Param(_ast.Param, expr_context, AST):
-    pass
-
-
-class Num(_ast.Num, Constant, expr, AST):
-    n: Any
-
-
-class Str(_ast.Str, Constant, expr, AST):
-    s: Any
-
-
-class Bytes(_ast.Bytes, Constant, expr, AST):
-    s: Any
-
-
-class NameConstant(_ast.NameConstant, Constant, expr, AST):
-    value: Any
-    kind: Any
-
-
-class Ellipsis(_ast.Ellipsis, Constant, expr, AST):
-    pass
 
 
 class Function(FunctionDef):

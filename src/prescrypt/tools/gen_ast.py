@@ -201,6 +201,25 @@ TYPES = {
     "withitem.optional_vars": "None | expr",
 }
 
+CAN_PROBABLY_BE_IGNORED = {
+    "AugLoad",
+    "AugStore",
+    "Bytes",
+    "Str",
+    "Num",
+    "Ellipsis",
+    "Expression",
+    "ExtSlice",
+    "FunctionType",
+    "Index",
+    "Interactive",
+    "NameConstant",
+    "Param",
+    "Suite",
+    "TryStar",
+    "TypeIgnore",
+}
+
 
 def main():
     print(PREAMBLE)
@@ -219,6 +238,9 @@ def main():
 
     for cls in classes:
         cls_name = cls.__name__
+        if cls_name in CAN_PROBABLY_BE_IGNORED:
+            continue
+
         parents = get_parents(cls)
         parents_str = ", ".join(parents)
 

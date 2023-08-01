@@ -167,10 +167,10 @@ def function_ord(codegen: CodeGen, args, kwargs) -> str:
 def function_range(codegen: CodeGen, args, kwargs):
     match args:
         case [a]:
-            args = [ast.Num(0), a, ast.Num(1)]
+            args = [ast.Constant(0), a, ast.Constant(1)]
             return codegen.call_std_function("range", args)
         case [a, b]:
-            args = [a, b, ast.Num(1)]
+            args = [a, b, ast.Constant(1)]
             return codegen.call_std_function("range", args)
         case [_a, _b, _c]:
             return codegen.call_std_function("range", args)
@@ -182,7 +182,7 @@ def function_sorted(codegen: CodeGen, args, kwargs):
     if len(args) != 1:
         raise JSError("sorted() needs one argument")
 
-    key, reverse = "undefined", ast.NameConstant(False)
+    key, reverse = "undefined", ast.Constant(False)
     for kw in kwargs:
         if kw.name == "key":
             key = kw.value
