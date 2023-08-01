@@ -65,7 +65,7 @@ class CodeGen:
         for statement in statements:
             code += [self.gen_stmt(statement)]
 
-        return flatten(code)
+        return flatten(code, sep="\n")
 
     def gen_expr(self, node: ast.expr):
         return gen_expr(node, self)
@@ -187,8 +187,8 @@ class CodeGen:
         The name is added to vars.
         """
         self._dummy_counter += 1
-        name = f"stub{self._dummy_counter:d}_{name}"
-        self.vars.add(name)
+        name = f"_pytmp_{self._dummy_counter:d}_{name}"
+        self.add_var(name)
         return name
 
     #
@@ -197,24 +197,29 @@ class CodeGen:
     def add_var(self, var):
         """Add a variable to the current scope."""
         self.ns.add(var)
-        self.scope.defs.add(var)
-        pass
 
     def with_prefix(self, name, new=False):
         """Add class prefix to a variable name if necessary."""
-        return f"XXX_{name}"
-        # TODO
-        # nstype, nsname, ns = self._stack[-1]
-        # if nstype == "class":
-        #     if name.startswith("__") and not name.endswith("__"):
-        #         name = "_" + nsname + name  # Double underscore name mangling
-        #     return nsname + ".prototype." + name
-        # else:
-        #     return name
+        if self.ns.type == "class":
+            ns_name = self.ns.name
+            if name.startswith("__") and not name.endswith("__"):
+                name = "_" + ns_name + name  # Double underscore name mangling
+            return ns_name + ".prototype." + name
+
+        else:
+            return name
 
     def push_ns(self, type, name):
-        self._stack.append(NameSpace(type, name))
-        self.ns = self._stack[-1]
+        """Push new namespace on stack.
+
+        Match a call to this with a call to pop_ns() and process the
+        resulting line to declare the used variables.
+        `type` must be 'module', 'class' or 'function'.
+        """
+        assert type in ("module", "class", "function")
+        new_ns = NameSpace(type, name)
+        self._stack.append(new_ns)
+        self.ns = new_ns
 
     def pop_ns(self):
         self.ns = self._stack.pop()
@@ -228,3 +233,6 @@ class NameSpace:
 
     def add(self, var):
         self._vars.add(var)
+
+    def is_known(self, var):
+        return var in self._vars

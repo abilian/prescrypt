@@ -11,83 +11,85 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
 
     target_nodes, value_node = node.targets, node.value
 
-    code = [codegen.lf()]
+    js_value = flatten(codegen.gen_expr(value_node))
 
-    # Set PScript behavior? Note that its reset on a function exit.
-    match target_nodes:
-        case [ast.Name(id)]:
-            if id == "PSCRIPT_OVERLOAD":
-                if self._stack[-1][0] != "function":
-                    raise JSError("Can only set PSCRIPT_OVERLOAD inside a function")
-                if not isinstance(node.value_node, ast.NameConstant):
-                    raise JSError("Can only set PSCRIPT_OVERLOAD with a bool")
-                else:
-                    self._stack[-1][2]._pscript_overload = bool(node.value_node.value)
-                    return []
+    if len(target_nodes) > 1:
+        raise JSError("Multiple assignment not (yet) supported.")
+
+    target_node = target_nodes[0]
+
+    match target_node:
+        case ast.Name(id):
+            if codegen.ns.is_known(id):
+                return f"{codegen.with_prefix(id)} = {js_value};"
+            else:
+                codegen.add_var(id)
+                return f"let {codegen.with_prefix(id)} = {js_value};"
+
+        case ast.Attribute(value, attr):
+            js_target = flatten(codegen.gen_expr(target_node))
+            return f"{js_target} = {js_value};"
+
+        case ast.Subscript(value, slice):
+            js_target = flatten(codegen.gen_expr(target_node))
+            return f"{js_target} = {js_value};"
+
         case _:
-            pass
+            raise NotImplementedError(f"gen_assign not implemented for {node!r}")
 
-    # if (
-    #     len(target_nodes) == 1
-    #     and isinstance(target_nodes[0], ast.Name)
-    #     and target_nodes[0].id == "PSCRIPT_OVERLOAD"
-    # ):
-    #     if self._stack[-1][0] != "function":
-    #         raise JSError("Can only set PSCRIPT_OVERLOAD inside a function")
-    #     if not isinstance(node.value_node, ast.NameConstant):
-    #         raise JSError("Can only set PSCRIPT_OVERLOAD with a bool")
-    #     else:
-    #         self._stack[-1][2]._pscript_overload = bool(node.value_node.value)
-    #         return []
-
-    # Parse targets
-    tuple = []
-    for target in target_nodes:
-        var = flatten(codegen.gen_expr(target))
-
-        match target:
-            case ast.Name(id):
-                if "." in var:
-                    code.append(var)
-                else:
-                    codegen.add_var(var)
-                    code.append(codegen.with_prefix(var))
-            case ast.Attribute(value, attr):
-                code.append(var)
-            case ast.Subscript(value, slice):
-                code.append(var)
-            case ast.Tuple(elts, ctx):
-                dummy = codegen.dummy()
-                code.append(dummy)
-                tuple = elts
-            case ast.List(elts, ctx):
-                dummy = codegen.dummy()
-                code.append(dummy)
-                tuple = elts
-            case _:
-                raise JSError("Unsupported assignment type")
-        code.append(" = ")
-
-    # Parse right side
-    if isinstance(value_node, ast.ListComp) and len(node.target_nodes) == 1:
-        result_name = codegen.dummy()
-        code.append(result_name + ";")
-        lc_code = self.parse_ListComp_funtionless(node.value_node, result_name)
-        code = [codegen.lf(), result_name + " = [];"] + lc_code + code
-    else:
-        code += codegen.gen_expr(value_node)
-        code.append(";")
-
-    # Handle tuple unpacking
-    if tuple:
-        code.append(codegen.lf())
-        for i, x in enumerate(tuple):
-            var = unify(codegen.gen_expr(x))
-            if isinstance(x, ast.Name):  # but not when attr or index
-                self.vars.add(var)
-            code.append("%s = %s[%i];" % (var, dummy, i))
-
-    return code
+    #
+    # code = [codegen.lf()]
+    #
+    # # Parse targets
+    # tuple = []
+    # dummy = ""
+    # for target in target_nodes:
+    #     var = flatten(codegen.gen_expr(target))
+    #
+    #     match target:
+    #         case ast.Name(id):
+    #             if "." in var:
+    #                 code.append(var)
+    #             else:
+    #                 codegen.add_var(var)
+    #                 code.append(codegen.with_prefix(var))
+    #         case ast.Attribute(value, attr):
+    #             code.append(var)
+    #         case ast.Subscript(value, slice):
+    #             code.append(var)
+    #         case ast.Tuple(elts, ctx):
+    #             dummy = codegen.dummy()
+    #             code.append(dummy)
+    #             tuple = elts
+    #         case ast.List(elts, ctx):
+    #             dummy = codegen.dummy()
+    #             code.append(dummy)
+    #             tuple = elts
+    #         case _:
+    #             raise JSError(f"Unsupported assignment type: {target}")
+    #
+    #     code.append(" = ")
+    #
+    # # Parse right side
+    # if isinstance(value_node, ast.ListComp) and len(node.target_nodes) == 1:
+    #     result_name = codegen.dummy()
+    #     code.append(result_name + ";")
+    #     lc_code = self.parse_ListComp_funtionless(node.value_node, result_name)
+    #     code = [codegen.lf(), result_name + " = [];"] + lc_code + code
+    # else:
+    #     code += codegen.gen_expr(value_node)
+    #     code.append(";")
+    #
+    # # Handle tuple unpacking
+    # if tuple:
+    #     code.append(codegen.lf())
+    #     for i, x in enumerate(tuple):
+    #         var = unify(codegen.gen_expr(x))
+    #         if isinstance(x, ast.Name):  # but not when attr or index
+    #             codegen.add_var(var)
+    #         code.append("%s = %s[%i];" % (var, dummy, i))
+    #
+    # return code
 
 
 @gen_stmt.register

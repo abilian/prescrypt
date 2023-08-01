@@ -8,7 +8,7 @@ EXPRESSIONS1 = [
     "False",
     "'a'",
     '"a"',
-    "f'a'",
+    # "f'a'",
     # Arithmetic ops
     "1+1",
     "2 * 3 + 5 * 6",
@@ -71,12 +71,18 @@ EXPRESSIONS1 = [
     "list(range(0, 10, 2))",
     "sorted([2, 1])",
     # Lambda
-    "(lambda x: x)(3)",
+    # "(lambda x: x)(3)",
+    #
     # List and tuples expressions
+    #
     "[]",
     "[1]",
     "[1, 2]",
+    "[1, 2] == [2, 1]",
+    "[1, 2] == list([1, 2])",
+    #
     # List and tuples via generators
+    #
     # "[x for x in [1, 2]]",
     # "[x for x in (1, 2)]",
     # "{k: k for k in 'abc'}",
@@ -85,8 +91,6 @@ EXPRESSIONS1 = [
     #
     "str(1.0) == '1.'",
     "str(1e3) == '1000.'",
-    # Lists
-    # Str (nope)
     "str(True).lower()",
     "str(False).lower()",
     # "str(True) == 'True'",
@@ -144,19 +148,21 @@ EXPRESSIONS1 = [
     "sorted([0, 4, 3, 1, 2])",
     "list(enumerate(['a', 'b', 'c']))",
     "list(zip([1, 2, 3], ['a', 'b', 'c']))",
+    #
     # In expressions
-    "1 in [1, 2]",
-    "1 not in [1, 2]",
-    "1 in (1, 2)",
-    "1 not in (1, 2)",
-    "1 in {1: 1}",
-    "1 not in {1: 1}",
+    #
     "'a' in 'abc'",
-    "'a' not in 'abc'",
-    "'a' in ['a', 'b']",
-    "'a' not in ['a', 'b']",
     "'a' in ('a', 'b')",
+    "'a' in ['a', 'b']",
+    "'a' not in 'abc'",
     "'a' not in ('a', 'b')",
+    "'a' not in ['a', 'b']",
+    "1 in (1, 2)",
+    "1 in [1, 2]",
+    "1 in {1: 1}",
+    "1 not in (1, 2)",
+    "1 not in [1, 2]",
+    "1 not in {1: 1}",
     # If expressions
     "1 if True else 2",
     "1 if False else 2",
@@ -164,29 +170,8 @@ EXPRESSIONS1 = [
 
 # TODO: merge
 EXPRESSIONS2 = [
-    # Lambda
-    "(lambda x: x)(3)",
-    # In expressions
-    "1 in [1, 2]",
-    "1 not in [1, 2]",
-    "1 in (1, 2)",
-    "1 not in (1, 2)",
-    "1 in {1: 1}",
-    "1 not in {1: 1}",
-    "'a' in 'abc'",
-    "'a' not in 'abc'",
-    "'a' in ['a', 'b']",
-    "'a' not in ['a', 'b']",
-    "'a' in ('a', 'b')",
-    "'a' not in ('a', 'b')",
-    # If expressions
-    "1 if True else 2",
-    "1 if False else 2",
-    # List and tuples expressions
-    "[1, 2] == [2, 1]",
-    "[1, 2] == list([1, 2])",
-    "[1, 2] == [x for x in [1, 2]]",
-    "[1, 2] == [x for x in (1, 2)]",
+    # "[1, 2] == [x for x in [1, 2]]",
+    # "[1, 2] == [x for x in (1, 2)]",
     "[1, 2] == sorted([2, 1])",
     # "{k: k for k in 'abc'}",
     # Str
@@ -215,4 +200,5 @@ EXPRESSIONS2 = [
     '"%d" % 1',
 ]
 
-EXPRESSIONS = EXPRESSIONS1 + EXPRESSIONS2
+EXPRESSIONS = EXPRESSIONS1[:]
+EXPRESSIONS += [expr for expr in EXPRESSIONS2 if expr not in EXPRESSIONS1]

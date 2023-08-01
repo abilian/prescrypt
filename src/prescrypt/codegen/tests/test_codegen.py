@@ -1,6 +1,7 @@
 import ast
 
 import pytest
+from devtools import debug
 
 from prescrypt.ast import ast
 from prescrypt.codegen.main import CodeGen
@@ -11,113 +12,45 @@ from prescrypt.testing.data import EXPRESSIONS
 
 @pytest.mark.parametrize("expression", EXPRESSIONS)
 def test_expressions(expression: str):
-    tree = ast.parse(expression)
-    tree = desugar(tree)
-    top_scope = get_top_scope(tree)
-    codegen = CodeGen(tree, top_scope)
-    code = codegen.gen()
+    code = _py2js(expression)
+    assert code
 
 
 def test_pass():
     prog = "pass"
-    tree = ast.parse(prog)
-    tree = desugar(tree)
-    top_scope = get_top_scope(tree)
-    codegen = CodeGen(tree, top_scope)
-    code = codegen.gen()
+    expected = "/* pass */"
+    assert _py2js(prog) == expected
 
 
 def test_int():
     prog = "1"
+    expected = "1;"
+    assert _py2js(prog) == expected
+
+
+def test_assignment():
+    prog = "a = 1"
+    expected = "let a = 1;"
+    assert _py2js(prog) == expected
+
+
+def test_assignment_subscript():
+    prog = "a = [0]; a[0] = 1"
+    expected = "let a = [0];\na[0] = 1;"
+    assert _py2js(prog) == expected
+
+
+@pytest.mark.skip("TODO")
+def test_multiple_assignment():
+    prog = "a, b = 1, 2"
+    expected = "let a = 1;"
+    debug(_py2js(prog))
+    assert _py2js(prog) == expected
+
+
+def _py2js(prog):
     tree = ast.parse(prog)
     tree = desugar(tree)
     top_scope = get_top_scope(tree)
     codegen = CodeGen(tree, top_scope)
-    code = codegen.gen()
-
-
-# def test_asignment():
-#     prog = "a = 1"
-#     tree = ast.parse(prog)
-#     tree = desugar(tree)
-#     top_scope = get_top_scope(tree)
-#     assert top_scope.defs == {"a"}
-#
-#
-# def test_asignment2():
-#     prog = "a = b"
-#     tree = ast.parse(prog)
-#     tree = desugar(tree)
-#     top_scope = get_top_scope(tree)
-#     assert top_scope.defs == {"a"}
-#     assert top_scope.uses == {"b"}
-#
-#
-# def test_fundef():
-#     prog = "def f(x): return x"
-#     tree = ast.parse(prog)
-#     tree = desugar(tree)
-#     top_scope = get_top_scope(tree)
-#     assert top_scope.defs == {"f"}
-#
-#     fun_scope = top_scope.children[tree.body[0]]
-#     assert fun_scope.defs == {"x"}
-#     assert fun_scope.uses == {"x"}
-#     assert fun_scope.local_defs == set()
-#
-#
-# def test_lambda():
-#     prog = "a = lambda x: x"
-#     tree = ast.parse(prog)
-#     tree = desugar(tree)
-#     top_scope = get_top_scope(tree)
-#     assert top_scope.defs == {"a"}
-#
-#
-# def test_classdef():
-#     prog = "class A: pass"
-#     tree = ast.parse(prog)
-#     tree = desugar(tree)
-#     top_scope = get_top_scope(tree)
-#     assert top_scope.defs == {"A"}
-#
-#     cls_scope = top_scope.children[tree.body[0]]
-#     assert cls_scope.defs == set()
-#     assert cls_scope.uses == set()
-#     assert cls_scope.local_defs == set()
-#
-#
-# def test_classdef2():
-#     prog = dedent(
-#         """
-#         class A(B):
-#             a = 1
-#
-#             def f(self):
-#                 pass
-#         """
-#     )
-#     tree = ast.parse(prog)
-#     tree = desugar(tree)
-#     top_scope = get_top_scope(tree)
-#     assert top_scope.defs == {"A"}
-#
-#     cls_scope = top_scope.children[tree.body[0]]
-#     assert cls_scope.defs == {"a", "f"}
-#     assert cls_scope.uses == set()
-#     assert cls_scope.local_defs == set()
-#
-#
-# def test_imports():
-#     prog = dedent(
-#         """
-#         import a
-#         from b import c
-#         import d as e
-#         from f import g as h
-#         """
-#     )
-#     tree = ast.parse(prog)
-#     tree = desugar(tree)
-#     top_scope = get_top_scope(tree)
-#     assert top_scope.defs == {"a", "c", "e", "h"}
+    return codegen.gen().strip()

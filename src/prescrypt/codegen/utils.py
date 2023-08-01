@@ -32,7 +32,7 @@ def js_repr(obj):
     return json.dumps(obj, ensure_ascii=False, indent=2)
 
 
-def flatten(js_code: list | str) -> str:
+def flatten(js_code: list | str, sep="") -> str:
     """Flatten a list of strings or a single string to a single string."""
     assert isinstance(js_code, (list, str))
     match js_code:
@@ -40,6 +40,6 @@ def flatten(js_code: list | str) -> str:
             return s
         case [*x]:
             assert x[0] != "\nA"
-            return "".join(flatten(s) for s in x)
+            return sep.join(flatten(s) for s in x)
         case _:
             raise ValueError(f"Unexpected type: {type(js_code)}")

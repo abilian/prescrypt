@@ -6,7 +6,7 @@ from buildstr import Builder
 from prescrypt.ast import ast
 
 from ..main import CodeGen, gen_expr
-from ..utils import unify
+from ..utils import flatten, unify
 
 
 @gen_expr.register
@@ -36,18 +36,19 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
     # ast.comprehension has attrs: 'target', 'iter', 'ifs', 'is_async',
     elt, generators = node.elt, node.generators
 
-    self.push_stack("function", "listcomp")
-    elt = "".join(codegen.gen_expr(elt))
+    codegen.push_ns("function", "<listcomp>")
+    elt = flatten(codegen.gen_expr(elt))
     code = ["(function list_comprehension (iter0) {", "var res = [];"]
     vars = []
 
     for iter, comprehension in enumerate(generators):
+        assert isinstance(comprehension, ast.comprehension)
         cc = []
         # Get target (can be multiple vars)
         if isinstance(comprehension.target, ast.Tuple):
-            target = ["".join(gen_expr(t)) for t in comprehension.target]
+            target = ["".join(codegen.gen_expr(t)) for t in comprehension.target]
         else:
-            target = ["".join(gen_expr(comprehension.target))]
+            target = ["".join(codegen.gen_expr(comprehension.target))]
 
         for t in target:
             vars.append(t)
@@ -62,13 +63,13 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
             "(!Array.isArray(iter#))) {iter# = Object.keys(iter#);}"
         )
         cc.append("for (i#=0; i#<iter#.length; i#++) {")
-        cc.append(self._iterator_assign("iter#[i#]", *target))
+        cc.append(_iterator_assign("iter#[i#]", *target))
 
         # Ifs
         if comprehension.if_nodes:
             cc.append("if (!(")
             for iff in comprehension.if_nodes:
-                cc += unify(gen_expr(iff))
+                cc += unify(codegen.gen_expr(iff))
                 cc.append("&&")
             cc.pop(-1)  # pop '&&'
             cc.append(")) {continue;}")
@@ -82,15 +83,27 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
     code.append("{res.push(%s);}" % elt)
     for comprehension in node.comp_nodes:
         code.append("}")  # end for
+
     # Finalize
     code.append("return res;})")  # end function
     iter0 = "".join(self.parse(node.comp_nodes[0].iter_node))
     code.append(".call(this, " + iter0 + ")")  # call funct with iter as 1st arg
     code.insert(2, f"var {', '.join(vars)};")
+
     # Clean vars
     for var in vars:
         self.vars.add(var)
-    self.pop_stack()
+    codegen.pop_ns()
     return code
 
     # todo: apply the apply(this) trick everywhere where we use a function
+
+
+def _iterator_assign(val, *names):
+    if len(names) == 1:
+        return f"{names[0]} = {val};"
+    else:
+        code = []
+        for i, name in enumerate(names):
+            code.append("%s = %s[%i];" % (name, val, i))
+        return " ".join(code)

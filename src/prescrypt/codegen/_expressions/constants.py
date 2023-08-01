@@ -7,7 +7,7 @@ from ..main import CodeGen, gen_expr
 def gen_constant(node: ast.Constant, codegen: CodeGen):
     match node:
         case ast.Constant(bool(value)):
-            return "true" if value else "false"
+            return str(value).lower()
 
         case ast.Constant(int(n)):
             return str(n)
