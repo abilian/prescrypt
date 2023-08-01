@@ -261,11 +261,11 @@ export const str = function (x) { // nargs: 0 1;
         var result = '[' + FUNCTION_PREFIXstr(x[0]);
         for (var i = 1; i < x.length; i++) {
             var t = FUNCTION_PREFIXstr(x[i]);
-            result.concat(", " + t);
+            result = result.concat(", " + t);
         }
         return result + ']';
     } else {
-        return String(x);
+        return JSON.stringify(x);
     }
 };
 
