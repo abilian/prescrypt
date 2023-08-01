@@ -2257,6 +2257,32 @@ files = [
 pyyaml = "*"
 
 [[package]]
+name = "quickjs"
+version = "1.19.2"
+description = "Wrapping the quickjs C library."
+optional = false
+python-versions = "*"
+files = [
+    {file = "quickjs-1.19.2-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:291c4bc9caee0d8b6ccaa6153295b3ca8c5e193e367e485ee37efa9323e61bda"},
+    {file = "quickjs-1.19.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl", hash = "sha256:b6000db0f58ed59e7db02346248ab425497d79a1702befb0cef5a7dd26c7d3ec"},
+    {file = "quickjs-1.19.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dcb89e7851a2e4d9a0463b019e59d1a41064051d6d8b2805f53489cc08292a80"},
+    {file = "quickjs-1.19.2-cp310-cp310-win_amd64.whl", hash = "sha256:caba42381406d96753ce857490b35f914c4cf1a59a43dfc38f3e46f0e1c811ad"},
+    {file = "quickjs-1.19.2-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:0c179918cfc6d559d5e713fd293632e7e378359dbdac6968228558ed67fbdc0c"},
+    {file = "quickjs-1.19.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl", hash = "sha256:ccaa82abd521b78cec7de31313b7509e1de633159aec4ee19d0562321a792cab"},
+    {file = "quickjs-1.19.2-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4230af97f02bce45f2974482b45bd60a9547c60f36987e2fd5120ca6696b9f12"},
+    {file = "quickjs-1.19.2-cp37-cp37m-win_amd64.whl", hash = "sha256:2ce181bd2c700a3f2ace8c03e38dae6108c33f5f81d18826d4654e5d10be0dd2"},
+    {file = "quickjs-1.19.2-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:1c6ba83e3171e204204ce1050c661a15cf3129179e1c1bcada82c016d6698dfb"},
+    {file = "quickjs-1.19.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl", hash = "sha256:fa2ae492e32d0962b0689052ceeb5b9e52caa2d826ab08834f07cd57c6164411"},
+    {file = "quickjs-1.19.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2c7894e815772521bafc5e5f82d5598d3fb366253e856f534e02ecedbdf88ca1"},
+    {file = "quickjs-1.19.2-cp38-cp38-win_amd64.whl", hash = "sha256:ac235b16d219a3b576689a64297f458931a2615000448c8bbbaf730fe1e4219a"},
+    {file = "quickjs-1.19.2-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:7edd15676e8c59bfb1becb5698698e4f53cdf79aa26a03267693f163d184a5d5"},
+    {file = "quickjs-1.19.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl", hash = "sha256:8f204973def8fa5288e05ceee192f51644ac8daf6c92d4c1808b4da733f4f85d"},
+    {file = "quickjs-1.19.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bc737cf8aa7bb2c2aacb87ab6d5b70ddeadfe918bb74cdffa068f39717d504bd"},
+    {file = "quickjs-1.19.2-cp39-cp39-win_amd64.whl", hash = "sha256:e01fc1e82728b532f35a97fb440181a39e56386f2adeee019c50a95c9d44c681"},
+    {file = "quickjs-1.19.2.tar.gz", hash = "sha256:84454b67f581fb0ab4bd99ed987fdbc23843774ddc271756e2abe7a5a5a49421"},
+]
+
+[[package]]
 name = "readtime"
 version = "3.0.0"
 description = "Calculates the time some text takes the average human to read, based on Medium's read time forumula"
@@ -2802,4 +2828,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d3d1f0f9d2040b37e38f34e9f9517956c3effa16f5b264d1ea94af95864a9149"
+content-hash = "745de832d3567e212a80065a963580939016a5468b6c057772adae56be544b7a"

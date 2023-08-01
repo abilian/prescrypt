@@ -13,11 +13,14 @@ def function_str(codegen: CodeGen, args, _kwargs):
     match args:
         case []:
             return '""'
-        case [arg]:
-            js_arg = unify(codegen.gen_expr(arg))
-            return f"({js_arg}).toString()"
-        case [*_]:
+        case [_arg]:
             return codegen.call_std_function("str", args)
+        case _:
+            raise JSError("str() at most one argument")
+        #     js_arg = unify(codegen.gen_expr(arg))
+        #     return f"({js_arg}).toString()"
+        # case [*_]:
+        #     return codegen.call_std_function("str", args)
 
 
 def function_bool(codegen: CodeGen, args, _kwargs):

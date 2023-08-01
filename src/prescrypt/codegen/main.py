@@ -4,8 +4,6 @@ import re
 from functools import singledispatch
 from typing import Iterator
 
-from devtools import debug
-
 from prescrypt.ast import ast
 from prescrypt.constants import RETURNING_BOOL
 from prescrypt.exceptions import JSError
@@ -108,7 +106,6 @@ class CodeGen:
             if isinstance(arg, str):
                 yield arg
             else:
-                debug(arg, self.gen_expr(arg))
                 yield unify(self.gen_expr(arg))
 
     #

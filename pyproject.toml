@@ -16,6 +16,7 @@ python = "^3.10"
 buildstr = "^0.1.0"
 plum-dispatch = "^2.1.1"
 mkdocs-material = "9.2.0b2"
+quickjs = "^1.19.2"
 
 [tool.poetry.group.dev.dependencies]
 abilian-devtools = "^0.5.2"

@@ -249,7 +249,25 @@ export const float = Number // nargs: 1;
 // ---
 
 // function: str
-export const str = String // nargs: 0 1;
+// export const str = String // nargs: 0 1;
+export const str = function (x) { // nargs: 0 1;
+    if (x === undefined) {
+        return '';
+    }
+    if (Array.isArray(x)) {
+        if (x.length == 0) {
+            return '[]';
+        }
+        var result = '[' + FUNCTION_PREFIXstr(x[0]);
+        for (var i = 1; i < x.length; i++) {
+            var t = FUNCTION_PREFIXstr(x[i]);
+            result.concat(", " + t);
+        }
+        return result + ']';
+    } else {
+        return String(x);
+    }
+};
 
 // ---
 
@@ -341,7 +359,7 @@ export const sorted = function (iter, key, reverse) { // nargs: 1 2 3
     if ((typeof iter==="object") && (!Array.isArray(iter))) {
         iter = Object.keys(iter);
     }
-    let comp = function (a, b) {
+    var comp = function (a, b) {
         a = key(a);
         b = key(b);
         if (a<b) {
@@ -437,7 +455,9 @@ export const op_contains = function op_contains (a, b) { // nargs: 2
 export const op_add = function (a, b) { // nargs: 2
     if (Array.isArray(a) && Array.isArray(b)) {
         return a.concat(b);
-    } return a + b;
+    } else {
+        return a + b;
+    }
 };
 
 // ---

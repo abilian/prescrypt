@@ -1,15 +1,11 @@
-from pathlib import Path
+import json
 
-import dukpy
 import pytest
+import quickjs
 from devtools import debug
-from dukpy import JSRuntimeError
 
 from prescrypt.compiler import py2js
 from prescrypt.testing.data import EXPRESSIONS
-
-stdlib_js = Path(__file__).parent / ".." / ".." / "src" / "prescrypt" / "stdlibjs"
-preamble_js = (stdlib_js / "_stdlib.js").read_text()
 
 
 def js_eq(a, b):
@@ -29,19 +25,23 @@ def js_eq(a, b):
 @pytest.mark.parametrize("expression", EXPRESSIONS)
 def test_expressions(expression: str):
     py_code = expression
-    py_result = eval(expression)
+    py_result = json.loads(json.dumps(eval(expression)))
 
-    js_code = py2js(py_code)
+    js_code = py2js(py_code, include_stdlib=False)
+    full_js_code = py2js(py_code)
 
     debug(py_code, js_code)
 
-    interpreter = dukpy.JSInterpreter()
+    ctx = quickjs.Context()
+    js_result = ctx.eval(full_js_code)
+    if isinstance(js_result, quickjs.Object):
+        js_result = js_result.json()
+        js_result = json.loads(js_result)
 
-    full_code = preamble_js + "\n" + js_code
-    try:
-        js_result = interpreter.evaljs(full_code)
-    except JSRuntimeError:
-        print(full_code)
-        raise
+    # try:
+    #     js_result = interpreter.evaljs(full_code)
+    # except JSRuntimeError:
+    #     print(full_code)
+    #     raise
 
     assert js_eq(js_result, py_result), f"{expression} : {js_result} != {py_result}"
