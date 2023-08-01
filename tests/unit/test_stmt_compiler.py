@@ -22,7 +22,7 @@ class C:
     def __init__(self):
         pass
 ###
-class D(A, B):
+class D(A):
     pass
 ###
 a = 1

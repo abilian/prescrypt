@@ -35,41 +35,41 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
         raise JSError(f"Cannot use reserved name {name} as a variable name!")
 
     # TODO:
-    # if self.vars.is_known(name):
-    #     return self.with_prefix(name)
-    #
-    # if self._scope_prefix:
-    #     for stackitem in reversed(self._stack):
-    #         scope = stackitem[2]
-    #         for prefix in reversed(self._scope_prefix):
-    #             prefixed_name = prefix + name
-    #             if prefixed_name in scope:
-    #                 return prefixed_name
-    #
-    # if name in NAME_MAP:
-    #     return NAME_MAP[name]
-    #
-    # # Else ...
-    # if not (name in self._functions or name in ("undefined", "window")):
-    #     # mark as used (not defined)
-    #     used_name = (name + "." + fullname) if fullname else name
-    #     self.vars.use(name, used_name)
+    if self.vars.is_known(name):
+        return self.with_prefix(name)
+
+    if self._scope_prefix:
+        for stackitem in reversed(self._stack):
+            scope = stackitem[2]
+            for prefix in reversed(self._scope_prefix):
+                prefixed_name = prefix + name
+                if prefixed_name in scope:
+                    return prefixed_name
+
+    if name in NAME_MAP:
+        return NAME_MAP[name]
+
+    # Else ...
+    if not (name in self._functions or name in ("undefined", "window")):
+        # mark as used (not defined)
+        used_name = (name + "." + fullname) if fullname else name
+        self.vars.use(name, used_name)
 
     return name
 
 
 @gen_expr.register
 def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
-    value, attr, ctx = node.value, node.attr, node.ctx
+    value_node, attr, ctx = node.value, node.attr, node.ctx
 
-    fullname = attr + "." + fullname if fullname else attr
-    match value:
+    # fullname = attr + "." + fullname if fullname else attr
+    match value_node:
         case ast.Name():
-            base_name = gen_expr(value)
+            base_name = codegen.gen_expr(value_node)
         case ast.Attribute():
-            base_name = self.gen_attribute(value, ctx, fullname)
+            base_name = self.gen_attribute(value_node, ctx, fullname)
         case _:
-            base_name = unify(codegen.gen_expr(value))
+            base_name = unify(codegen.gen_expr(value_node))
 
     # Double underscore name mangling
     if attr.startswith("__") and not attr.endswith("__") and base_name == "this":

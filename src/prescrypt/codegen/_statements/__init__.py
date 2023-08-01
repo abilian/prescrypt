@@ -23,24 +23,23 @@ Must support:
     expr* decorator_list)
 - Return(expr? value)
 
-- Delete(expr* targets)
 - Assign(expr* targets, expr value, string? type_comment)
 - AugAssign(expr target, operator op, expr value)
 - AnnAssign(expr target, expr annotation, expr? value, int simple)
+- Delete(expr* targets)
 
-- With(withitem* items, stmt* body, string? type_comment)
-- AsyncWith(withitem* items, stmt* body, string? type_comment)
-- Match(expr subject, match_case* cases)
--
- Raise(expr? exc, expr? cause)
+- Raise(expr? exc, expr? cause)
 - Try(stmt* body, excepthandler* handlers, stmt* orelse, stmt* finalbody)
 - TryStar(stmt* body, excepthandler* handlers, stmt* orelse, stmt* finalbody)
 - Assert(expr test, expr? msg)
 
 - Import(alias* names)
 - ImportFrom(identifier? module, alias* names, int? level)
-"""
+- With(withitem* items, stmt* body, string? type_comment)
+- AsyncWith(withitem* items, stmt* body, string? type_comment)
+- Match(expr subject, match_case* cases)
 
+"""
 
 from . import (assignments, classes, control_flow, exceptions, functions,
                simple_statements)

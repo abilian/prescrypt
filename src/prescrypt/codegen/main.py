@@ -28,6 +28,7 @@ def gen_stmt(node: ast.stmt, gen: CodeGen) -> str:
 class CodeGen:
     module: ast.Module
     scope: Scope
+    ns: NameSpace
 
     def __init__(self, module: ast.Module, scope: Scope):
         self.module = module
@@ -62,10 +63,8 @@ class CodeGen:
         statements = self.module.body
         code = []
         for statement in statements:
-            debug(statement)
             code += [self.gen_stmt(statement)]
 
-        debug(code)
         return flatten(code)
 
     def gen_expr(self, node: ast.expr):

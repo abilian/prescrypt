@@ -123,13 +123,13 @@ def gen_try(node: ast.Try, codegen: CodeGen):
 
 @gen_stmt.register
 def gen_excepthandler(node: ast.ExceptHandler, codegen: CodeGen):
-    type, name, body = node.type, node.name, node.body
+    type_node, name_node, body_nodes = node.type, node.name, node.body
 
     err_name = "err_%i" % codegen._indent
 
     # Set up the catch
     code = []
-    err_type = unify(codegen.gen_expr(type)) if node.type_node else ""
+    err_type = unify(codegen.gen_expr(type_node)) if type_node else ""
     codegen.vars.discard(err_type)
     if err_type and err_type != "Exception":
         code.append(

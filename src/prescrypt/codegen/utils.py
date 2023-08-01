@@ -34,7 +34,6 @@ def js_repr(obj):
 
 def flatten(js_code: list | str) -> str:
     """Flatten a list of strings or a single string to a single string."""
-    debug(js_code)
     assert isinstance(js_code, (list, str))
     match js_code:
         case str(s):

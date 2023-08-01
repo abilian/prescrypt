@@ -24,11 +24,11 @@ load, store = ast.Load(), ast.Store()
 
 class Desugarer(ast.NodeTransformer):
     @rewriter
-    def visit_Assert(self, t: ast.Assert):
-        args = [] if t.msg is None else [t.msg]
+    def visit_Assert(self, node: ast.Assert):
+        args = [] if node.msg is None else [node.msg]
         keywords = []
         call = ast.Call(ast.Name("AssertionError", load), args, keywords)
-        return ast.If(t.test, [], [ast.Raise(call, None)])
+        return ast.If(node.test, [], [ast.Raise(call, None)])
 
     # @rewriter
     # def visit_Lambda(self, node: ast.Lambda):
@@ -42,10 +42,10 @@ class Desugarer(ast.NodeTransformer):
     #     return ast.Assign([ast.Name(node.name, store)], fn)
 
     # @rewriter
-    # def visit_ListComp(self, t):
+    # def visit_ListComp(self, node: ast.ListComp):
     #     result_append = ast.Attribute(ast.Name(".0", load), "append", load)
-    #     body = ast.Expr(ast.Call(result_append, [t.elt]))
-    #     for loop in reversed(t.generators):
+    #     body = ast.Expr(ast.Call(result_append, [node.elt]))
+    #     for loop in reversed(node.generators):
     #         for test in reversed(loop.ifs):
     #             body = ast.If(test, [body], [])
     #         body = ast.For(loop.target, loop.iter, [body], [])
