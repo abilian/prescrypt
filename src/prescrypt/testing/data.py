@@ -1,5 +1,7 @@
 EXPRESSIONS = [
+    #
     # Literals
+    #
     "1",
     "1.0",
     "1e3",
@@ -9,8 +11,9 @@ EXPRESSIONS = [
     "None",
     "'a'",
     '"a"',
-    # "f'a'",
+    #
     # Arithmetic ops
+    #
     "1+1",
     "2 * 3 + 5 * 6",
     "'a' + 'b'",
@@ -18,23 +21,31 @@ EXPRESSIONS = [
     '"a" + "b"',
     "1 // 2",
     "1 % 2",
+    #
     # Boolean ops
+    #
     "True or False",
     "True and False",
+    #
     # Bitwise ops
+    #
     "1 | 2",
     "1 & 2",
     "1 ^ 2",
     "1 << 2",
     "1 >> 2",
+    #
     # Comparison ops
+    #
     "1 == 2",
     "1 != 2",
     "1 < 2",
     "1 <= 2",
     "1 > 2",
     "1 >= 2",
+    #
     # Constructors
+    #
     "bool('')",
     "bool('a')",
     "bool(0)",
@@ -59,7 +70,9 @@ EXPRESSIONS = [
     "tuple([1])",
     # Tuple is translated to array.
     # "tuple()",
+    #
     # Other builtin functions
+    #
     "chr(35)",
     "ord('a')",
     "len('abc')",
@@ -71,6 +84,91 @@ EXPRESSIONS = [
     "list(range(0, 1))",
     "list(range(0, 10, 2))",
     "sorted([2, 1])",
+    #
+    # Functions from stdlib
+    #
+    "list(reversed([1, 2]))",
+    "sorted([0, 4, 3, 1, 2])",
+    "list(enumerate(['a', 'b', 'c']))",
+    "list(zip([1, 2, 3], ['a', 'b', 'c']))",
+    "[1, 2] == sorted([2, 1])",
+    "[3, 2, 1] == sorted([2, 3, 1], reverse=True)",
+    #
+    # More builtin functions
+    #
+    "abs(-1)",
+    "abs(1)",
+    # "aiter()",
+    "all([])",
+    "all([True, False])",
+    "all([True, True])",
+    "all([False, False])",
+    # "anext()",
+    "any([])",
+    "any([True, False])",
+    "any([True, True])",
+    "any([False, False])",
+    # "ascii()",
+    # "bin()",
+    # "bytearray()",
+    # "bytes()",
+    # "callable()",
+    # "chr()",
+    # "complex()",
+    # "delattr()",
+    # "dict()",
+    # "dir()",
+    # "divmod()",
+    # "enumerate()",
+    # "eval()",
+    # "exec()",
+    # "exit()",
+    # "filter()",
+    # "float()",
+    # "format()",
+    # "frozenset()",
+    # "getattr()",
+    # "globals()",
+    # "hasattr()",
+    # "hash()",
+    # "help()",
+    # "hex()",
+    # "id()",
+    # "input()",
+    # "isinstance()",
+    # "issubclass()",
+    # "iter()",
+    # "len()",
+    "len([1, 2])",
+    "len([])",
+    "len('abc')",
+    # "map()",
+    # "max()",
+    "max([1, 2])",
+    # "min()",
+    "min([1, 2])",
+    # "oct()",
+    # "ord()",
+    # "pow()",
+    "pow(2, 3)",
+    # "range()",
+    # "repr()",
+    # "reversed()",
+    "list(reversed([1, 2]))",
+    # "round()",
+    "round(1.0)",
+    "round(1.1)",
+    "round(1.5)",
+    # "slice()",
+    # "sum()",
+    sum([1, 2]),
+    sum([]),
+    # "super()",
+    # "type()",
+    # "vars()",
+    # "zip()",
+    "list(zip([1], [2]))",
+    #
     # Lambda
     # "(lambda x: x)(3)",
     #
@@ -95,6 +193,7 @@ EXPRESSIONS = [
     "str(1e3) == '1000.'",
     "str(True).lower()",
     "str(False).lower()",
+    "str([1, 2]) == '[1, 2]'",
     # "str(True) == 'True'",
     # "str(False) == 'False'",
     # Tupes (nope)
@@ -127,33 +226,23 @@ EXPRESSIONS = [
     # "list({'a': 1}.items())",
     # Ellipsis
     # "str(...) == 'Ellipsis'",
-    "%d" % 1,
     #
     # Equality
     #
     "1 == 1",
     "1 != 0",
-    # "dict() == {}",
-    # "list() == []",
-    # "tuple() == ()",
-    # "set() == set()",
-    # "list([1, 2]) == [1, 2]",
-    # "tuple([1, 2]) == (1, 2)",
+    "dict() == {}",
+    "list() == []",
+    "tuple() == ()",
+    "set() == set()",
+    "list([1, 2]) == [1, 2]",
+    "tuple([1, 2]) == (1, 2)",
     # "set([1, 2]) == {1, 2}",
     #
     # Strings methods
     #
     "'Ab+'.lower()",
     "'Ab+'.upper()",
-    #
-    # Functions from stdlib
-    #
-    "list(reversed([1, 2]))",
-    "sorted([0, 4, 3, 1, 2])",
-    "list(enumerate(['a', 'b', 'c']))",
-    "list(zip([1, 2, 3], ['a', 'b', 'c']))",
-    "[1, 2] == sorted([2, 1])",
-    "[3, 2, 1] == sorted([2, 3, 1], reverse=True)",
     #
     # In expressions
     #
@@ -169,11 +258,14 @@ EXPRESSIONS = [
     "1 not in (1, 2)",
     "1 not in [1, 2]",
     "1 not in {1: 1}",
+    #
     # If expressions
+    #
     "1 if True else 2",
     "1 if False else 2",
     #
     # String formatting
     #
-    '"%d" % 1',
+    # "f'a'",
+    # '"%d" % 1',
 ]

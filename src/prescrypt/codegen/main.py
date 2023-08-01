@@ -41,7 +41,6 @@ class CodeGen:
         self._indent = 0
         self._dummy_counter = 0
 
-        self._pscript_overload = False
         self._methods = {}
         self._functions = {}
         self._seen_func_names = set()
