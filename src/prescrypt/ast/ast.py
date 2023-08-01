@@ -14,6 +14,8 @@ NodeTransformer = _ast.NodeTransformer
 dump = _ast.dump
 unparse = _ast.unparse
 
+ellipsis = type(...)
+
 
 class AST(_ast.AST, Mixin):
     pass
@@ -73,19 +75,19 @@ class arguments(_ast.arguments, Mixin):
 
 
 class arg(_ast.arg, Mixin):
-    arg: ellipsis
+    arg: str
     annotation: None | expr
     type_comment: None
 
 
 class keyword(_ast.keyword, Mixin):
-    arg: None | ellipsis
+    arg: None | str
     value: expr
 
 
 class alias(_ast.alias, Mixin):
-    name: ellipsis
-    asname: None | ellipsis
+    name: str
+    asname: None | str
 
 
 class withitem(_ast.withitem, Mixin):
@@ -130,7 +132,7 @@ class FunctionType(_ast.FunctionType, mod, Mixin):
 
 
 class FunctionDef(_ast.FunctionDef, stmt, Mixin):
-    name: ellipsis
+    name: str
     args: arguments
     body: list[stmt]
     decorator_list: list[expr]
@@ -139,7 +141,7 @@ class FunctionDef(_ast.FunctionDef, stmt, Mixin):
 
 
 class AsyncFunctionDef(_ast.AsyncFunctionDef, stmt, Mixin):
-    name: ellipsis
+    name: str
     args: arguments
     body: list[stmt]
     decorator_list: list[expr]
@@ -148,7 +150,7 @@ class AsyncFunctionDef(_ast.AsyncFunctionDef, stmt, Mixin):
 
 
 class ClassDef(_ast.ClassDef, stmt, Mixin):
-    name: ellipsis
+    name: str
     bases: list[expr]
     keywords: list[keyword]
     body: list[stmt]
@@ -256,17 +258,17 @@ class Import(_ast.Import, stmt, Mixin):
 
 
 class ImportFrom(_ast.ImportFrom, stmt, Mixin):
-    module: None | ellipsis
+    module: None | str
     names: list[alias]
     level: int
 
 
 class Global(_ast.Global, stmt, Mixin):
-    names: list[ellipsis]
+    names: list[str]
 
 
 class Nonlocal(_ast.Nonlocal, stmt, Mixin):
-    names: list[ellipsis]
+    names: list[str]
 
 
 class Expr(_ast.Expr, stmt, Mixin):
@@ -382,13 +384,13 @@ class JoinedStr(_ast.JoinedStr, expr, Mixin):
 
 
 class Constant(_ast.Constant, expr, Mixin):
-    value: None | bytes | complex | ellipsis | float | int
-    kind: None | ellipsis
+    value: None | bytes | complex | ellipsis | float | int | str
+    kind: None | str
 
 
 class Attribute(_ast.Attribute, expr, Mixin):
     value: expr
-    attr: ellipsis
+    attr: str
     ctx: expr_context
 
 
@@ -404,7 +406,7 @@ class Starred(_ast.Starred, expr, Mixin):
 
 
 class Name(_ast.Name, expr, Mixin):
-    id: ellipsis
+    id: str
     ctx: expr_context
 
 
@@ -554,7 +556,7 @@ class NotIn(_ast.NotIn, cmpop, Mixin):
 
 class ExceptHandler(_ast.ExceptHandler, excepthandler, Mixin):
     type: None | expr
-    name: None | ellipsis
+    name: None | str
     body: list[stmt]
 
 
@@ -573,23 +575,23 @@ class MatchSequence(_ast.MatchSequence, pattern, Mixin):
 class MatchMapping(_ast.MatchMapping, pattern, Mixin):
     keys: list[expr]
     patterns: list[pattern]
-    rest: ellipsis
+    rest: str
 
 
 class MatchClass(_ast.MatchClass, pattern, Mixin):
     cls: expr
     patterns: list[pattern]
-    kwd_attrs: list[ellipsis]
+    kwd_attrs: list[str]
     kwd_patterns: list[pattern]
 
 
 class MatchStar(_ast.MatchStar, pattern, Mixin):
-    name: None | ellipsis
+    name: None | str
 
 
 class MatchAs(_ast.MatchAs, pattern, Mixin):
     pattern: None
-    name: None | ellipsis
+    name: None | str
 
 
 class MatchOr(_ast.MatchOr, pattern, Mixin):
