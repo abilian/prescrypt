@@ -16,6 +16,7 @@ def gen_subscript(node: ast.Subscript, codegen: CodeGen):
 
 @gen_expr.register
 def gen_unary_op(node: ast.UnaryOp, codegen: CodeGen) -> str | list:
+    # We'bve desugared all unary ops to Not and USub (is it safe?)
     op = node.op
     operand = node.operand
 
@@ -76,23 +77,25 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
 
 @gen_expr.register
 def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
-    left, ops, comparators = node.left, node.ops, node.comparators
+    left_node, ops, comparator_nodes = node.left, node.ops, node.comparators
 
-    js_left = unify(codegen.gen_expr(left))
-    js_right = unify(codegen.gen_expr(comparators[0]))
+    js_left = unify(codegen.gen_expr(left_node))
+    js_right = unify(codegen.gen_expr(comparator_nodes[0]))
 
+    # We've desugar'd chained comparisons, so we only have one op
+    assert len(ops) == 1
     op = ops[0]
 
     if type(op) in (ast.Eq, ast.NotEq) and not js_left.endswith(".length"):
-        if codegen._pscript_overload:
-            code = codegen.call_std_function("op_equals", [js_left, js_right])
-            if type(op) == ast.NotEq:
-                code = "!" + code
-        else:
-            if type(op) == ast.NotEq:
-                code = [js_left, "!=", js_right]
-            else:
-                code = [js_left, "==", js_right]
+        code = codegen.call_std_function("op_equals", [js_left, js_right])
+        if type(op) == ast.NotEq:
+            code = "!" + code
+
+        # TODO: type inference
+        # if type(op) == ast.NotEq:
+        #     code = [js_left, "!=", js_right]
+        # else:
+        #     code = [js_left, "==", js_right]
         return code
 
     elif type(op) in (ast.In, ast.NotIn):

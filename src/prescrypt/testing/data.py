@@ -1,4 +1,4 @@
-EXPRESSIONS1 = [
+EXPRESSIONS = [
     # Literals
     "1",
     "1.0",
@@ -79,6 +79,7 @@ EXPRESSIONS1 = [
     "[]",
     "[1]",
     "[1, 2]",
+    "[1, 2] == [1, 2]",
     "[1, 2] == [2, 1]",
     "[1, 2] == list([1, 2])",
     #
@@ -127,7 +128,9 @@ EXPRESSIONS1 = [
     # Ellipsis
     # "str(...) == 'Ellipsis'",
     "%d" % 1,
+    #
     # Equality
+    #
     "1 == 1",
     "1 != 0",
     # "dict() == {}",
@@ -149,6 +152,8 @@ EXPRESSIONS1 = [
     "sorted([0, 4, 3, 1, 2])",
     "list(enumerate(['a', 'b', 'c']))",
     "list(zip([1, 2, 3], ['a', 'b', 'c']))",
+    "[1, 2] == sorted([2, 1])",
+    "[3, 2, 1] == sorted([2, 3, 1], reverse=True)",
     #
     # In expressions
     #
@@ -167,39 +172,8 @@ EXPRESSIONS1 = [
     # If expressions
     "1 if True else 2",
     "1 if False else 2",
-]
-
-# TODO: merge
-EXPRESSIONS2 = [
-    # "[1, 2] == [x for x in [1, 2]]",
-    # "[1, 2] == [x for x in (1, 2)]",
-    "[1, 2] == sorted([2, 1])",
-    # "{k: k for k in 'abc'}",
-    # Str
-    "str(1.0) == '1.'",
-    "str(1e3) == '1000.'",
-    # Lists
-    "[]",
-    "[1]",
-    "[1, 2]",
-    # Str (nope)
-    # "str(True)",
-    # "str(False)",
-    # "str(True) == 'True'",
-    # "str(False) == 'False'",
-    # Tupes (nope)
-    # "(1, 2)",
-    # Set expressions (nope)
-    # "1 in {1}",
-    # "1 not in {1}",
-    # "{1, 2} == {2, 1}",
-    # Fail
-    # "{1: 1}",
-    # "list({'a': 1}.items())",
-    # Ellipsis
-    # "str(...) == 'Ellipsis'",
+    #
+    # String formatting
+    #
     '"%d" % 1',
 ]
-
-EXPRESSIONS = EXPRESSIONS1[:]
-EXPRESSIONS += [expr for expr in EXPRESSIONS2 if expr not in EXPRESSIONS1]

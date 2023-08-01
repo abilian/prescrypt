@@ -71,5 +71,4 @@ while a > 0:
 
 def test_prog():
     js_code = py2js(PROG, include_stdlib=False)
-    debug(js_code)
-    assert False
+    assert js_code

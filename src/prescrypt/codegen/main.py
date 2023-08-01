@@ -118,10 +118,8 @@ class CodeGen:
     def gen_truthy(self, node: ast.expr) -> str | list:
         """Wraps an operation in a truthy call, unless it's not necessary."""
         eq_name = FUNCTION_PREFIX + "op_equals"
-        test = "".join(self.gen_expr(node))
-        if not self._pscript_overload:
-            return unify(test)
-        elif (
+        test = flatten(self.gen_expr(node))
+        if (
             test.endswith(".length")
             or test.startswith("!")
             or test.isnumeric()
