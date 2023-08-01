@@ -3,9 +3,9 @@ import ast as native_ast
 import pytest
 from devtools import debug
 
+from ..testing.data import EXPRESSIONS
 from . import ast
 from .converter import convert
-from ..testing.data import EXPRESSIONS
 
 
 def test_converter():

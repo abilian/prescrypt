@@ -2,6 +2,8 @@ from prescrypt.ast import ast
 
 from ..main import CodeGen, gen_expr
 
+MAP = {True: "true", False: "false", None: "null"}
+
 
 @gen_expr.register
 def gen_constant(node: ast.Constant, codegen: CodeGen):
@@ -19,5 +21,4 @@ def gen_constant(node: ast.Constant, codegen: CodeGen):
             return str(s)
 
         case ast.NameConstant(value):
-            M = {True: "true", False: "false", None: "null"}
-            return M[value]
+            return MAP[value]

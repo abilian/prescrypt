@@ -28,7 +28,7 @@ def gen_return(node: ast.Return, codegen: CodeGen):
         return codegen.lf("return null;")
 
 
-def _gen_functiondef(codegen: CodeGen, node: ast.stmt, lambda_=False, asyn=False):
+def _gen_functiondef(codegen: CodeGen, node: ast.AST, lambda_=False, asyn=False):
     # Common code for the FunctionDef and Lambda nodes.
     assert isinstance(node, (ast.FunctionDef, ast.Lambda, ast.AsyncFunctionDef))
 

@@ -3,10 +3,11 @@
 Custom AST.
 """
 from __future__ import annotations
-from typing import Any
-import ast as _ast
-from prescrypt.ast.mixin import Mixin
 
+import ast as _ast
+from typing import Any
+
+from prescrypt.ast.mixin import Mixin
 
 NodeVisitor = _ast.NodeVisitor
 NodeTransformer = _ast.NodeTransformer

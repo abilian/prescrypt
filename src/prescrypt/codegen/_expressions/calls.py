@@ -17,6 +17,11 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
     obj_js = ""
 
     match func:
+        # Function call
+        case ast.Name(id):
+            func_name = id
+
+        # Method call ?
         case ast.Attribute(value, attr, ctx):
             # TODO:
             # we asume for now that the left side is an object and the call
@@ -28,9 +33,6 @@ def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
             base_name = unify(codegen.gen_expr(value))
             full_name = unify(codegen.gen_expr(func))
             method_name = ""
-
-        case ast.Name(id):
-            func_name = id
 
         case _:
             method_name = ""

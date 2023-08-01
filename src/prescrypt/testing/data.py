@@ -6,6 +6,7 @@ EXPRESSIONS1 = [
     "1e-3",
     "True",
     "False",
+    "None",
     "'a'",
     '"a"',
     # "f'a'",
