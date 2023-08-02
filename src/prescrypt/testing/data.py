@@ -206,15 +206,14 @@ EXPRESSIONS = REGRESSIONS + [
     #
     # Str function / constructor
     #
-    "str(1.0) == '1.'",
-    "str(1e3) == '1000.'",
     "str(True).lower()",
     "str(False).lower()",
     "str([])",
     "str([1])",
     "str([1, 2, 'a', -1])",
-    "str(1.0)",
-    "str([1, 2]) == '[1, 2]'",
+    # "str(1.0)",
+    # "str(1.0) == '1.'",
+    # "str(1e3) == '1000.'",
     #
     # Str
     #

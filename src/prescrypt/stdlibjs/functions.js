@@ -152,19 +152,16 @@ export const delattr = function (ob, name) {
 
 // function: dict
 export const dict = function (x) {
-  let t,
-    i,
-    keys,
-    r = {};
+  const r = {};
   if (Array.isArray(x)) {
-    for (i = 0; i < x.length; i++) {
-      t = x[i];
+    for (let i = 0; i < x.length; i++) {
+      let t = x[i];
       r[t[0]] = t[1];
     }
   } else {
-    keys = Object.keys(x);
-    for (i = 0; i < keys.length; i++) {
-      t = keys[i];
+    const keys = Object.keys(x);
+    for (let i = 0; i < keys.length; i++) {
+      let t = keys[i];
       r[t] = x[t];
     }
   }
@@ -175,7 +172,7 @@ export const dict = function (x) {
 
 // function: list
 export const list = function (x) {
-  let r = [];
+  const r = [];
   if (typeof x === "object" && !Array.isArray(x)) {
     x = Object.keys(x);
   }
@@ -189,11 +186,10 @@ export const list = function (x) {
 
 // function: range
 export const range = function (start, end, step) {
-  let i,
-    res = [];
+  const res = [];
   let val = start;
   let n = (end - start) / step;
-  for (i = 0; i < n; i++) {
+  for (let i = 0; i < n; i++) {
     res.push(val);
     val += step;
   }
@@ -404,7 +400,7 @@ export const abs = Math.abs; // nargs: 1;
 // function: divmod
 export const divmod = function (x, y) {
   // nargs: 2
-  let m = x % y;
+  const m = x % y;
   return [(x - m) / y, m];
 };
 
@@ -439,12 +435,11 @@ export const any = function (x) {
 // function: enumerate
 export const enumerate = function (iter) {
   // nargs: 1
-  let i,
-    res = [];
+  const res = [];
   if (typeof iter === "object" && !Array.isArray(iter)) {
     iter = Object.keys(iter);
   }
-  for (i = 0; i < iter.length; i++) {
+  for (let i = 0; i < iter.length; i++) {
     res.push([i, iter[i]]);
   }
   return res;
@@ -455,24 +450,21 @@ export const enumerate = function (iter) {
 // function: zip
 export const zip = function () {
   // nargs: 2 3 4 5 6 7 8 9
-  let i,
-    j,
-    tup,
-    arg,
-    args = [],
-    res = [],
-    len = 1e20;
-  for (i = 0; i < arguments.length; i++) {
-    arg = arguments[i];
+  let len = 1e20;
+  const args = [],
+    res = [];
+
+  for (let i = 0; i < arguments.length; i++) {
+    let arg = arguments[i];
     if (typeof arg === "object" && !Array.isArray(arg)) {
       arg = Object.keys(arg);
     }
     args.push(arg);
     len = Math.min(len, arg.length);
   }
-  for (j = 0; j < len; j++) {
-    tup = [];
-    for (i = 0; i < args.length; i++) {
+  for (let j = 0; j < len; j++) {
+    const tup = [];
+    for (let i = 0; i < args.length; i++) {
       tup.push(args[i][j]);
     }
     res.push(tup);
@@ -578,7 +570,10 @@ export const op_equals = function op_equals(a, b) {
   }
 
   if (a == null || b == null) {
-  } else if (Array.isArray(a) && Array.isArray(b)) {
+    return a == b;
+  }
+
+  if (Array.isArray(a) && Array.isArray(b)) {
     let i = 0,
       iseq = a.length == b.length;
     while (iseq && i < a.length) {

@@ -3,14 +3,35 @@ from devtools import debug
 
 from prescrypt.compiler import py2js
 
+ONE_LINE_STATEMENTS = [
+    "pass",
+    "if 1: pass",
+    "while 0: pass",
+    "while 1: break",
+    "while 0: continue",
+    "assert 1",
+    "raise Exception()",
+    "a = 1",
+    "del a",
+    "global a",
+    "for i in range(10): pass",
+    "def f(): pass",
+    "def f(a): return a",
+    "class A: pass",
+    "class A: a = 1",
+]
+
 # language=Python
 _MULTINE_STATEMENTS = """
+pass
+###
 try:
     1
 except:
     pass
 ###
-pass
+def f():
+    pass
 ###
 class A:
     pass
@@ -30,22 +51,6 @@ if a == 1:
     print("hello")
 """
 
-ONE_LINE_STATEMENTS = [
-    "pass",
-    "if 1: pass",
-    "while 0: pass",
-    "while 1: break",
-    "while 0: continue",
-    "assert 1",
-    "raise Exception()",
-    "a = 1",
-    "del a",
-    "global a",
-    "for i in range(10): pass",
-    "class A: pass",
-    "class A: a = 1",
-]
-
 
 def get_statements():
     for stmt in ONE_LINE_STATEMENTS:
@@ -59,16 +64,3 @@ def get_statements():
 def test_statement(statement: str):
     js_code = py2js(statement)
     debug(statement, js_code)
-
-
-PROG = """
-a = 10
-while a > 0:
-    a -= 1
-    print("hello")
-""".strip()
-
-
-def test_prog():
-    js_code = py2js(PROG, include_stdlib=False)
-    assert js_code

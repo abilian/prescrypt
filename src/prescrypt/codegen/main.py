@@ -34,6 +34,8 @@ class CodeGen:
         self._stack = []
         self.push_ns("module", "module")
 
+        self.NAME_MAP = {}
+
         assert isinstance(self.module, ast.Module)
 
         self._indent = 0
