@@ -1,7 +1,6 @@
 import ast as native_ast
 
 import pytest
-from devtools import debug
 
 from ..testing.data import EXPRESSIONS
 from . import ast

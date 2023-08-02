@@ -1,11 +1,18 @@
-.PHONY: all develop test lint clean doc format
+.PHONY: all develop test lint clean doc format build
 .PHONY: clean clean-build clean-pyc clean-test coverage dist docs install lint lint/flake8
 
 # The package name
 PKG=pywire
 
 
-all: lint test
+all: build test lint
+
+#
+# Build
+#
+build:
+	python src/prescrypt/tools/gen_stdlibjs.py
+	
 
 #
 # Setup

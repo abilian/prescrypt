@@ -348,17 +348,22 @@ export const str = function (x) {
     }
     let result = "[" + FUNCTION_PREFIXstr(x[0]);
     for (let i = 1; i < x.length; i++) {
-      let t = FUNCTION_PREFIXstr(x[i]);
-      result = result.concat(", " + t);
+      const e = x[i];
+      if (typeof e === "string") {
+        if (e.indexOf("'") == -1) {
+          result = result.concat(", " + "'" + e + "'");
+        } else {
+          result = result.concat(", " + JSON.stringify(e));
+        }
+      } else {
+        const t = FUNCTION_PREFIXstr(e);
+        result = result.concat(", " + t);
+      }
     }
     return result + "]";
   }
   if (typeof x === "string") {
-    if (!x.includes("'")) {
-      return "'" + x + "'";
-    } else {
-      return JSON.stringify(x);
-    }
+    return x;
   }
   // Default
   return JSON.stringify(x);

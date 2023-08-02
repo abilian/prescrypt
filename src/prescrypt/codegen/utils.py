@@ -1,8 +1,6 @@
 import json
 import re
 
-from devtools import debug
-
 
 def unify(x):
     """Turn string or list of strings parts into string.

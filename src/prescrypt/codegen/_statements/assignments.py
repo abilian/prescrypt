@@ -2,7 +2,7 @@ from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
 
 from ..main import CodeGen, gen_stmt
-from ..utils import flatten, unify
+from ..utils import flatten
 
 
 @gen_stmt.register

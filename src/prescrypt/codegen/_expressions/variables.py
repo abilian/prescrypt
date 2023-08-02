@@ -1,5 +1,3 @@
-from buildstr import Builder
-
 from prescrypt.ast import ast
 from prescrypt.constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES, NAME_MAP
 from prescrypt.exceptions import JSError

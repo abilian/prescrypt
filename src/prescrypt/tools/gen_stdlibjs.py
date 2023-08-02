@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from prescrypt.stdlib_js import (FUNCTION_PREFIX, METHOD_PREFIX,
-                                 get_full_std_lib)
+from prescrypt.stdlib_js import get_full_std_lib
 
 stdlib_js = get_full_std_lib()
 

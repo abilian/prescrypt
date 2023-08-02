@@ -3,6 +3,7 @@ from prescrypt.exceptions import JSError
 
 from ..main import CodeGen
 from ..utils import flatten, unify
+from .constructors import function_str
 
 
 #
@@ -97,8 +98,14 @@ def function_print(codegen: CodeGen, args, kwargs):
             raise JSError(f"Invalid argument for print(): {kw.name!r}")
 
     # Combine args
-    js_args = [unify(codegen.gen_expr(arg)) for arg in args]
-    end = f" + {end}" if (js_args and end and end != "\n") else ""
+    js_args = []
+    for arg in args:
+        js_arg = function_str(codegen, [arg], [])
+        js_args.append(js_arg)
+    if js_args and end and end != "\n":
+        end = f" + {end}"
+    else:
+        end = ""
     combiner = f" + {sep} + "
     args_concat = combiner.join(js_args) or '""'
     return "console.log(" + args_concat + end + ")"

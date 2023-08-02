@@ -1,8 +1,6 @@
 import pytest
 
 from prescrypt.ast import ast
-from prescrypt.passes.binder import Binder
-from prescrypt.passes.type_inference import TypeInference
 from prescrypt.testing.data import EXPRESSIONS
 
 from ..desugar import desugar
