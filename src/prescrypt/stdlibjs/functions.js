@@ -4,7 +4,7 @@ export const perf_counter = function () {
   if (typeof process === "undefined") {
     return performance.now() * 1e-3;
   } else {
-    let t = process.hrtime();
+    const t = process.hrtime();
     return t[0] + t[1] * 1e-9;
   }
 };
@@ -47,7 +47,7 @@ export const op_instantiate = function (ob, args) {
 
 // function: create_dict
 export const create_dict = function () {
-  let d = {};
+  const d = {};
   for (let i = 0; i < arguments.length; i += 2) {
     d[arguments[i]] = arguments[i + 1];
   }
@@ -58,13 +58,12 @@ export const create_dict = function () {
 
 // function: merge_dicts
 export const merge_dicts = function () {
-  let res = {};
+  const res = {};
   for (let i = 0; i < arguments.length; i++) {
-    let d = arguments[i];
-    let key,
-      keys = Object.keys(d);
+    const d = arguments[i];
+    const keys = Object.keys(d);
     for (let j = 0; j < keys.length; j++) {
-      key = keys[j];
+      let key = keys[j];
       res[key] = d[key];
     }
   }
@@ -152,34 +151,34 @@ export const delattr = function (ob, name) {
 
 // function: dict
 export const dict = function (x) {
-  const r = {};
+  const res = {};
   if (Array.isArray(x)) {
     for (let i = 0; i < x.length; i++) {
       let t = x[i];
-      r[t[0]] = t[1];
+      res[t[0]] = t[1];
     }
   } else {
     const keys = Object.keys(x);
     for (let i = 0; i < keys.length; i++) {
       let t = keys[i];
-      r[t] = x[t];
+      res[t] = x[t];
     }
   }
-  return r;
+  return res;
 };
 
 // ---
 
 // function: list
 export const list = function (x) {
-  const r = [];
+  const res = [];
   if (typeof x === "object" && !Array.isArray(x)) {
     x = Object.keys(x);
   }
   for (let i = 0; i < x.length; i++) {
-    r.push(x[i]);
+    res.push(x[i]);
   }
-  return r;
+  return res;
 };
 
 // ---
@@ -320,7 +319,9 @@ export const round = Math.round; // nargs: 1;
 // function: int
 export const int = function (x, base) {
   // nargs: 1 2
-  if (base !== undefined) return parseInt(x, base);
+  if (base !== undefined) {
+    return parseInt(x, base);
+  }
   return x < 0 ? Math.ceil(x) : Math.floor(x);
 };
 
@@ -581,21 +582,23 @@ export const op_equals = function op_equals(a, b) {
       i += 1;
     }
     return iseq;
-  } else if (a.constructor === Object && b.constructor === Object) {
-    let akeys = Object.keys(a),
+  }
+
+  if (a.constructor === Object && b.constructor === Object) {
+    const akeys = Object.keys(a),
       bkeys = Object.keys(b);
     akeys.sort();
     bkeys.sort();
     let i = 0,
-      k,
       iseq = op_equals(akeys, bkeys);
     while (iseq && i < akeys.length) {
-      k = akeys[i];
+      const k = akeys[i];
       iseq = op_equals(a[k], b[k]);
       i += 1;
     }
     return iseq;
   }
+
   return a == b;
 };
 
@@ -630,9 +633,8 @@ export const op_add = function (a, b) {
   // nargs: 2
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.concat(b);
-  } else {
-    return a + b;
   }
+  return a + b;
 };
 
 // ---

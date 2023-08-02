@@ -1,4 +1,4 @@
-var _pyfunc_abs = Math.abs;
+var _pyfunc_abs = Math.abs;;
 var _pyfunc_all = function (x) {
   // nargs: 1
   for (let i = 0; i < x.length; i++) {
@@ -22,7 +22,7 @@ var _pyfunc_bool = function (x) {
   return Boolean(_pyfunc_truthy(x));
 };
 var _pyfunc_create_dict = function () {
-  let d = {};
+  const d = {};
   for (let i = 0; i < arguments.length; i += 2) {
     d[arguments[i]] = arguments[i + 1];
   }
@@ -33,20 +33,20 @@ var _pyfunc_delattr = function (ob, name) {
   delete ob[name];
 };
 var _pyfunc_dict = function (x) {
-  const r = {};
+  const res = {};
   if (Array.isArray(x)) {
     for (let i = 0; i < x.length; i++) {
       let t = x[i];
-      r[t[0]] = t[1];
+      res[t[0]] = t[1];
     }
   } else {
     const keys = Object.keys(x);
     for (let i = 0; i < keys.length; i++) {
       let t = keys[i];
-      r[t] = x[t];
+      res[t] = x[t];
     }
   }
-  return r;
+  return res;
 };
 var _pyfunc_divmod = function (x, y) {
   // nargs: 2
@@ -76,7 +76,7 @@ var _pyfunc_filter = function (func, iter) {
   }
   return iter.filter(func);
 };
-var _pyfunc_float = Number;
+var _pyfunc_float = Number;;
 var _pyfunc_format = function (v, fmt) {
   // nargs: 2
   fmt = fmt.toLowerCase();
@@ -191,18 +191,20 @@ var _pyfunc_hasattr = function (ob, name) {
 };
 var _pyfunc_int = function (x, base) {
   // nargs: 1 2
-  if (base !== undefined) return parseInt(x, base);
+  if (base !== undefined) {
+    return parseInt(x, base);
+  }
   return x < 0 ? Math.ceil(x) : Math.floor(x);
 };
 var _pyfunc_list = function (x) {
-  const r = [];
+  const res = [];
   if (typeof x === "object" && !Array.isArray(x)) {
     x = Object.keys(x);
   }
   for (let i = 0; i < x.length; i++) {
-    r.push(x[i]);
+    res.push(x[i]);
   }
-  return r;
+  return res;
 };
 var _pyfunc_map = function (func, iter) {
   // nargs: 2
@@ -217,13 +219,12 @@ var _pyfunc_map = function (func, iter) {
   return iter.map(func);
 };
 var _pyfunc_merge_dicts = function () {
-  let res = {};
+  const res = {};
   for (let i = 0; i < arguments.length; i++) {
-    let d = arguments[i];
-    let key,
-      keys = Object.keys(d);
+    const d = arguments[i];
+    const keys = Object.keys(d);
     for (let j = 0; j < keys.length; j++) {
-      key = keys[j];
+      let key = keys[j];
       res[key] = d[key];
     }
   }
@@ -233,9 +234,8 @@ var _pyfunc_op_add = function (a, b) {
   // nargs: 2
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.concat(b);
-  } else {
-    return a + b;
   }
+  return a + b;
 };
 var _pyfunc_op_contains = function op_contains(a, b) {
   // nargs: 2
@@ -278,21 +278,23 @@ var _pyfunc_op_equals = function op_equals(a, b) {
       i += 1;
     }
     return iseq;
-  } else if (a.constructor === Object && b.constructor === Object) {
-    let akeys = Object.keys(a),
+  }
+
+  if (a.constructor === Object && b.constructor === Object) {
+    const akeys = Object.keys(a),
       bkeys = Object.keys(b);
     akeys.sort();
     bkeys.sort();
     let i = 0,
-      k,
       iseq = op_equals(akeys, bkeys);
     while (iseq && i < akeys.length) {
-      k = akeys[i];
+      const k = akeys[i];
       iseq = op_equals(a[k], b[k]);
       i += 1;
     }
     return iseq;
   }
+
   return a == b;
 };
 var _pyfunc_op_error = function (etype, msg) {
@@ -342,7 +344,12 @@ var _pyfunc_op_mult = function (a, b) {
   }
   return a * b;
 };
-var _pyfunc_op_parse_kwargs = function (arg_names, arg_values, kwargs, strict) {
+var _pyfunc_op_parse_kwargs = function (
+  arg_names,
+  arg_values,
+  kwargs,
+  strict
+) {
   // nargs: 3
   for (let i = 0; i < arg_values.length; i++) {
     let name = arg_names[i];
@@ -364,11 +371,11 @@ var _pyfunc_perf_counter = function () {
   if (typeof process === "undefined") {
     return performance.now() * 1e-3;
   } else {
-    let t = process.hrtime();
+    const t = process.hrtime();
     return t[0] + t[1] * 1e-9;
   }
 };
-var _pyfunc_pow = Math.pow;
+var _pyfunc_pow = Math.pow;;
 var _pyfunc_range = function (start, end, step) {
   const res = [];
   let val = start;
@@ -399,7 +406,7 @@ var _pyfunc_reversed = function (iter) {
   }
   return iter.slice().reverse();
 };
-var _pyfunc_round = Math.round;
+var _pyfunc_round = Math.round;;
 var _pyfunc_setattr = function (ob, name, value) {
   // nargs: 3
   ob[name] = value;
@@ -508,8 +515,7 @@ var _pymeth_append = function (x) {
 };
 var _pymeth_capitalize = function () {
   // nargs: 0
-  if (this.constructor !== String)
-    return this.capitalize.apply(this, arguments);
+  if (this.constructor !== String) return this.capitalize.apply(this, arguments);
   return this.slice(0, 1).toUpperCase() + this.slice(1).toLowerCase();
 };
 var _pymeth_casefold = function () {
@@ -586,8 +592,7 @@ var _pymeth_endswith = function (x) {
 };
 var _pymeth_expandtabs = function (tabsize) {
   // nargs: 0 1
-  if (this.constructor !== String)
-    return this.expandtabs.apply(this, arguments);
+  if (this.constructor !== String) return this.expandtabs.apply(this, arguments);
   tabsize = tabsize === undefined ? 8 : tabsize;
   return this.replace(/\t/g, _pymeth_repeat.call(" ", tabsize));
 };
@@ -703,8 +708,7 @@ var _pymeth_isdigit = function () {
 };
 var _pymeth_isidentifier = function () {
   // nargs: 0
-  if (this.constructor !== String)
-    return this.isidentifier.apply(this, arguments);
+  if (this.constructor !== String) return this.isidentifier.apply(this, arguments);
 
   return Boolean(/^[A-Za-z_][A-Za-z0-9_]*$/.test(this));
 };
@@ -764,8 +768,7 @@ var _pymeth_join = function (x) {
 };
 var _pymeth_keys = function () {
   // nargs: 0
-  if (typeof this["keys"] === "function")
-    return this.keys.apply(this, arguments);
+  if (typeof this["keys"] === "function") return this.keys.apply(this, arguments);
   return Object.keys(this);
 };
 var _pymeth_ljust = function (w, fill) {
@@ -920,8 +923,7 @@ var _pymeth_rjust = function (w, fill) {
 };
 var _pymeth_rpartition = function (sep) {
   // nargs: 1
-  if (this.constructor !== String)
-    return this.rpartition.apply(this, arguments);
+  if (this.constructor !== String) return this.rpartition.apply(this, arguments);
   if (sep === "") {
     let e = Error("empty sep");
     e.name = "ValueError";
@@ -954,8 +956,7 @@ var _pymeth_rstrip = function (chars) {
 };
 var _pymeth_setdefault = function (key, d) {
   // nargs: 1 2
-  if (this.constructor !== Object)
-    return this.setdefault.apply(this, arguments);
+  if (this.constructor !== Object) return this.setdefault.apply(this, arguments);
   if (this[key] !== undefined) {
     return this[key];
   } else if (d !== undefined) {
@@ -1013,8 +1014,7 @@ var _pymeth_split = function (sep, count) {
 };
 var _pymeth_splitlines = function (keepends) {
   // nargs: 0 1
-  if (this.constructor !== String)
-    return this.splitlines.apply(this, arguments);
+  if (this.constructor !== String) return this.splitlines.apply(this, arguments);
   keepends = keepends ? 1 : 0;
   let finder = /\r\n|\r|\n/g;
   let i = 0,
@@ -1034,8 +1034,7 @@ var _pymeth_splitlines = function (keepends) {
 };
 var _pymeth_startswith = function (x) {
   // nargs: 1
-  if (this.constructor !== String)
-    return this.startswith.apply(this, arguments);
+  if (this.constructor !== String) return this.startswith.apply(this, arguments);
   return this.indexOf(x) == 0;
 };
 var _pymeth_strip = function (chars) {
