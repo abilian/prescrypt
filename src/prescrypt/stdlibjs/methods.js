@@ -1,7 +1,10 @@
 // method: append
 export const append = function (x) {
   // nargs: 1
-  if (!Array.isArray(this)) return this.KEY.apply(this, arguments);
+  if (!Array.isArray(this)) {
+    return this.KEY.apply(this, arguments);
+  }
+
   this.push(x);
 };
 
@@ -10,7 +13,10 @@ export const append = function (x) {
 // method: extend
 export const extend = function (x) {
   // nargs: 1
-  if (!Array.isArray(this)) return this.KEY.apply(this, arguments);
+  if (!Array.isArray(this)) {
+    return this.KEY.apply(this, arguments);
+  }
+
   this.push.apply(this, x);
 };
 
@@ -19,7 +25,10 @@ export const extend = function (x) {
 // method: insert
 export const insert = function (i, x) {
   // nargs: 2
-  if (!Array.isArray(this)) return this.KEY.apply(this, arguments);
+  if (!Array.isArray(this)) {
+    return this.KEY.apply(this, arguments);
+  }
+
   i = i < 0 ? this.length + i : i;
   this.splice(i, 0, x);
 };
@@ -29,7 +38,10 @@ export const insert = function (i, x) {
 // method: remove
 export const remove = function (x) {
   // nargs: 1
-  if (!Array.isArray(this)) return this.KEY.apply(this, arguments);
+  if (!Array.isArray(this)) {
+    return this.KEY.apply(this, arguments);
+  }
+
   for (let i = 0; i < this.length; i++) {
     if (FUNCTION_PREFIXop_equals(this[i], x)) {
       this.splice(i, 1);
@@ -54,7 +66,10 @@ export const reverse = function () {
 // method: sort
 export const sort = function (key, reverse) {
   // nargs: 0 1 2
-  if (!Array.isArray(this)) return this.KEY.apply(this, arguments);
+  if (!Array.isArray(this)) {
+    return this.KEY.apply(this, arguments);
+  }
+
   let comp = function (a, b) {
     a = key(a);
     b = key(b);
@@ -92,11 +107,10 @@ export const copy = function () {
   if (Array.isArray(this)) {
     return this.slice(0);
   } else if (this.constructor === Object) {
-    let key,
-      keys = Object.keys(this),
+    const keys = Object.keys(this),
       res = {};
     for (let i = 0; i < keys.length; i++) {
-      key = keys[i];
+      let key = keys[i];
       res[key] = this[key];
     }
     return res;
