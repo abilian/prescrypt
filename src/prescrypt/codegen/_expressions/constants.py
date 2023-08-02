@@ -23,5 +23,5 @@ def gen_constant(node: ast.Constant, codegen: CodeGen):
         case ast.Constant(None):
             return "null"
 
-        case ast.NameConstant(value):
-            return MAP[value]
+        case _:  # pragma: no cover
+            raise ValueError(f"Unknown Constant: {node}")

@@ -30,18 +30,18 @@ def test_expressions(expression: str):
     js_code = py2js(py_code, include_stdlib=False)
     full_js_code = py2js(py_code)
 
-    debug(py_code, js_code)
-
     ctx = quickjs.Context()
     js_result = ctx.eval(full_js_code)
     if isinstance(js_result, quickjs.Object):
-        js_result = js_result.json()
-        js_result = json.loads(js_result)
+        js_result = json.loads(js_result.json())
 
     # try:
     #     js_result = interpreter.evaljs(full_code)
     # except JSRuntimeError:
     #     print(full_code)
     #     raise
+
+    if not js_eq(js_result, py_result):
+        debug(py_code, js_code)
 
     assert js_eq(js_result, py_result), f"{expression} : {js_result} != {py_result}"

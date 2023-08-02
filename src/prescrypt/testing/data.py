@@ -16,11 +16,14 @@ EXPRESSIONS = REGRESSIONS + [
     #
     # Arithmetic ops
     #
+    "+1",
     "-1",
+    "~1",
     "1+1",
     "2 * 3 + 5 * 6",
     "1 // 2",
     "1 % 2",
+    "2 ** 2",
     #
     # Float ops
     #
@@ -30,6 +33,9 @@ EXPRESSIONS = REGRESSIONS + [
     "1.0 * 1.0",
     "1.0 / 1.0",
     "1 / 2",
+    "1.0 // 2.0",
+    "1.0 % 2.0",
+    "2.0 ** 2.0",
     #
     # String ops
     #
@@ -43,6 +49,30 @@ EXPRESSIONS = REGRESSIONS + [
     "True and False",
     "not True",
     "not False",
+    "True and False or True",
+    "True and (False or True)",
+    "True and False or False",
+    "True and (False or False)",
+    "True or False and True",
+    "(True or False) and True",
+    "True or False and False",
+    "(True or False) and False",
+    "True or True and True",
+    "True or True and False",
+    "(True or True) and False",
+    "True or True or True",
+    "True or True or False",
+    "True or False or True",
+    "True or False or False",
+    "False or True or True",
+    "False or True or False",
+    "False or False or True",
+    "False or False or False",
+    "True and True and True",
+    "True and True and False",
+    "True and False and True",
+    "True and False and False",
+    "False and True and True",
     #
     # Bitwise ops
     #
@@ -60,6 +90,10 @@ EXPRESSIONS = REGRESSIONS + [
     "1 <= 2",
     "1 > 2",
     "1 >= 2",
+    "1 < 2 < 3",
+    "1 < 3 < 2",
+    "3 > 2 > 1",
+    "1 > 3 > 2",
     #
     # Constructors
     #

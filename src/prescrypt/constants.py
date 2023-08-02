@@ -3,15 +3,16 @@ import re
 from . import stdlib_js
 from .ast import ast
 
-NAME_MAP = {
-    "True": "true",
-    "False": "false",
-    "None": "null",
-    "unicode": "str",  # legacy Py compat
-    "unichr": "chr",
-    "xrange": "range",
-    "self": "this",
-}
+# Not needed ?
+# NAME_MAP = {
+#     # "True": "true",
+#     # "False": "false",
+#     # "None": "null",
+#     # "unicode": "str",  # legacy Py compat
+#     # "unichr": "chr",
+#     # "xrange": "range",
+#     # "self": "this",
+# }
 
 ATTRIBUTE_MAP = {
     "__class__": "Object.getPrototypeOf({})",

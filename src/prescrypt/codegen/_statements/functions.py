@@ -85,7 +85,9 @@ class BaseFunDef:
         # Collect args
         argnames = []
         for arg in args:
-            name = self.codegen.NAME_MAP.get(arg.arg, arg.arg)
+            name = arg.arg
+            if name == "self":
+                name = "this"
             if name != "this":
                 argnames.append(name)
                 # Add code and comma
@@ -179,7 +181,9 @@ def _gen_functiondef(codegen: CodeGen, node: ast.AST, is_lambda=False, asyn=Fals
     # Collect args
     argnames = []
     for arg in args:
-        name = codegen.NAME_MAP.get(arg.arg, arg.arg)
+        name = arg.arg
+        if name == "self":
+            name = "this"
         if name != "this":
             argnames.append(name)
             # Add code and comma

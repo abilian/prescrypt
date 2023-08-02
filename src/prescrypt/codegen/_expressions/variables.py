@@ -1,5 +1,5 @@
 from prescrypt.ast import ast
-from prescrypt.constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES, NAME_MAP
+from prescrypt.constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES
 from prescrypt.exceptions import JSError
 
 from ..main import CodeGen, gen_expr
@@ -9,8 +9,6 @@ from ..utils import js_repr, unify
 @gen_expr.register
 def gen_name(node: ast.Name, codegen: CodeGen) -> str:
     name = node.id
-    # ctx = node.ctx
-    # ctx can be Load, Store, Del -> can be of use somewhere?
 
     if name in JS_RESERVED_NAMES:
         raise JSError(f"Cannot use reserved name {name} as a variable name!")
@@ -27,8 +25,8 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
     #             if prefixed_name in scope:
     #                 return prefixed_name
 
-    if name in NAME_MAP:
-        return NAME_MAP[name]
+    # if name in NAME_MAP:
+    #     return NAME_MAP[name]
 
     # if name in self._functions or name in ("undefined", "window"):
     #     return name

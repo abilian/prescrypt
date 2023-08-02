@@ -45,8 +45,6 @@ def test_converter2(expression):
 
 
 def check_tree(tree: ast.AST):
-    # debug(tree, type(tree))
-    # assert isinstance(tree, (ast.AST, ast.Module))
     for k in tree._fields:
         v = getattr(tree, k)
         if isinstance(v, list):

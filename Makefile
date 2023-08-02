@@ -12,7 +12,7 @@ all: build test lint
 #
 build:
 	python src/prescrypt/tools/gen_stdlibjs.py
-	
+
 
 #
 # Setup
@@ -101,7 +101,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache */.pytest_cache */*/.pytest_cache
-
+	rm tests/whole_programs/programs/*.js
 
 ## Cleanup harder
 tidy: clean

@@ -100,12 +100,10 @@ class Desugarer(ast.NodeTransformer):
                 return node.operand
             case ast.USub:
                 return ast.BinOp(ast.Constant(0), ast.Sub(), node.operand)
-            case ast.Not:
+            case ast.Not | ast.Invert:
                 return node
-            case ast.Invert:
-                raise NotImplementedError(f"UnaryOp {node.op} not implemented")
-            case _:
-                raise NotImplementedError(f"UnaryOp {node.op} not implemented")
+            case _:  # pragma: no cover
+                raise ValueError(f"UnaryOp {node.op} should not exist")
 
     @rewriter
     def visit_BoolOp(self, node: ast.BoolOp):

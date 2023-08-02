@@ -1,5 +1,6 @@
-print("AAA".lower())
-print("aaa".upper())
-print("aaa".capitalize())
-print("aaa".title())
-print("aAa".swapcase())
+s = "aAbB$#"
+print(s.lower())
+print(s.upper())
+print(s.capitalize())
+print(s.title())
+print(s.swapcase())
