@@ -537,16 +537,26 @@ var _pymeth_clear = function () {
   // nargs: 0
   if (Array.isArray(this)) {
     this.splice(0, this.length);
-  } else if (this.constructor === Object) {
-    let keys = Object.keys(this);
-    for (let i = 0; i < keys.length; i++) delete this[keys[i]];
-  } else return this.clear.apply(this, arguments);
+    return;
+  }
+
+  if (this.constructor === Object) {
+    const keys = Object.keys(this);
+    for (let i = 0; i < keys.length; i++) {
+      delete this[keys[i]];
+    }
+    return;
+  }
+
+  return this.clear.apply(this, arguments);
 };
 var _pymeth_copy = function () {
   // nargs: 0
   if (Array.isArray(this)) {
     return this.slice(0);
-  } else if (this.constructor === Object) {
+  }
+
+  if (this.constructor === Object) {
     const keys = Object.keys(this),
       res = {};
     for (let i = 0; i < keys.length; i++) {
@@ -554,7 +564,9 @@ var _pymeth_copy = function () {
       res[key] = this[key];
     }
     return res;
-  } else return this.copy.apply(this, arguments);
+  }
+
+  return this.copy.apply(this, arguments);
 };
 var _pymeth_count = function (x, start, stop) {
   // nargs: 1 2 3
@@ -822,21 +834,29 @@ var _pymeth_pop = function (i, d) {
   if (Array.isArray(this)) {
     i = i === undefined ? -1 : i;
     i = i < 0 ? this.length + i : i;
-    let popped = this.splice(i, 1);
-    if (popped.length) return popped[0];
-    let e = Error(i);
+    const popped = this.splice(i, 1);
+    if (popped.length) {
+      return popped[0];
+    }
+    const e = Error(i);
     e.name = "IndexError";
     throw e;
-  } else if (this.constructor === Object) {
+  }
+
+  if (this.constructor === Object) {
     let res = this[i];
     if (res !== undefined) {
       delete this[i];
       return res;
-    } else if (d !== undefined) return d;
-    let e = Error(i);
+    } else if (d !== undefined) {
+      return d;
+    }
+    const e = Error(i);
     e.name = "KeyError";
     throw e;
-  } else return this.pop.apply(this, arguments);
+  }
+
+  return this.pop.apply(this, arguments);
 };
 var _pymeth_popitem = function () {
   // nargs: 0
@@ -865,7 +885,7 @@ var _pymeth_remove = function (x) {
       return;
     }
   }
-  let e = Error(x);
+  const e = Error(x);
   e.name = "ValueError";
   throw e;
 };
@@ -997,7 +1017,9 @@ var _pymeth_sort = function (key, reverse) {
   };
   comp = Boolean(key) ? comp : undefined;
   this.sort(comp);
-  if (reverse) this.reverse();
+  if (reverse) {
+    this.reverse();
+  }
 };
 var _pymeth_split = function (sep, count) {
   // nargs: 0, 1 2
