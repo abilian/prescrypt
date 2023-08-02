@@ -90,15 +90,22 @@ class Desugarer(ast.NodeTransformer):
         return new_node
 
     @rewriter
-    def visit_UnaryOp(self, node):
+    def visit_UnaryOp(self, node: ast.UnaryOp):
         """
         Transforms `-X` to `(0 - X)` and `+X` to `X`.
         """
         match type(node.op):
             case ast.UAdd:
+                # Ignore "+" operator
                 return node.operand
             case ast.USub:
                 return ast.BinOp(ast.Constant(0), ast.Sub(), node.operand)
+            case ast.Not:
+                return node
+            case ast.Invert:
+                raise NotImplementedError(f"UnaryOp {node.op} not implemented")
+            case _:
+                raise NotImplementedError(f"UnaryOp {node.op} not implemented")
 
     @rewriter
     def visit_BoolOp(self, node: ast.BoolOp):

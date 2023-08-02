@@ -1,9 +1,8 @@
 import heapq
 import random
 
-import dukpy
-
 from prescrypt import py2js
+from prescrypt.testing import js_eval
 
 GRAMMAR = {
     "<expr>": [
@@ -73,8 +72,7 @@ def test_gen():
         except Exception as e:
             continue
 
-        jscode = py2js(expr)
-        interpreter = dukpy.JSInterpreter()
-        js_result = interpreter.evaljs(jscode)
+        js_code = py2js(expr)
+        js_result = js_eval(js_code)
 
         assert py_result == js_result, f"{expr} = {py_result} != {js_result}"

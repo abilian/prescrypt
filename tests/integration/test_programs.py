@@ -1,8 +1,8 @@
-import dukpy
 import pytest
 from devtools import debug
 
 from prescrypt import py2js
+from prescrypt.testing import js_eval, js_eq
 
 # language=python
 P1 = """
@@ -142,8 +142,8 @@ def test_programs(program: str):
     exec(code, py_ctx)
     py_result = py_ctx["result"]
 
-    jscode = py2js(code)
-    js_result = dukpy.evaljs(jscode)
+    js_code = py2js(code)
+    js_result = js_eval(js_code)
 
-    debug(jscode)
-    assert js_result == py_result, f"{js_result} != {py_result}"
+    debug(js_code)
+    assert js_eq(js_result, py_result), f"{js_result} != {py_result}"

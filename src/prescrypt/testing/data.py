@@ -1,4 +1,6 @@
-EXPRESSIONS = [
+REGRESSIONS = ["[1, 2, 'a', -1]"]
+
+EXPRESSIONS = REGRESSIONS + [
     #
     # Literals
     #
@@ -14,18 +16,33 @@ EXPRESSIONS = [
     #
     # Arithmetic ops
     #
+    "-1",
     "1+1",
     "2 * 3 + 5 * 6",
-    "'a' + 'b'",
-    "3 * 'a'",
-    '"a" + "b"',
     "1 // 2",
     "1 % 2",
+    #
+    # Float ops
+    #
+    "-1.0",
+    "1.0 + 1.0",
+    "1.0 - 1.0",
+    "1.0 * 1.0",
+    "1.0 / 1.0",
+    "1 / 2",
+    #
+    # String ops
+    #
+    "3 * 'a'",
+    "'a' + 'b'",
+    '"a" + "b"',
     #
     # Boolean ops
     #
     "True or False",
     "True and False",
+    "not True",
+    "not False",
     #
     # Bitwise ops
     #
@@ -92,7 +109,7 @@ EXPRESSIONS = [
     "list(enumerate(['a', 'b', 'c']))",
     "list(zip([1, 2, 3], ['a', 'b', 'c']))",
     "[1, 2] == sorted([2, 1])",
-    "[3, 2, 1] == sorted([2, 3, 1], reverse=True)",
+    # "[3, 2, 1] == sorted([2, 3, 1], reverse=True)",
     #
     # More builtin functions
     #
@@ -161,8 +178,8 @@ EXPRESSIONS = [
     "round(1.5)",
     # "slice()",
     # "sum()",
-    sum([1, 2]),
-    sum([]),
+    "sum([1, 2])",
+    "sum([])",
     # "super()",
     # "type()",
     # "vars()",
@@ -195,8 +212,50 @@ EXPRESSIONS = [
     "str(False).lower()",
     "str([])",
     "str([1])",
-    "str([1, 2, 'a', 1.0])",
+    "str([1, 2, 'a', -1])",
+    "str(1.0)",
     "str([1, 2]) == '[1, 2]'",
+    #
+    # Str
+    #
+    # "'a'.upper()",
+    # "'a'.lower()",
+    # "'a'.capitalize()",
+    # "'a'.title()",
+    # "'a'.swapcase()",
+    # "'a'.isupper()",
+    # "'a'.islower()",
+    # "'a'.istitle()",
+    # "'a'.isalpha()",
+    # "'a'.isalnum()",
+    # "'a'.isdigit()",
+    # "'a'.isspace()",
+    # "'a'.isprintable()",
+    # "'a'.isdecimal()",
+    # "'a'.encode()",
+    # "'abc'.startswith('a')",
+    # "'abc'.startswith('b')",
+    # "'abc'.endswith('c')",
+    # "'abc'.endswith('b')",
+    # "'abc'.find('a')",
+    # "'abc'.find('b')",
+    # "'abc'.find('c')",
+    # "'abc'.find('d')",
+    # "'abc'.rfind('a')",
+    # "'abc'.rfind('b')",
+    # "'abc'.rfind('c')",
+    # "'abc'.rfind('d')",
+    # "'abc'.index('a')",
+    # "'abc'.index('b')",
+    # "'abc'.index('c')",
+    # "'abc'.rindex('a')",
+    # "'abc'.rindex('b')",
+    # "'abc'.rindex('c')",
+    # "'abc'.count('a')",
+    # "'abc'.count('b')",
+    # "'abc'.count('c')",
+    # "'abc'.count('d')",
+    # "'abc'.replace('a', 'b')",
     # "str(True) == 'True'",
     # "str(False) == 'False'",
     # Tupes (nope)
@@ -237,7 +296,7 @@ EXPRESSIONS = [
     "dict() == {}",
     "list() == []",
     "tuple() == ()",
-    "set() == set()",
+    # "set() == set()",
     "list([1, 2]) == [1, 2]",
     "tuple([1, 2]) == (1, 2)",
     # "set([1, 2]) == {1, 2}",

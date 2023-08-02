@@ -42,13 +42,6 @@ test-randomly:
 	@echo "--> Running Python tests in random order"
 	pytest
 
-## Cleanup tests artifacts
-clean-test: ## remove test and coverage artifacts
-	rm -fr .tox/
-	rm -f .coverage
-	rm -fr htmlcov/
-	rm -fr .pytest_cache
-
 ## Lint / check typing
 lint:
 	ruff src
@@ -70,6 +63,8 @@ format:
 #
 # Everything else
 #
+.PHONY: help install doc doc-html doc-pdf clean clean-test tidy update-deps publish
+
 help:
 	@inv help-make
 
@@ -86,12 +81,20 @@ doc-pdf:
 	make -C docs/_build/latex all-pdf
 
 ## Cleanup repository
-clean:
+clean: clean-test
 	rm -f **/*.pyc
 	find . -type d -empty -delete
 	rm -rf *.egg-info *.egg .coverage .eggs .cache .mypy_cache .pyre \
 		.pytest_cache .pytest .DS_Store  docs/_build docs/cache docs/tmp \
 		dist build pip-wheel-metadata junit-*.xml htmlcov coverage.xml
+
+## Cleanup tests artifacts
+clean-test: ## remove test and coverage artifacts
+	rm -fr .tox/ .nox/
+	rm -f .coverage
+	rm -fr htmlcov/
+	rm -fr .pytest_cache */.pytest_cache */*/.pytest_cache
+
 
 ## Cleanup harder
 tidy: clean

@@ -1,19 +1,18 @@
 from buildstr import Builder
 
 from prescrypt.ast import ast
-from prescrypt.constants import isidentifier1
 from prescrypt.exceptions import JSError
 from prescrypt.stdlib_js import FUNCTION_PREFIX
 
 from ..main import CodeGen, gen_expr
-from ..utils import unify
+from ..utils import flatten, unify
 
 
 @gen_expr.register
 def gen_list(node: ast.List, codegen: CodeGen):
     code = Builder()
     with code(surround=("[", "]"), separator=", "):
-        code << [codegen.gen_expr(el) for el in node.elts]
+        code << [flatten(codegen.gen_expr(el)) for el in node.elts]
     return code.build()
 
 
@@ -21,7 +20,7 @@ def gen_list(node: ast.List, codegen: CodeGen):
 def gen_tuple(node: ast.Tuple, codegen: CodeGen):
     code = Builder()
     with code(surround=("[", "]"), separator=", "):
-        code << [codegen.gen_expr(el) for el in node.elts]
+        code << [flatten(codegen.gen_expr(el)) for el in node.elts]
     return code.build()
 
 

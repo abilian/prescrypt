@@ -1,7 +1,6 @@
 from pathlib import Path
 from textwrap import dedent
 
-import dukpy
 from devtools import debug
 
 from prescrypt import py2js

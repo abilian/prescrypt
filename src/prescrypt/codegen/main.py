@@ -91,7 +91,8 @@ class CodeGen:
     def call_std_function(self, name: str, args: list[str | ast.expr]) -> str:
         """Generate a function call from the Prescrypt standard library."""
         mangled_name = FUNCTION_PREFIX + name
-        return f"{mangled_name}({', '.join(self.gen_js_args(args))})"
+        js_args = list(self.gen_js_args(args))
+        return f"{mangled_name}({', '.join(js_args)})"
 
     def call_std_method(self, base, name: str, args: list) -> str:
         """Generate a method call from the Prescrypt standard library."""

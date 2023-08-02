@@ -1,16 +1,19 @@
-import dukpy
 import pytest
+from devtools import debug
 
 from prescrypt import py2js
-from prescrypt.testing.data import EXPRESSIONS
+from prescrypt.testing import EXPRESSIONS, js_eq
+from prescrypt.testing import js_eval
 
 
 @pytest.mark.parametrize("expression", EXPRESSIONS)
 def test_expressions(expression: str):
     expected = eval(expression)
 
-    jscode = py2js(expression)
-    interpreter = dukpy.JSInterpreter()
-    js_result = interpreter.evaljs(jscode)
+    js_code = py2js(expression)
+    js_result = js_eval(js_code)
 
-    assert js_result == expected, f"{expression} != {js_result} != {expected}"
+    short_code = py2js(expression, include_stdlib=False)
+    debug(short_code)
+
+    assert js_eq(js_result, expected), f"{expression} != {js_result} != {expected}"

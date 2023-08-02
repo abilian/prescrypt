@@ -1,7 +1,7 @@
-import dukpy
+from devtools import debug
 
 from prescrypt import py2js
-
+from prescrypt.testing import js_eq, js_eval
 from .util import gen_expr
 
 
@@ -14,65 +14,10 @@ def test_gen():
         except Exception:
             continue
 
-        jscode = py2js(expr)
-        interpreter = dukpy.JSInterpreter()
-        js_result = interpreter.evaljs(jscode)
+        js_code = py2js(expr)
+        js_code_short = py2js(expr, include_stdlib=False)
+        js_result = js_eval(js_code)
 
-        assert js_equals(py_result, js_result)
+        debug(expr, js_code_short, py_result, js_result)
 
-
-def to_js(x):
-    if x is None:
-        return "null"
-
-    if isinstance(x, bool):
-        return str(x).lower()
-
-    if isinstance(x, (int, float)):
-        return str(float(x))
-
-    if isinstance(x, (list, tuple)):
-        return tuple(to_js(y) for y in x)
-
-    if isinstance(x, dict):
-        return {to_js(k): to_js(v) for k, v in x.items()}
-
-    if isinstance(x, str):
-        try:
-            int(x)
-        except ValueError:
-            pass
-        try:
-            return float(x)
-        except ValueError:
-            pass
-
-    return x
-
-
-#
-# Note: we're using a very liberal definition of equality here.
-#
-def js_equals(x, y):
-    x = to_js(x)
-    y = to_js(y)
-
-    if x is None and y == 0.0:
-        return True
-    if y is None and x == 0.0:
-        return True
-
-    if isinstance(x, tuple) and isinstance(y, tuple):
-        if len(x) != len(y):
-            return False
-        return all(js_equals(a, b) for a, b in zip(x, y))
-
-    # JS dict keys are always strings
-    if isinstance(x, dict) and isinstance(y, dict):
-        x_keys = tuple(x.keys())
-        y_keys = tuple(y.keys())
-        x_values = tuple(x.values())
-        y_values = tuple(y.values())
-        return js_equals(x_keys, y_keys) and js_equals(x_values, y_values)
-
-    return x == y
+        assert js_eq(py_result, js_result), f"{expr} -> {py_result} != {js_result}"

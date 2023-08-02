@@ -16,16 +16,19 @@ def gen_subscript(node: ast.Subscript, codegen: CodeGen):
 
 @gen_expr.register
 def gen_unary_op(node: ast.UnaryOp, codegen: CodeGen) -> str | list:
-    # We'bve desugared all unary ops to Not and USub (is it safe?)
+    # We've desugared all unary ops except Not and Invert (is it safe?)
     op = node.op
     operand = node.operand
 
-    if type(op) is ast.Not:
-        return ["!", codegen.gen_truthy(operand)]
-    else:
-        js_op = UNARY_OP[op]
-        right = unify(codegen.gen_expr(operand))
-        return [js_op, right]
+    match op:
+        case ast.Not():
+            return ["!", codegen.gen_truthy(operand)]
+        case ast.Invert():
+            js_op = UNARY_OP[op]
+            right = unify(codegen.gen_expr(operand))
+            return [js_op, right]
+        case _:
+            raise ValueError(f"Unknown unary operator {op!r} (should not happen)")
 
 
 @gen_expr.register
