@@ -1,7 +1,7 @@
 from attr import define
 
 from prescrypt.ast import ast
-from prescrypt.stdlib_js import FUNCTION_PREFIX, StdlibJs
+from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
 
 from ..main import CodeGen, gen_expr
 from ..stdlib_py import stdlib
@@ -51,7 +51,7 @@ class FuncCall:
 
         if func_name in stdlib_js.functions:
             args_js = [unify(self.gen_expr(arg)) for arg in args]
-            return f"_pyfunc_{func_name}({', '.join(args_js)})"
+            return f"{FUNCTION_PREFIX}{func_name}({', '.join(args_js)})"
 
         return f"{self.gen_func()}{self.gen_args()}"
 
@@ -67,7 +67,7 @@ class FuncCall:
 
         if method_name in stdlib_js.methods:
             args_js = [obj_js] + [unify(self.gen_expr(arg)) for arg in args]
-            return f"_pymeth_{method_name}.call({', '.join(args_js)})"
+            return f"{METHOD_PREFIX}{method_name}.call({', '.join(args_js)})"
 
         return f"{self.gen_func()}{self.gen_args()}"
 
