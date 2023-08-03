@@ -101,7 +101,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 	find . -name .pytest_cache -exec rm -fr {} +
-	rm -f tests/whole_programs/programs/*.js
+	rm -f tests/*/programs/*.js
 
 ## Cleanup harder
 tidy: clean

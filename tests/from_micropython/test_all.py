@@ -1,0 +1,44 @@
+import os
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from prescrypt.compiler import py2js
+
+PROGRAMS_DIR = Path(__file__).parent / "programs"
+
+
+def get_source_files():
+    for src in sorted(PROGRAMS_DIR.glob("*.py")):
+        if src.name.startswith("set_"):
+            continue
+        yield str(src.name)
+
+
+@pytest.mark.skip(reason="Too many failures")
+@pytest.mark.parametrize("source_file", get_source_files())
+def test_module(source_file):
+    src = PROGRAMS_DIR / source_file
+    dst = src.with_suffix(".js")
+
+    js_code = py2js(src.read_text())
+    dst.write_text(js_code)
+
+    p1 = subprocess.run(["node", str(dst)], stdout=subprocess.PIPE, check=True)
+    p2 = subprocess.run(["python", str(src)], stdout=subprocess.PIPE, check=True)
+
+    stdout1 = p1.stdout.decode("utf-8")
+    stdout2 = p2.stdout.decode("utf-8")
+
+    if stdout1 != stdout2:
+        print()
+        print()
+        print("node result:", stdout1)
+        print("python result", stdout2)
+        print()
+        print(py2js(src.read_text(), include_stdlib=False))
+
+    assert stdout1 == stdout2
+
+    os.unlink(dst)
