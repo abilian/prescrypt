@@ -35,12 +35,6 @@ def test_expressions(expression: str):
     if isinstance(js_result, quickjs.Object):
         js_result = json.loads(js_result.json())
 
-    # try:
-    #     js_result = interpreter.evaljs(full_code)
-    # except JSRuntimeError:
-    #     print(full_code)
-    #     raise
-
     if not js_eq(js_result, py_result):
         debug(py_code, js_code)
 

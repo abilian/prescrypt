@@ -24,20 +24,21 @@ def test_module(source_file):
     js_code = py2js(src.read_text())
     dst.write_text(js_code)
 
-    p1 = subprocess.run(["node", str(dst)], stdout=subprocess.PIPE, check=True)
-    p2 = subprocess.run(["python", str(src)], stdout=subprocess.PIPE, check=True)
+    # NB: we assume the python script is always correct
+    p1 = subprocess.run(["python", str(src)], stdout=subprocess.PIPE, check=True)
+    p2 = subprocess.run(["node", str(dst)], stdout=subprocess.PIPE)
 
     stdout1 = p1.stdout.decode("utf-8")
     stdout2 = p2.stdout.decode("utf-8")
 
-    if stdout1 != stdout2:
+    if p2.returncode != 0 or stdout1 != stdout2:
         print()
         print()
         print("node result:", stdout1)
         print("python result", stdout2)
         print()
-        print(py2js(src.read_text(), include_stdlib=False))
+        print("source:", py2js(src.read_text(), include_stdlib=False), sep="\n")
 
-    assert stdout1 == stdout2
+    assert p2.returncode == 0 and stdout1 == stdout2
 
     os.unlink(dst)

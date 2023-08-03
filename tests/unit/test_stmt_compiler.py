@@ -62,5 +62,5 @@ def get_statements():
 
 @pytest.mark.parametrize("statement", get_statements())
 def test_statement(statement: str):
-    js_code = py2js(statement)
+    js_code = py2js(statement, include_stdlib=False)
     debug(statement, js_code)
