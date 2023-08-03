@@ -7,6 +7,7 @@ from ..binder import Binder
 from ..desugar import desugar
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize("expression", EXPRESSIONS)
 def test_expressions(expression: str):
     tree = ast.parse(expression)

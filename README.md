@@ -7,8 +7,8 @@ It is a fork of [PScript](https://github.com/flexxui/pscript/), with a different
 
 - Targets modern Python (3.9+) and Javascript (ES6+).
 - Uses the pattern matchin (e.g. `match`) to make compiler code more readable
+- Comes with thousands of tests, small and large.
 - Will use type inference to generate more efficient and/or more readable code.
-- Comes with an extensive test suite.
 
 We will provide more details when the project is more mature.
 

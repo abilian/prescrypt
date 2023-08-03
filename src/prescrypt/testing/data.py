@@ -363,4 +363,11 @@ EXPRESSIONS = REGRESSIONS + [
     #
     # "f'a'",
     # '"%d" % 1',
+    #
+    # List comprehensions
+    #
+    "[x for x in [1, 2]]",
+    "[[x, y] for x in [1, 2] for y in [3, 4]]",
+    "[(x, y) for (x, y) in [[1, 2], [3, 4]]]",
+    "[x for x in [-1, 0, 1] if x >= 0]",
 ]

@@ -1,0 +1,86 @@
+from prescrypt.ast import ast
+
+from ..main import CodeGen, gen_expr
+from ..utils import flatten, unify
+
+
+@gen_expr.register
+def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
+    elt_node, generator_nodes = node.elt, node.generators
+
+    codegen.push_ns("function", "<listcomp>")
+    js_elt = flatten(codegen.gen_expr(elt_node))
+    code = ["(function list_comprehension (iter0) {", "const res = [];"]
+    vars = []
+
+    for iter, comprehension in enumerate(generator_nodes):
+        assert isinstance(comprehension, ast.comprehension)
+        cc = []
+        # Get target (can be multiple vars)
+        target_node = comprehension.target
+        match target_node:
+            case ast.Tuple(elts=target_elts):
+                target = [flatten(codegen.gen_expr(t)) for t in target_elts]
+            case _:
+                target = [flatten(codegen.gen_expr(comprehension.target))]
+
+        for t in target:
+            vars.append(t)
+        vars.append("i%i" % iter)
+
+        # comprehension(target_node, iter_node, if_nodes)
+        if iter > 0:  # first one is passed to function as an arg
+            cc.append(f"iter# = {flatten(codegen.gen_expr(comprehension.iter))};")
+            vars.append("iter%i" % iter)
+
+        cc.append(
+            'if ((typeof iter# === "object") && '
+            "(!Array.isArray(iter#))) {iter# = Object.keys(iter#);}"
+        )
+        cc.append("for (let i#=0; i#<iter#.length; i#++) {")
+        cc.append(_iterator_assign("iter#[i#]", *target))
+
+        # Ifs
+        if_nodes = comprehension.ifs
+        if if_nodes:
+            cc.append("if (!(")
+            for if_node in if_nodes:
+                cc += unify(codegen.gen_expr(if_node))
+                cc.append("&&")
+            cc.pop(-1)  # pop '&&'
+            cc.append(")) {continue;}")
+
+        # Insert code for this comprehension loop
+        code.append(
+            "".join(cc).replace("i#", "i%i" % iter).replace("iter#", "iter%i" % iter)
+        )
+
+    # Push result
+    code.append("{res.push(%s);}" % js_elt)
+
+    # End for
+    code.append("}" * len(generator_nodes))
+
+    # Finalize
+    code.append("return res;})")  # end function
+    iter0 = flatten(codegen.gen_expr(generator_nodes[0].iter))
+    code.append(f".call(this, {iter0})")  # call funct with iter as 1st arg
+    code.insert(2, f"var {', '.join(vars)};")
+
+    # Clean vars
+    # for var in vars:
+    #     self.vars.add(var)
+    codegen.pop_ns()
+    return code
+
+    # todo: apply the apply(this) trick everywhere where we use a function
+
+
+def _iterator_assign(val, *names):
+    if len(names) == 1:
+        return f"{names[0]} = {val};"
+    else:
+        code = []
+        for i, name in enumerate(names):
+            code.append("%s = %s[%i];" % (name, val, i))
+        return " ".join(code)

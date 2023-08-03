@@ -1,5 +1,5 @@
-from . import (calls, constants, constructors, f_strings, misc, ops,  # noqa
-               variables)
+from . import (calls, comprehensions, constants, constructors, f_strings, misc,
+               ops, variables)
 
 """
 + Constant(constant value, string? kind)

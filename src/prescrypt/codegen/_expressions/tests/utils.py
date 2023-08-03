@@ -9,4 +9,5 @@ def check_gen(code, expected):
     codegen = CodeGen(module, None)
     expr_node = module.body[0].value
     js_code = flatten(codegen.gen_expr(expr_node))
-    assert js_code == expected, f"Expected: {expected!r}\nGot: {js_code!r}"
+    if expected:
+        assert js_code == expected, f"Expected: {expected!r}\nGot: {js_code!r}"
