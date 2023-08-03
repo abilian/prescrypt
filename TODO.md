@@ -5,8 +5,8 @@ TODO
 
 - [ ] Unify `stdlib_js` and `stdlib_py` into one Class.
 - [ ] Minimize stdlib code generation.
-- [ ] Pre-mangle stdlib names / find a way to awoy NS pollution.
-- [ ] Leverage scope data collected during parsing.
+- [ ] Pre-mangle stdlib names / find a way to awoy NS pollution (?)
+- [ ] Leverage scope info collected during parsing.
 
 ## Long term
 
@@ -17,3 +17,7 @@ TODO
 - [ ] Add support for `@property` and `@classmethod`.
 - [ ] Add support for `__slots__`.
 - [ ] Add support for more magic methods.
+
+## Done
+
+- [x] List comprehensions.

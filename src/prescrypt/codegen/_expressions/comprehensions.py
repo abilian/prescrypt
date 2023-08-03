@@ -35,7 +35,7 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
 
         cc.append(
             'if ((typeof iter# === "object") && '
-            "(!Array.isArray(iter#))) {iter# = Object.keys(iter#);}"
+            "!Array.isArray(iter#)) {iter# = Object.keys(iter#);}"
         )
         cc.append("for (let i#=0; i#<iter#.length; i#++) {")
         cc.append(_iterator_assign("iter#[i#]", *target))
@@ -52,7 +52,7 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
 
         # Insert code for this comprehension loop
         code.append(
-            "".join(cc).replace("i#", "i%i" % iter).replace("iter#", "iter%i" % iter)
+            "".join(cc).replace("i#", f"i{iter:d}").replace("iter#", f"iter{iter:d}")
         )
 
     # Push result
@@ -65,9 +65,8 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
     code.append("return res;})")  # end function
     iter0 = flatten(codegen.gen_expr(generator_nodes[0].iter))
     code.append(f".call(this, {iter0})")  # call funct with iter as 1st arg
-    code.insert(2, f"var {', '.join(vars)};")
 
-    # Clean vars
+    # Clean vars (TODO)
     # for var in vars:
     #     self.vars.add(var)
     codegen.pop_ns()
@@ -78,9 +77,9 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
 
 def _iterator_assign(val, *names):
     if len(names) == 1:
-        return f"{names[0]} = {val};"
+        return f"const {names[0]} = {val};"
     else:
         code = []
         for i, name in enumerate(names):
-            code.append("%s = %s[%i];" % (name, val, i))
+            code.append(f"const {name} = {val}[{i:d}];")
         return " ".join(code)
