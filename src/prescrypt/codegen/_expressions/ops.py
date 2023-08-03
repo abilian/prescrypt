@@ -1,8 +1,36 @@
 from prescrypt.ast import ast
-from prescrypt.constants import BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
+from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
+                                 UNARY_OP)
 
 from ..main import CodeGen, gen_expr
 from ..utils import unify
+
+
+@gen_expr.register
+def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
+    value_node, attr, ctx = node.value, node.attr, node.ctx
+
+    # fullname = attr + "." + fullname if fullname else attr
+    match value_node:
+        case ast.Name():
+            base_name = codegen.gen_expr(value_node)
+        case ast.Attribute():
+            base_name = self.gen_attribute(value_node, ctx, fullname)
+        case _:
+            base_name = unify(codegen.gen_expr(value_node))
+
+    # Double underscore name mangling
+    if attr.startswith("__") and not attr.endswith("__") and base_name == "this":
+        for i in range(len(self._stack) - 1, -1, -1):
+            if self._stack[i][0] == "class":
+                classname = self._stack[i][1]
+                attr = "_" + classname + attr
+                break
+
+    if attr in ATTRIBUTE_MAP:
+        return ATTRIBUTE_MAP[attr].format(base_name)
+    else:
+        return f"{base_name}.{attr}"
 
 
 @gen_expr.register
@@ -64,7 +92,7 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
 
         case ast.Mult():
             # TODO: type inference
-            return codegen.call_std_function("op_mult", [js_left, js_right])
+            return codegen.call_std_function("op_mul", [js_left, js_right])
 
         case ast.Pow():
             return ["Math.pow(", js_left, ", ", js_right, ")"]

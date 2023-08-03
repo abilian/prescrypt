@@ -1,9 +1,8 @@
 from prescrypt.ast import ast
-from prescrypt.constants import ATTRIBUTE_MAP, JS_RESERVED_NAMES
+from prescrypt.constants import JS_RESERVED_NAMES
 from prescrypt.exceptions import JSError
 
 from ..main import CodeGen, gen_expr
-from ..utils import js_repr, unify
 
 
 @gen_expr.register
@@ -36,49 +35,3 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
     # self.vars.use(name, used_name)
 
     return name
-
-
-@gen_expr.register
-def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
-    value_node, attr, ctx = node.value, node.attr, node.ctx
-
-    # fullname = attr + "." + fullname if fullname else attr
-    match value_node:
-        case ast.Name():
-            base_name = codegen.gen_expr(value_node)
-        case ast.Attribute():
-            base_name = self.gen_attribute(value_node, ctx, fullname)
-        case _:
-            base_name = unify(codegen.gen_expr(value_node))
-
-    # Double underscore name mangling
-    if attr.startswith("__") and not attr.endswith("__") and base_name == "this":
-        for i in range(len(self._stack) - 1, -1, -1):
-            if self._stack[i][0] == "class":
-                classname = self._stack[i][1]
-                attr = "_" + classname + attr
-                break
-
-    if attr in ATTRIBUTE_MAP:
-        return ATTRIBUTE_MAP[attr].format(base_name)
-    else:
-        return f"{base_name}.{attr}"
-
-
-@gen_expr.register
-def gen_joinstr(node: ast.JoinedStr, codegen: CodeGen):
-    values = node.values
-
-    parts, value_nodes = [], []
-    for n in values:
-        match n:
-            case ast.Str(s):
-                parts.append(s)
-            case ast.FormattedValue(value, conversion, format_spec):
-                parts.append("{" + _parse_FormattedValue_fmt(n) + "}")
-                value_nodes.append(value)
-            case _:
-                raise JSError("Unknown JoinedStr part: " + str(n))
-
-    thestring = js_repr("".join(parts))
-    return codegen.call_std_method(thestring, "format", value_nodes)

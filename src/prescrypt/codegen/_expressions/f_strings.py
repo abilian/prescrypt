@@ -12,7 +12,7 @@ def gen_joinstr(node: ast.JoinedStr, codegen: CodeGen):
     parts, value_nodes = [], []
     for n in values:
         match n:
-            case ast.Str(s):
+            case ast.Constant(str(s)):
                 parts.append(s)
             case ast.FormattedValue(value, conversion, format_spec):
                 parts.append("{" + c_parse_FormattedValue_fmt(n) + "}")

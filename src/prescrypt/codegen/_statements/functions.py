@@ -82,6 +82,7 @@ class BaseFunDef:
 
         args = self.node.args.args
         code = []
+
         # Collect args
         argnames = []
         for arg in args:
@@ -152,7 +153,7 @@ def _gen_functiondef(codegen: CodeGen, node: ast.AST, is_lambda=False, asyn=Fals
     #         binder = ").bind(this)"
 
     # Init function definition
-    # Non-anonymouse functions get a name so that they are debugged more
+    # Non-anonymous functions get a name so that they are debugged more
     # easily and resolve to the correct event labels in flexx.event. However,
     # we cannot use the exact name, since we don't want to actually *use* it.
     # Classes give their methods a __name__, so no need to name these.

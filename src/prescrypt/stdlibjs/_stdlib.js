@@ -1,4 +1,4 @@
-var _pyfunc_abs = Math.abs;
+var _pyfunc_abs = Math.abs;;
 var _pyfunc_all = function (x) {
   // nargs: 1
   for (let i = 0; i < x.length; i++) {
@@ -76,7 +76,7 @@ var _pyfunc_filter = function (func, iter) {
   }
   return iter.filter(func);
 };
-var _pyfunc_float = Number;
+var _pyfunc_float = Number;;
 var _pyfunc_format = function (v, fmt) {
   // nargs: 2
   fmt = fmt.toLowerCase();
@@ -326,7 +326,7 @@ var _pyfunc_op_instantiate = function (ob, args) {
     ob.__init__.apply(ob, args);
   }
 };
-var _pyfunc_op_mult = function (a, b) {
+var _pyfunc_op_mul = function (a, b) {
   // nargs: 2
   if ((typeof a === "number") + (typeof b === "number") === 1) {
     if (a.constructor === String) return _pymeth_repeat.call(a, b);
@@ -344,7 +344,12 @@ var _pyfunc_op_mult = function (a, b) {
   }
   return a * b;
 };
-var _pyfunc_op_parse_kwargs = function (arg_names, arg_values, kwargs, strict) {
+var _pyfunc_op_parse_kwargs = function (
+  arg_names,
+  arg_values,
+  kwargs,
+  strict
+) {
   // nargs: 3
   for (let i = 0; i < arg_values.length; i++) {
     let name = arg_names[i];
@@ -370,7 +375,7 @@ var _pyfunc_perf_counter = function () {
     return t[0] + t[1] * 1e-9;
   }
 };
-var _pyfunc_pow = Math.pow;
+var _pyfunc_pow = Math.pow;;
 var _pyfunc_range = function (start, end, step) {
   const res = [];
   let val = start;
@@ -401,7 +406,7 @@ var _pyfunc_reversed = function (iter) {
   }
   return iter.slice().reverse();
 };
-var _pyfunc_round = Math.round;
+var _pyfunc_round = Math.round;;
 var _pyfunc_setattr = function (ob, name, value) {
   // nargs: 3
   ob[name] = value;
@@ -513,8 +518,7 @@ var _pymeth_append = function (x) {
 };
 var _pymeth_capitalize = function () {
   // nargs: 0
-  if (this.constructor !== String)
-    return this.capitalize.apply(this, arguments);
+  if (this.constructor !== String) return this.capitalize.apply(this, arguments);
   return this.slice(0, 1).toUpperCase() + this.slice(1).toLowerCase();
 };
 var _pymeth_casefold = function () {
@@ -602,8 +606,7 @@ var _pymeth_endswith = function (x) {
 };
 var _pymeth_expandtabs = function (tabsize) {
   // nargs: 0 1
-  if (this.constructor !== String)
-    return this.expandtabs.apply(this, arguments);
+  if (this.constructor !== String) return this.expandtabs.apply(this, arguments);
   tabsize = tabsize === undefined ? 8 : tabsize;
   return this.replace(/\t/g, _pymeth_repeat.call(" ", tabsize));
 };
@@ -725,8 +728,7 @@ var _pymeth_isdigit = function () {
 };
 var _pymeth_isidentifier = function () {
   // nargs: 0
-  if (this.constructor !== String)
-    return this.isidentifier.apply(this, arguments);
+  if (this.constructor !== String) return this.isidentifier.apply(this, arguments);
 
   return Boolean(/^[A-Za-z_][A-Za-z0-9_]*$/.test(this));
 };
@@ -786,8 +788,7 @@ var _pymeth_join = function (x) {
 };
 var _pymeth_keys = function () {
   // nargs: 0
-  if (typeof this["keys"] === "function")
-    return this.keys.apply(this, arguments);
+  if (typeof this["keys"] === "function") return this.keys.apply(this, arguments);
   return Object.keys(this);
 };
 var _pymeth_ljust = function (w, fill) {
@@ -953,8 +954,7 @@ var _pymeth_rjust = function (w, fill) {
 };
 var _pymeth_rpartition = function (sep) {
   // nargs: 1
-  if (this.constructor !== String)
-    return this.rpartition.apply(this, arguments);
+  if (this.constructor !== String) return this.rpartition.apply(this, arguments);
   if (sep === "") {
     let e = Error("empty sep");
     e.name = "ValueError";
@@ -987,8 +987,7 @@ var _pymeth_rstrip = function (chars) {
 };
 var _pymeth_setdefault = function (key, d) {
   // nargs: 1 2
-  if (this.constructor !== Object)
-    return this.setdefault.apply(this, arguments);
+  if (this.constructor !== Object) return this.setdefault.apply(this, arguments);
   if (this[key] !== undefined) {
     return this[key];
   } else if (d !== undefined) {
@@ -1051,8 +1050,7 @@ var _pymeth_split = function (sep, count) {
 };
 var _pymeth_splitlines = function (keepends) {
   // nargs: 0 1
-  if (this.constructor !== String)
-    return this.splitlines.apply(this, arguments);
+  if (this.constructor !== String) return this.splitlines.apply(this, arguments);
   keepends = keepends ? 1 : 0;
   let finder = /\r\n|\r|\n/g;
   let i = 0,
@@ -1072,8 +1070,7 @@ var _pymeth_splitlines = function (keepends) {
 };
 var _pymeth_startswith = function (x) {
   // nargs: 1
-  if (this.constructor !== String)
-    return this.startswith.apply(this, arguments);
+  if (this.constructor !== String) return this.startswith.apply(this, arguments);
   return this.indexOf(x) == 0;
 };
 var _pymeth_strip = function (chars) {

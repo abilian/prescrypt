@@ -639,8 +639,8 @@ export const op_add = function (a, b) {
 
 // ---
 
-// function: op_mult
-export const op_mult = function (a, b) {
+// function: op_mul
+export const op_mul = function (a, b) {
   // nargs: 2
   if ((typeof a === "number") + (typeof b === "number") === 1) {
     if (a.constructor === String) return METHOD_PREFIXrepeat(a, b);

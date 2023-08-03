@@ -161,6 +161,7 @@ class CodeGen:
                 "In string formatting, number of placeholders "
                 "does not match number of replacements"
             )
+
         # Format
         parts = []
         start = 0

@@ -1,4 +1,4 @@
-from . import (calls, constants, constructors, misc, ops, others,  # noqa
+from . import (calls, constants, constructors, f_strings, misc, ops,  # noqa
                variables)
 
 """
