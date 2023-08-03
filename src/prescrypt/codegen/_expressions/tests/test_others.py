@@ -9,5 +9,5 @@ EXPRS = [
 
 
 @pytest.mark.parametrize("code,expected", EXPRS)
-def test_ops(code, expected):
+def test_others(code, expected):
     check_gen(code, expected)
