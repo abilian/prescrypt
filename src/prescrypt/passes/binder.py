@@ -1,11 +1,12 @@
 import builtins
+from pathlib import Path
+
+from snoop import snoop
 
 from prescrypt.ast import ast
+from prescrypt.ast.scope import Scope, Variable
 
 from .base import Visitor
-from .errors import UnknownSymbolError
-from .scopes import ScopedMap
-from .symbol import Symbol
 
 builtin_names = {name for name in dir(builtins)}
 
@@ -16,55 +17,71 @@ class Binder(Visitor):
     """
 
     def __init__(self):
-        # Scopes
-        self.map = ScopedMap()  # Scope
+        self.scope = Scope()
         # Loop we're curently in (needed for break and continue)
         self.loop = None
+
+    # Scope management
+    def push_scope(self, node: ast.AST):
+        new_scope = Scope()
+        new_scope.parent = self.scope
+        node._scope = new_scope
+        self.scope = new_scope
+
+    def pop_scope(self):
+        self.scope = self.scope.parent
 
     def visit_list(self, li):
         for instr in li:
             self.visit(instr)
 
+    #
+    # Scope-creating nodes
+    #
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """
         Creates a symbol for the function and sets the node's definition to itself.
         """
+        self.scope.vars[node.name] = Variable(name=node.name, type="function")
 
-        sym = Symbol(node.name, node)
-        self.map.append(sym)
-        node._definition = node
-
-        self.map.push_scope(sym)
+        self.push_scope(node)
         self.visit(node.args)
         self.visit_list(node.body)
+        self.pop_scope()
 
-        self.map.pop_scope()
+    def visit_ClassDef(self, node: ast.ClassDef):
+        """
+        Creates a symbol for the class and sets the node's definition to itself.
+        """
+        self.scope.vars[node.name] = Variable(name=node.name, type="class")
 
-    def visit_arg(self, node: ast.arg):
-        """
-        Creates a new symbol for the argument, and sets the node's definition to itself
-        """
-        sym = Symbol(node.arg, node)
-        self.map.append(sym)
-        node._definition = node
+        self.push_scope(node)
+        self.visit_list(node.body)
+        # self.visit(node.bases)
+        self.pop_scope()
 
-    def visit_Call(self, node: ast.Call):
+    def visit_Lambda(self, node: ast.Lambda):
         """
-        Visits the Call node
+        Creates a symbol for the lambda and sets the node's definition to itself.
         """
-        self.visit(node.func)
-        self.visit_list(node.args)
-        node._definition = node.func._definition
+        self.push_scope(node)
+        self.visit(node.args)
+        self.visit(node.body)
+        self.pop_scope()
 
-    def visit_AnnAssign(self, node: ast.AnnAssign):
+    def visit_ListComp(self, node: ast.ListComp):
         """
-        Visit the terms of the equality, but not the annotation.
-
-        Will likely be removed at some point
+        Creates a symbol for the lambda and sets the node's definition to itself.
         """
-        self.visit(node.target)
-        self.visit(node.value)
+        self.push_scope(node)
+        # Visit generators first
+        self.visit_list(node.generators)
+        self.visit(node.elt)
+        self.pop_scope()
 
+    #
+    # Variables
+    #
     def visit_Name(self, node: ast.Name):
         """
         If the context is ast.Load, check for the symbol in the
@@ -74,24 +91,51 @@ class Binder(Visitor):
         sets the node's definition to itself.
         """
         name = node.id
-        if name in builtin_names:
-            return
-
-        sym = self.map.find(name, False)
-        if sym is not None:
-            node._definition = sym._definition
-            return
 
         match node.ctx:
             case ast.Load():
-                raise UnknownSymbolError(name)
+                if name in builtin_names:
+                    return
+                if self.scope.search(name) is None:
+                    raise NameError(f"name '{name}' is not defined")
+
             case ast.Store():
-                sym = Symbol(name, node)
-                self.map.append(sym)
-                node._definition = node
+                self.scope.vars[name] = Variable(name=name, type="variable")
+                # sym = Symbol(name, node)
+                # self.map.append(sym)
+                # node._definition = node
+
             case _:
                 raise NotImplementedError("del instruction not yet implemented")
 
+    # def visit_arg(self, node: ast.arg):
+    #     """
+    #     Creates a new symbol for the argument, and sets the node's definition to itself
+    #     """
+    #     sym = Symbol(node.arg, node)
+    #     self.map.append(sym)
+    #     node._definition = node
+    #
+    # def visit_Call(self, node: ast.Call):
+    #     """
+    #     Visits the Call node
+    #     """
+    #     self.visit(node.func)
+    #     self.visit_list(node.args)
+    #     node._definition = node.func._definition
+    #
+    # def visit_AnnAssign(self, node: ast.AnnAssign):
+    #     """
+    #     Visit the terms of the equality, but not the annotation.
+    #
+    #     Will likely be removed at some point
+    #     """
+    #     self.visit(node.target)
+    #     self.visit(node.value)
+
+    #
+    # Loops
+    #
     def visit_While(self, node: ast.While):
         """
         Sets self.loop properly.
@@ -124,3 +168,12 @@ class Binder(Visitor):
             raise SyntaxError("'break' not properly in loop")
 
         node._definition = self.loop
+
+
+if __name__ == "__main__":
+    import sys
+
+    code = Path(sys.argv[1]).read_text()
+    tree = ast.parse(code)
+    Binder().visit(tree)
+    print(tree)

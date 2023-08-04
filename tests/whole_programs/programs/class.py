@@ -2,9 +2,8 @@ class A:
     def __init__(self):
         self.a = 1
 
-    def f(self, b):
-        return self.a + b
-
+a = A()
+print(a.a)
 
 # FIXME: not working
 # print(A().f(1))
