@@ -1,6 +1,6 @@
 from attr import define
 
-from prescrypt.ast import ast
+from prescrypt.front import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
 
 from ..main import CodeGen, gen_expr

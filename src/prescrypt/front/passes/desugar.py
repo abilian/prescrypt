@@ -1,7 +1,7 @@
 import ast as _ast
 from typing import cast
 
-from prescrypt.ast import ast
+from prescrypt.front import ast
 
 
 def desugar(tree: ast.Module) -> ast.Module:

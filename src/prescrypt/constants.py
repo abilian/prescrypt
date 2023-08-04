@@ -1,7 +1,7 @@
 import re
 
 from . import stdlib_js
-from .ast import ast
+from .front import ast
 
 # Not needed ?
 # NAME_MAP = {

@@ -1,5 +1,5 @@
-from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
+from prescrypt.front import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX
 
 from ..main import CodeGen, gen_stmt

@@ -1,6 +1,6 @@
-from prescrypt.ast import ast
 from prescrypt.constants import (ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP,
                                  UNARY_OP)
+from prescrypt.front import ast
 
 from ..main import CodeGen, gen_expr
 from ..utils import unify

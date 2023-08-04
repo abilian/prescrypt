@@ -1,17 +1,15 @@
 from pathlib import Path
 
-from .ast import ast
 from .codegen import CodeGen
-from .passes.desugar import desugar
-from .passes.scope import get_top_scope
+from .front import ast
+from .front.passes.desugar import desugar
 
 
 class Compiler:
     def compile(self, source: str, include_stdlib=True) -> str:
         tree = ast.parse(source)
         tree = desugar(tree)
-        top_scope = get_top_scope(tree)
-        codegen = CodeGen(tree, top_scope)
+        codegen = CodeGen(tree)
         js_code = codegen.gen()
         if not include_stdlib:
             return js_code

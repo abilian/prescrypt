@@ -2,7 +2,8 @@ import ast as native_ast
 
 import pytest
 
-from ..testing.data import EXPRESSIONS
+from prescrypt.testing.data import EXPRESSIONS
+
 from . import ast
 from .converter import convert
 

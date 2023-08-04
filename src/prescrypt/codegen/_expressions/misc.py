@@ -2,7 +2,7 @@
 # The rest
 #
 
-from prescrypt.ast import ast
+from prescrypt.front import ast
 
 from ..main import CodeGen, gen_expr
 

@@ -1,4 +1,4 @@
-from prescrypt.ast import ast
+from prescrypt.front import ast
 
 from .base import Visitor
 from .types import Bool, Float, Int, String

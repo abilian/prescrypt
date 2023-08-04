@@ -2,7 +2,7 @@ from textwrap import dedent
 
 from devtools import debug
 
-from prescrypt.ast import ast
+from prescrypt.front import ast
 
 from ..main import CodeGen, gen_stmt
 from ..utils import flatten

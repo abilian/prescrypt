@@ -1,5 +1,5 @@
-from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
+from prescrypt.front import ast
 
 
 def function_this_is_js(compiler, args):

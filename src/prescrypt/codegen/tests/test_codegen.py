@@ -3,10 +3,9 @@ import ast
 import pytest
 from devtools import debug
 
-from prescrypt.ast import ast
 from prescrypt.codegen.main import CodeGen
-from prescrypt.passes.desugar import desugar
-from prescrypt.passes.scope import get_top_scope
+from prescrypt.front import ast
+from prescrypt.front.passes.desugar import desugar
 from prescrypt.testing.data import EXPRESSIONS
 
 
@@ -51,6 +50,5 @@ def test_multiple_assignment():
 def _py2js(prog):
     tree = ast.parse(prog)
     tree = desugar(tree)
-    top_scope = get_top_scope(tree)
-    codegen = CodeGen(tree, top_scope)
+    codegen = CodeGen(tree)
     return codegen.gen().strip()

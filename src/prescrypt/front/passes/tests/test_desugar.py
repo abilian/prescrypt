@@ -1,6 +1,6 @@
 import pytest
 
-from prescrypt.ast import ast
+from prescrypt.front import ast
 from prescrypt.testing.data import EXPRESSIONS
 
 from ..desugar import desugar

@@ -2,8 +2,7 @@ from textwrap import dedent
 
 import pytest
 
-from prescrypt.ast import ast
-from prescrypt.ast.scope import Variable
+from prescrypt.front import Variable, ast
 from prescrypt.testing.data import EXPRESSIONS as _EXPRESSIONS
 
 from ..binder import Binder

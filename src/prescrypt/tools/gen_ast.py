@@ -10,7 +10,7 @@ Custom AST.
 from __future__ import annotations
 from typing import Any
 import ast as _ast
-from prescrypt.ast.mixin import Mixin
+from .mixin import Mixin
 
 
 NodeVisitor = _ast.NodeVisitor

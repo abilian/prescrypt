@@ -1,8 +1,8 @@
 import pytest
 
-from prescrypt.ast import ast
 from prescrypt.codegen import CodeGen
 from prescrypt.codegen._expressions.calls import FuncCall
+from prescrypt.front import ast
 
 from .utils import check_gen
 
@@ -39,7 +39,7 @@ FUNC_CALLS = [
 @pytest.mark.parametrize("code,expected", FUNC_CALLS)
 def test_func_call(code, expected):
     module = ast.parse(code)
-    codegen = CodeGen(module, None)
+    codegen = CodeGen(module)
     call_node = module.body[0].value
     func_call = FuncCall(call_node, codegen)
     assert func_call.gen() == expected

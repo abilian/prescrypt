@@ -1,4 +1,4 @@
-from prescrypt.ast import ast
+from prescrypt.front import ast
 
 
 class Visitor(ast.NodeVisitor):

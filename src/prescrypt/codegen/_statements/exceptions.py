@@ -1,8 +1,8 @@
 #
 # Exceptions
 #
-from prescrypt.ast import ast
 from prescrypt.exceptions import JSError
+from prescrypt.front import ast
 
 from ..main import CodeGen, gen_stmt
 from ..utils import js_repr, unify

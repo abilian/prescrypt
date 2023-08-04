@@ -1,6 +1,6 @@
-from prescrypt.ast import ast
 from prescrypt.codegen import CodeGen
 from prescrypt.exceptions import JSError
+from prescrypt.front import ast
 
 
 #

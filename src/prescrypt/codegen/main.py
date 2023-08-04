@@ -4,10 +4,9 @@ import re
 from functools import singledispatch
 from typing import Iterator
 
-from prescrypt.ast import ast
 from prescrypt.constants import RETURNING_BOOL
 from prescrypt.exceptions import JSError
-from prescrypt.passes.scope import Scope
+from prescrypt.front import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX
 
 from .utils import flatten, unify
@@ -25,12 +24,10 @@ def gen_stmt(node: ast.stmt, gen: CodeGen) -> str:
 
 class CodeGen:
     module: ast.Module
-    scope: Scope
     ns: NameSpace
 
-    def __init__(self, module: ast.Module, scope: Scope):
+    def __init__(self, module: ast.Module):
         self.module = module
-        self.scope = scope
         self._stack = []
         self.push_ns("module", "module")
 

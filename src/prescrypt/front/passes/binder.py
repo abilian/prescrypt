@@ -1,10 +1,7 @@
 import builtins
 from pathlib import Path
 
-from snoop import snoop
-
-from prescrypt.ast import ast
-from prescrypt.ast.scope import Scope, Variable
+from prescrypt.front import Scope, Variable, ast
 
 from .base import Visitor
 

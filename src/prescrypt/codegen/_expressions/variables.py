@@ -1,6 +1,6 @@
-from prescrypt.ast import ast
 from prescrypt.constants import JS_RESERVED_NAMES
 from prescrypt.exceptions import JSError
+from prescrypt.front import ast
 
 from ..main import CodeGen, gen_expr
 
