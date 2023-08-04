@@ -9,3 +9,6 @@ class Mixin:
     _info: dict | None = None
     _parent: Any = None
     _scope: Scope | None = None
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} (AST node)>"

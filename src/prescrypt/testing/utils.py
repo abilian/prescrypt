@@ -9,6 +9,9 @@ import quickjs
 JSON = Union[str, int, float, bool, None, List[Any], Dict[str, Any]]
 
 
+#
+# Useful for code that involve JS evaluation
+#
 def js_eval(code) -> JSON:
     # _pre_check(code)
 

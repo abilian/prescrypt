@@ -7,5 +7,6 @@ Everything that happens after parsing and before code generation.
 """
 from .ast import ast
 from .ast.scope import Scope, Variable
+from .front import to_ast
 
-__all__ = ["ast", "Scope", "Variable"]
+__all__ = ["ast", "Scope", "Variable", "to_ast"]
