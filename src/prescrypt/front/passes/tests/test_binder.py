@@ -62,6 +62,23 @@ def test_function():
     assert l_scope.vars["b"] == Variable(name="b", type="variable", is_const=True)
 
 
+def test_lambda():
+    prog = "f = lambda x: 2 * x"
+    tree, binder = parse(prog)
+
+    # Global scope
+    g_scope = binder.scope
+    assert sorted(g_scope.vars.keys()) == ["f"]
+
+    # Function scope
+    assign_node = tree.body[0]
+    lambda_node = assign_node.value
+    l_scope = lambda_node._scope
+
+    assert sorted(l_scope.vars.keys()) == ["x"]
+    assert l_scope.vars["x"] == Variable(name="x", type="variable", is_const=True)
+
+
 def test_class():
     prog = dedent(
         """
