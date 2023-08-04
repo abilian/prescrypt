@@ -96,7 +96,12 @@ class Binder(Visitor):
                     raise NameError(f"name '{name}' is not defined")
 
             case ast.Store():
-                self.scope.vars[name] = Variable(name=name, type="variable")
+                if name in builtin_names:
+                    raise ValueError(f"cannot assign to '{name}'")
+                if name in self.scope.vars:
+                    self.scope.vars[name].is_const = False
+                else:
+                    self.scope.vars[name] = Variable(name=name, type="variable")
                 # sym = Symbol(name, node)
                 # self.map.append(sym)
                 # node._definition = node

@@ -25,6 +25,7 @@ class Scope:
 class Variable:
     name: str
     type: str
+    is_const: bool = True
 
 
 # @define

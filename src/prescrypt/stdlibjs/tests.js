@@ -1,4 +1,4 @@
-import { op_add } from "./functions.js";
+import {op_add} from "./functions.js";
 
 const assert = console.assert;
 

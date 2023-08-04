@@ -26,7 +26,7 @@ def test_globals():
             pass
         class C:
             pass
-    """
+        """
     )
     tree, binder = parse(prog)
 
@@ -44,7 +44,8 @@ def test_function():
         def f(c):
             a = 1
             b = a
-    """
+            a = 2
+        """
     )
     tree, binder = parse(prog)
 
@@ -57,8 +58,8 @@ def test_function():
     l_scope = fun_def_node._scope
 
     assert sorted(l_scope.vars.keys()) == ["a", "b", "c"]
-    assert l_scope.vars["a"] == Variable(name="a", type="variable")
-    assert l_scope.vars["b"] == Variable(name="b", type="variable")
+    assert l_scope.vars["a"] == Variable(name="a", type="variable", is_const=False)
+    assert l_scope.vars["b"] == Variable(name="b", type="variable", is_const=True)
 
 
 def test_class():
@@ -69,7 +70,7 @@ def test_class():
             
             def f(self):
                 self.a = 2
-    """
+        """
     )
     tree, binder = parse(prog)
 
