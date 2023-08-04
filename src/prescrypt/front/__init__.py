@@ -1,3 +1,10 @@
+"""
+Frontend of the compiler (actually, middle-end, since the parser is just CPython's parser).
+
+AST, scopes, binder, type checker, etc.
+
+Everything that happens after parsing and before code generation.
+"""
 from .ast import ast
 from .ast.scope import Scope, Variable
 
