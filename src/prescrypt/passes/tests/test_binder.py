@@ -10,7 +10,7 @@ from ..binder import Binder
 from ..desugar import desugar
 
 EXPRESSIONS = _EXPRESSIONS + [
-    # "f = lambda x: x",
+    "f = lambda x: x",
 ]
 
 
@@ -42,27 +42,49 @@ def test_globals():
 def test_function():
     prog = dedent(
         """
-        x = 1
-        def f():
+        def f(c):
             a = 1
             b = a
-        class C:
-            pass
     """
     )
     tree, binder = parse(prog)
 
     # Global scope
     g_scope = binder.scope
-    assert sorted(g_scope.vars.keys()) == ["C", "f", "x"]
+    assert sorted(g_scope.vars.keys()) == ["f"]
 
     # Function scope
-    fun_def_node = tree.body[1]
+    fun_def_node = tree.body[0]
     l_scope = fun_def_node._scope
 
-    assert sorted(l_scope.vars.keys()) == ["a", "b"]
+    assert sorted(l_scope.vars.keys()) == ["a", "b", "c"]
     assert l_scope.vars["a"] == Variable(name="a", type="variable")
     assert l_scope.vars["b"] == Variable(name="b", type="variable")
+
+
+def test_class():
+    prog = dedent(
+        """
+        class A(B):
+            a = 1
+            
+            def f(self):
+                self.a = 2
+    """
+    )
+    tree, binder = parse(prog)
+
+    # Global scope
+    g_scope = binder.scope
+    assert sorted(g_scope.vars.keys()) == ["A"]
+
+    # Function scope
+    fun_def_node = tree.body[0]
+    l_scope = fun_def_node._scope
+
+    assert sorted(l_scope.vars.keys()) == ["a", "f"]
+    assert l_scope.vars["a"] == Variable(name="a", type="variable")
+    assert l_scope.vars["f"] == Variable(name="f", type="function")
 
 
 def parse(prog: str):

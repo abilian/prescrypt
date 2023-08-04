@@ -8,6 +8,7 @@ from attr import define, field, mutable
 
 @define
 class Scope:
+    type: str = "global"
     vars: dict[str, Variable] = field(factory=dict)
     parent: Scope | None = None
 

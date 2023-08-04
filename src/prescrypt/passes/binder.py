@@ -22,9 +22,8 @@ class Binder(Visitor):
         self.loop = None
 
     # Scope management
-    def push_scope(self, node: ast.AST):
-        new_scope = Scope()
-        new_scope.parent = self.scope
+    def push_scope(self, type, node: ast.AST):
+        new_scope = Scope(type, parent=self.scope)
         node._scope = new_scope
         self.scope = new_scope
 
@@ -44,7 +43,7 @@ class Binder(Visitor):
         """
         self.scope.vars[node.name] = Variable(name=node.name, type="function")
 
-        self.push_scope(node)
+        self.push_scope("function", node)
         self.visit(node.args)
         self.visit_list(node.body)
         self.pop_scope()
@@ -55,7 +54,7 @@ class Binder(Visitor):
         """
         self.scope.vars[node.name] = Variable(name=node.name, type="class")
 
-        self.push_scope(node)
+        self.push_scope("class", node)
         self.visit_list(node.body)
         # self.visit(node.bases)
         self.pop_scope()
@@ -64,7 +63,7 @@ class Binder(Visitor):
         """
         Creates a symbol for the lambda and sets the node's definition to itself.
         """
-        self.push_scope(node)
+        self.push_scope("function", node)
         self.visit(node.args)
         self.visit(node.body)
         self.pop_scope()
@@ -73,7 +72,7 @@ class Binder(Visitor):
         """
         Creates a symbol for the lambda and sets the node's definition to itself.
         """
-        self.push_scope(node)
+        self.push_scope("listcomp", node)
         # Visit generators first
         self.visit_list(node.generators)
         self.visit(node.elt)
@@ -108,14 +107,13 @@ class Binder(Visitor):
             case _:
                 raise NotImplementedError("del instruction not yet implemented")
 
-    # def visit_arg(self, node: ast.arg):
-    #     """
-    #     Creates a new symbol for the argument, and sets the node's definition to itself
-    #     """
-    #     sym = Symbol(node.arg, node)
-    #     self.map.append(sym)
-    #     node._definition = node
-    #
+    def visit_arg(self, node: ast.arg):
+        """
+        Creates a new symbol for the argument, and sets the node's definition to itself
+        """
+        name = node.arg
+        self.scope.vars[name] = Variable(name=name, type="variable")
+
     # def visit_Call(self, node: ast.Call):
     #     """
     #     Visits the Call node
