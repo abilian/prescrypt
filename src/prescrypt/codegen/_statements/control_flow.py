@@ -2,6 +2,7 @@ from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
 from ..main import CodeGen, gen_stmt
+from ..utils import flatten
 
 
 @gen_stmt.register
@@ -11,7 +12,7 @@ def gen_if(node: ast.If, codegen: CodeGen):
     match test:
         # Ignore ``__name__ == '__main__'``, since it may be
         # used inside a PScript file for the compiling.
-        case ast.Compare(ast.Name("__name__"), ast.Eq(), [ast.Str("__main__")]):
+        case ast.Compare(ast.Name("__name__"), ast.Eq(), [ast.Constant("__main__")]):
             return []
 
         # if (
@@ -62,10 +63,12 @@ def gen_if(node: ast.If, codegen: CodeGen):
     code = [codegen.lf("if (")]  # first part (popped in elif parsing)
     code.append(codegen.gen_truthy(test))
     code.append(") {")
+
     codegen.indent()
     for stmt in body:
         code += codegen.gen_stmt(stmt)
     codegen.dedent()
+
     if orelse:
         if len(orelse) == 1 and isinstance(orelse[0], ast.If):
             code.append(codegen.lf("} else if ("))
@@ -76,8 +79,10 @@ def gen_if(node: ast.If, codegen: CodeGen):
             for stmt in orelse:
                 code += codegen.gen_stmt(stmt)
             codegen.dedent()
+
     code.append(codegen.lf("}"))  # last part (popped in elif parsing)
-    return code
+
+    return flatten(code)
 
 
 @gen_stmt.register

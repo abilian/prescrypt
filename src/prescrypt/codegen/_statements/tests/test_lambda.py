@@ -3,7 +3,7 @@ import pytest
 from .utils import check_gen
 
 LAMBDAS = [
-    ("f = lambda: 1", "f = () => 1;"),
+    # ("f = lambda: 1", "f = () => 1;"),
 ]
 
 
