@@ -4,6 +4,7 @@ Solving Sudoku (nanpure)
 jill-jenn vie et christoph durr - 2014-2019
 """
 # pylint: disable=missing-docstring, multiple-statements, global-statement
+from __future__ import annotations
 
 from tryalgo.dancing_links import dancing_links
 

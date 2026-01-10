@@ -1,4 +1,7 @@
 # converting user instance to buffer
+from __future__ import annotations
+
+
 class C:
     pass
 

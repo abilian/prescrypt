@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from textwrap import dedent
 
 import pytest
@@ -73,7 +75,7 @@ def test_classdef2():
         """
         class A(B):
             a = 1
-            
+
             def f(self):
                 pass
         """

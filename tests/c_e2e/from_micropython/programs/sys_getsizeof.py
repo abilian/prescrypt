@@ -1,6 +1,8 @@
 # test sys.getsizeof() function
+from __future__ import annotations
 
 import sys
+
 try:
     sys.getsizeof
 except AttributeError:

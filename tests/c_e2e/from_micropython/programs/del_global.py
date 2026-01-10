@@ -1,4 +1,6 @@
 # del global
+from __future__ import annotations
+
 
 def do_del():
     global x

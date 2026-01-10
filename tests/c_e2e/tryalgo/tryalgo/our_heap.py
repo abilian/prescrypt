@@ -7,6 +7,9 @@ christoph dürr et jill-jênn vie - 2015-2019
 
 
 # snip{
+from __future__ import annotations
+
+
 class OurHeap:
     """ min heap
 

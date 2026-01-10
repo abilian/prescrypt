@@ -4,6 +4,7 @@ Huffman code
 
 jill-jenn vie et christoph durr - 2014-2022
 """
+from __future__ import annotations
 
 from heapq import heappop, heappush
 

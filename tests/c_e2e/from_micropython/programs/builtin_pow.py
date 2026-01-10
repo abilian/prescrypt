@@ -1,5 +1,6 @@
 # test builtin pow() with integral values
 # 2 arg version
+from __future__ import annotations
 
 print(pow(0, 1))
 print(pow(1, 0))

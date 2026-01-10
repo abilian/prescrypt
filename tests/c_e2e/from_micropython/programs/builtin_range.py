@@ -1,6 +1,8 @@
 # test builtin range type
 
 # print
+from __future__ import annotations
+
 print(range(4))
 
 # bool

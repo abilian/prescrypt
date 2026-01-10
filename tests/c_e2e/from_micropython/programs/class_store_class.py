@@ -2,6 +2,8 @@
 # There was a bug in MicroPython that under some conditions class stored
 # in instance attribute later was returned "bound" as if it was a method,
 # which caused class constructor to receive extra argument.
+from __future__ import annotations
+
 try:
     from collections import namedtuple
 except ImportError:

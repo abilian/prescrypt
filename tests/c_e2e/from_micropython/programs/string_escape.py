@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 a = "a\1b"
 print(len(a))
 print(ord(a[1]))

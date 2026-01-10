@@ -1,6 +1,7 @@
 # test "is" and "is not" with literal arguments
 # these raise a SyntaxWarning in CPython because the results are
 # implementation dependent; see https://bugs.python.org/issue34850
+from __future__ import annotations
 
 print(1 is 1)
 print(1 is 2)

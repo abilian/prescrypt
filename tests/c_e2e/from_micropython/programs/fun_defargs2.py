@@ -1,4 +1,6 @@
 # overriding default arguments
+from __future__ import annotations
+
 
 def foo(a, b=3):
     print(a, b)

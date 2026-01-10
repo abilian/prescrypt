@@ -1,4 +1,5 @@
 # test builtin exec with a buffer (bytearray/memoryview) input
+from __future__ import annotations
 
 try:
     exec

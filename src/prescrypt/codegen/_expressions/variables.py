@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from prescrypt.constants import JS_RESERVED_NAMES
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast

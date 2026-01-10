@@ -1,4 +1,5 @@
 # comprehensive functionality test for {} format string
+from __future__ import annotations
 
 int_tests = False # these take a while
 char_tests = True

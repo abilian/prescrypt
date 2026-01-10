@@ -1,8 +1,9 @@
 # test sys.tracebacklimit
+from __future__ import annotations
 
 try:
-    import sys
     import io
+    import sys
 except ImportError:
     print("SKIP")
     raise SystemExit

@@ -1,4 +1,6 @@
 # test with when context manager raises in __enter__/__exit__
+from __future__ import annotations
+
 
 class CtxMgr:
     def __init__(self, id):

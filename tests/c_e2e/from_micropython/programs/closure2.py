@@ -1,4 +1,6 @@
 # closures; closing over an argument
+from __future__ import annotations
+
 
 def f(x):
     y = 2 * x

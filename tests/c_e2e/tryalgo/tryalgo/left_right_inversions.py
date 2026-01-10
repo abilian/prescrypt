@@ -8,6 +8,9 @@ christoph dürr - 2016-2019
 
 # snip{
 # pylint: disable=too-many-arguments, missing-docstring
+from __future__ import annotations
+
+
 def _merge_sort(tab, tmp, rank, left, right, lo, hi):
     if hi <= lo + 1:             # interval is empty or singleton
         return                   # nothing to do

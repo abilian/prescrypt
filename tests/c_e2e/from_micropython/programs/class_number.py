@@ -1,4 +1,6 @@
 # test class with __add__ and __sub__ methods
+from __future__ import annotations
+
 
 class C:
     def __init__(self, value):

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def f1(a):
     print(a)
 

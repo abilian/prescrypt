@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 LOCAL = 1
 NONLOCAL = 2
 GLOBAL = 3

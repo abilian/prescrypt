@@ -1,6 +1,8 @@
 # test behaviour of module objects
 
 # this module should always exist
+from __future__ import annotations
+
 import __main__
 
 # print module

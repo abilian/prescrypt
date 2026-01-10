@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class C1:
     def __init__(self, value):
         self.value = value

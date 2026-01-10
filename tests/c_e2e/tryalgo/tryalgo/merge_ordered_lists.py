@@ -7,6 +7,9 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 
 # snip{
+from __future__ import annotations
+
+
 def merge(x, y):
     """Merge two ordered lists
 

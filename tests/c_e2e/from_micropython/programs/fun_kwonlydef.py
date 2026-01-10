@@ -1,6 +1,9 @@
 # test function args, keyword only with default value
 
 # a single arg with a default
+from __future__ import annotations
+
+
 def f1(*, a=1):
     print(a)
 f1()

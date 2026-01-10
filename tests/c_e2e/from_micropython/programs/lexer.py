@@ -1,4 +1,5 @@
 # test the lexer
+from __future__ import annotations
 
 try:
     eval

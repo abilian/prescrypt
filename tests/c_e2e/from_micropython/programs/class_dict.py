@@ -1,4 +1,5 @@
 # test __dict__ attribute of a class
+from __future__ import annotations
 
 if not hasattr(int, "__dict__"):
     print("SKIP")

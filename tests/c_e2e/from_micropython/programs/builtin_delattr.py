@@ -1,4 +1,6 @@
 # test builtin delattr
+from __future__ import annotations
+
 try:
     delattr
 except:

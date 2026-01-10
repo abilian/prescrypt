@@ -1,5 +1,8 @@
 # Handling of "complicated" arg forms to generators
 # https://github.com/micropython/micropython/issues/397
+from __future__ import annotations
+
+
 def gen(v=5):
     for i in range(v):
         yield i

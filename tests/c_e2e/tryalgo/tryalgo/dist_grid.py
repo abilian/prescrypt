@@ -4,6 +4,7 @@ Distances in a grid
 
 jill-jenn vie et christoph durr - 2014-2018
 """
+from __future__ import annotations
 
 from collections import deque
 

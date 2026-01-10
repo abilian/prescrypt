@@ -1,31 +1,50 @@
-[tool.poetry]
+[project]
+authors = [
+    {name = "Stefane Fermigier", email = "sf@abilian.com"},
+]
+requires-python = "<3.13,>=3.10"
+dependencies = [
+    "buildstr<1.0.0,>=0.1.0",
+    "plum-dispatch<3.0.0,>=2.1.1",
+]
 name = "prescrypt-ng"
 version = "0.8.0"
 description = ""
-authors = ["Stefane Fermigier <sf@abilian.com>"]
 readme = "README.md"
-packages = [{include = "prescrypt", from = "src" }]
 
-[tool.poetry.scripts]
-# How do we call it ?
+[project.scripts]
 prescrypt = "prescrypt.main:main"
 py2js = "prescrypt.main:main"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-buildstr = "^0.1.0"
-plum-dispatch = "^2.1.1"
-mkdocs-material = "9.2.0b2"
-quickjs = "^1.19.2"
+[dependency-groups]
+dev = [
+    # Generic
+    "abilian-devtools<1.0.0,>=0.5.2",
+    "devtools<1.0.0,>=0.11.0",
+    # Test
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "nox>=2025.5.1",
+    # Types & Lint
+    "ruff>=0.14.11",
+    "mypy>=1.19.1",
+    "ty>=0.0.11",
+    "pyrefly>=0.47.0",
+    "pre-commit>=4.5.1",
+    # JS infra for tests
+    "dukpy<1.0.0,>=0.3.0",
+    "quickjs<2.0.0,>=1.19.2",
+    # Doc
+    "mkdocs-material",
+    # Misc
+    "attrs<24.0.0,>=23.1.0",
+    "snoop<1.0.0,>=0.4.3",
+]
 
-[tool.poetry.group.dev.dependencies]
-abilian-devtools = "^0.5.2"
-dukpy = "^0.3.0"
-devtools = "^0.11.0"
-attrs = "^23.1.0"
-mkdocs-material = "^9.1.21"
-snoop = "^0.4.3"
-
+[tool.pdm.build]
+includes = [
+    "src/prescrypt",
+]
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

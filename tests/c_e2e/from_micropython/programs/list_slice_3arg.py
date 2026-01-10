@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 x = list(range(10))
 print(x[::-1])
 print(x[::2])

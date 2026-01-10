@@ -1,6 +1,8 @@
 # jill-jênn vie et christoph dürr - 2020
 
 # pylint: disable=missing-docstring
+from __future__ import annotations
+
 import unittest
 
 try:

@@ -16,6 +16,7 @@ every clause has a score: number of its negative variables
 that are not in solution sol
 pool : maps score to clauses of that score
 """
+from __future__ import annotations
 
 import sys
 from collections import defaultdict

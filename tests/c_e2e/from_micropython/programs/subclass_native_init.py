@@ -1,6 +1,9 @@
 # test subclassing a native type and overriding __init__
 
 # overriding list.__init__()
+from __future__ import annotations
+
+
 class L(list):
     def __init__(self, a, b):
         super().__init__([a, b])

@@ -7,6 +7,9 @@ jill-jênn vie et christoph dürr - 2015-2019
 
 
 # snip{
+from __future__ import annotations
+
+
 def knapsack(p, v, cmax):
     """Knapsack problem: select maximum value set of items if total size not
     more than capacity

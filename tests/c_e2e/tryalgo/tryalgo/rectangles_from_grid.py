@@ -5,6 +5,7 @@ plus grand rectangle monochromatique
 
 jill-jenn vie et christoph durr - 2014-2018
 """
+from __future__ import annotations
 
 from tryalgo.rectangles_from_histogram import rectangles_from_histogram
 

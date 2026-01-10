@@ -1,4 +1,5 @@
 # test builtin exec
+from __future__ import annotations
 
 try:
     exec

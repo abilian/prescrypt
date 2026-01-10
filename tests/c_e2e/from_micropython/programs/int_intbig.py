@@ -1,4 +1,5 @@
 # This tests long ints for 32-bit machine
+from __future__ import annotations
 
 a = 0x1ffffffff
 b = 0x100000000

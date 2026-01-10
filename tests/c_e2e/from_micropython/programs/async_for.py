@@ -1,5 +1,7 @@
 # test basic async for execution
 # example taken from PEP0492
+from __future__ import annotations
+
 
 class AsyncIteratorWrapper:
     def __init__(self, obj):

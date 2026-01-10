@@ -1,5 +1,15 @@
-from . import (calls, comprehensions, constants, constructors, f_strings, misc,
-               ops, variables)
+from __future__ import annotations
+
+from . import (
+               calls,
+               comprehensions,
+               constants,
+               constructors,
+               f_strings,
+               misc,
+               ops,
+               variables,
+)
 
 """
 + Constant(constant value, string? kind)

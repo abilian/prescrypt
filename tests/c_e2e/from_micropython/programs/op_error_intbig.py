@@ -1,4 +1,6 @@
 # test errors from bad operations (unary, binary, etc)
+from __future__ import annotations
+
 
 def test_exc(code, exc):
     try:

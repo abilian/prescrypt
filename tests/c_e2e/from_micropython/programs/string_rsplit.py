@@ -1,4 +1,6 @@
 # default separator (whitespace)
+from __future__ import annotations
+
 print("a b".rsplit())
 #print("   a   b    ".rsplit(None))
 #print("   a   b    ".rsplit(None, 1))

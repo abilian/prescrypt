@@ -1,6 +1,8 @@
 # tests int constant folding in compiler
 
 # positive
+from __future__ import annotations
+
 print(+1)
 print(+100)
 

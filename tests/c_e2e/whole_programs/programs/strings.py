@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 s = "aAbB$#"
 print(s.lower())
 print(s.upper())

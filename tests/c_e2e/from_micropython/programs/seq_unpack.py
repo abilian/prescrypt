@@ -1,4 +1,6 @@
 # Basics
+from __future__ import annotations
+
 a, b = 1, 2
 print(a, b)
 a, b = (1, 2)

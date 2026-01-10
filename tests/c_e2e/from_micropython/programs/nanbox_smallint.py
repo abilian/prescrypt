@@ -1,4 +1,5 @@
 # Test creating small integers without heap allocation in nan-boxing mode.
+from __future__ import annotations
 
 try:
     import micropython

@@ -1,4 +1,6 @@
 # anything above 0xa0 is printed as Unicode by CPython
 # the abobe is CPython implementation detail, stick to ASCII
+from __future__ import annotations
+
 for c in range(0x80):
     print("0x{:02x}: {}".format(c, repr(chr(c))))

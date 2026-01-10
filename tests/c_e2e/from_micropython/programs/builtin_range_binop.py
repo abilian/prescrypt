@@ -1,6 +1,8 @@
 # test binary operations on range objects; (in)equality only
 
 # this "feature test" actually tests the implementation but is the best we can do
+from __future__ import annotations
+
 if range(1) != range(1):
     print("SKIP")
     raise SystemExit

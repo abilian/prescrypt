@@ -1,4 +1,5 @@
 # test round() with integral values
+from __future__ import annotations
 
 tests = [
     False, True,

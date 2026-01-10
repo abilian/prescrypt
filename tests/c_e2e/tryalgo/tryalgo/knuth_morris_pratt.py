@@ -9,6 +9,9 @@ inspired from a practical lesson (TP) from Yves Lemaire
 
 
 # snip{ maximum_border_length
+from __future__ import annotations
+
+
 def maximum_border_length(w):
     """Maximum string borders by Knuth-Morris-Pratt
 

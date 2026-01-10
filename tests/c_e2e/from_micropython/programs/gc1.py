@@ -1,4 +1,5 @@
 # basic tests for gc module
+from __future__ import annotations
 
 try:
     import gc

@@ -8,6 +8,8 @@ Useful links:
 Main limiting features for browsers (not sure if this is 100% complete):
 * Object.keys supported from IE 9 - we use it in method_keys()
 """
+from __future__ import annotations
+
 from abc import abstractmethod
 
 from .ast import ast

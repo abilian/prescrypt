@@ -5,6 +5,7 @@ composantes fortement connexes
 
 jill-jênn vie et christoph dürr - 2015-2018
 """
+from __future__ import annotations
 
 __all__ = ["tarjan_recursif", "tarjan", "kosaraju", "reverse"]
 

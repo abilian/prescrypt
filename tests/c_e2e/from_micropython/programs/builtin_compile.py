@@ -1,4 +1,5 @@
 # test compile builtin
+from __future__ import annotations
 
 try:
     compile

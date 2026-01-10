@@ -1,4 +1,6 @@
 # test that we can override a class method with an instance method
+from __future__ import annotations
+
 
 class A:
     def foo(self):

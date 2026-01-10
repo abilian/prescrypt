@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 if not hasattr(bytes, "fromhex"):
     print("SKIP")
     raise SystemExit

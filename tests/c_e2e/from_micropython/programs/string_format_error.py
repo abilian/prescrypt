@@ -1,4 +1,5 @@
 # tests for errors in {} format string
+from __future__ import annotations
 
 try:
     '{0:=}'.format('zzz')

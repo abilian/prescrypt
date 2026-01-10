@@ -1,6 +1,9 @@
 # test user defined iterators
 
 # this class is not iterable
+from __future__ import annotations
+
+
 class NotIterable:
     pass
 try:

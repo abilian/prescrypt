@@ -1,4 +1,7 @@
 # create a class that has a __getitem__ method
+from __future__ import annotations
+
+
 class A:
     def __getitem__(self, index):
         print('getitem', index)

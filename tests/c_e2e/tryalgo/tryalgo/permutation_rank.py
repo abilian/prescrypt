@@ -7,6 +7,9 @@ christoph dürr - 2016-2019
 
 
 # pylint: disable=line-too-long
+from __future__ import annotations
+
+
 def permutation_rank(p):
     """Given a permutation of {0,..,n-1} find its rank according to
     lexicographical order

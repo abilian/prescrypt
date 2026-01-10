@@ -1,4 +1,6 @@
 # yield-from a user-defined generator with a throw() method
+from __future__ import annotations
+
 
 class Iter:
     def __iter__(self):

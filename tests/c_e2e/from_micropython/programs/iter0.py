@@ -1,4 +1,6 @@
 # builtin type that is not iterable
+from __future__ import annotations
+
 try:
     for i in 1:
         pass

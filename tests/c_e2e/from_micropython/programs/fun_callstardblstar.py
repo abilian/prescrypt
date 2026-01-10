@@ -1,4 +1,6 @@
 # test calling a function with *tuple and **dict
+from __future__ import annotations
+
 
 def f(a, b, c, d):
     print(a, b, c, d)

@@ -1,4 +1,5 @@
 # test attributes of builtin range type
+from __future__ import annotations
 
 try:
     range(0).start

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print("".strip())
 print(" \t\n\r\v\f".strip())
 print(" T E S T".strip())

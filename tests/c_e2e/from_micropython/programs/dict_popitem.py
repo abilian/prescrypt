@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 els = []
 d = {1:2,3:4}
 a = d.popitem()
@@ -13,4 +15,3 @@ except KeyError:
 else:
     print("Did not raise KeyError")
 print(sorted(els))
-

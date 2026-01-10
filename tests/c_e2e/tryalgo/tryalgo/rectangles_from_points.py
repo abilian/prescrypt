@@ -7,6 +7,9 @@ jill-jenn vie et christoph durr - 2014-2018
 
 
 # snip{
+from __future__ import annotations
+
+
 def rectangles_from_points(S):
     """How many rectangles can be formed from a set of points
 

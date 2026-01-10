@@ -1,4 +1,6 @@
 # test for correct binding of self when accessing attr of an instance
+from __future__ import annotations
+
 
 class A:
     def __init__(self, arg):

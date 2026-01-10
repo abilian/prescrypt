@@ -1,4 +1,5 @@
 # test struct and endian specific things
+from __future__ import annotations
 
 try:
     import struct

@@ -1,4 +1,5 @@
 # test using an OrderedDict as the locals to construct a class
+from __future__ import annotations
 
 try:
     from collections import OrderedDict

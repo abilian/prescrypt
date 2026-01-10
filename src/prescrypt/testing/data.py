@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 REGRESSIONS = ["[1, 2, 'a', -1]"]
 
 EXPRESSIONS = REGRESSIONS + [

@@ -1,4 +1,6 @@
 # test static and class methods
+from __future__ import annotations
+
 
 class C:
     @staticmethod

@@ -1,4 +1,5 @@
 # test StopIteration interaction with generators
+from __future__ import annotations
 
 try:
     enumerate, exec

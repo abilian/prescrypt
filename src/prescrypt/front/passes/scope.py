@@ -6,9 +6,11 @@ Code based on
 - Tailbiter (Darius Bacon, https://github.com/darius/tailbiter)
 - Compylo (Ethan Zouzoulkowsky & Abilian, https://github.com/abilian/compylo)
 """
+from __future__ import annotations
 
 from prescrypt.front import ast
 from prescrypt.front.ast.ast import Function
+
 # from prescrypt.front.ast import Function
 from prescrypt.front.passes.base import Visitor
 

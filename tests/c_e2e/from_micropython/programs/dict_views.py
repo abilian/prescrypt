@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 d = {1: 2}
 for m in d.items, d.values, d.keys:
     print(m())

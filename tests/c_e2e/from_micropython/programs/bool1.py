@@ -1,6 +1,8 @@
 # tests for bool objects
 
 # basic logic
+from __future__ import annotations
+
 print(not False)
 print(not True)
 print(False and True)

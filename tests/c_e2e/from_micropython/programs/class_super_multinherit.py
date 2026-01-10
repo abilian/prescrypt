@@ -1,4 +1,6 @@
 # test super with multiple inheritance
+from __future__ import annotations
+
 
 class A:
     def foo(self):

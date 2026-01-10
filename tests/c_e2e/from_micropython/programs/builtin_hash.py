@@ -1,4 +1,5 @@
 # test builtin hash function
+from __future__ import annotations
 
 print(hash(False))
 print(hash(True))

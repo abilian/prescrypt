@@ -1,4 +1,5 @@
 # nested try's
+from __future__ import annotations
 
 try:
     print("try 1")

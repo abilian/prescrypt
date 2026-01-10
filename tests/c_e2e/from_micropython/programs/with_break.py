@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class CtxMgr:
 
     def __enter__(self):

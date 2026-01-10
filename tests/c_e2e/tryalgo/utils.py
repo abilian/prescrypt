@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from pathlib import Path
 from textwrap import dedent
 
 from prescrypt import py2js
-from prescrypt.testing import js_eval, js_eq
+from prescrypt.testing import js_eq, js_eval
 
 
 def check(name, expr, expected):

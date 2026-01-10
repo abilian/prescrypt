@@ -1,4 +1,5 @@
 # test that fixed dictionaries cannot be modified
+from __future__ import annotations
 
 try:
     import errno

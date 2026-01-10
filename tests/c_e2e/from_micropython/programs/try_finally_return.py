@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def func1():
     try:
         return "it worked"

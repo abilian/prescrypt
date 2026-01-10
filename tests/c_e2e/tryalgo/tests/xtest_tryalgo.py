@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # pylint: disable=missing-docstring
+from __future__ import annotations
+
 import unittest
 
 

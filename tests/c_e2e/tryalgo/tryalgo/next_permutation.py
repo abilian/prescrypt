@@ -9,6 +9,9 @@ jill-jênn vie et christoph dürr - 2014-2020
 
 # snip{
 # pylint: disable=redefined-outer-name
+from __future__ import annotations
+
+
 def next_permutation(tab):
     """find the next permutation of tab in the lexicographical order
 

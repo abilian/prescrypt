@@ -1,6 +1,9 @@
 # test builtin slice
 
 # print slice
+from __future__ import annotations
+
+
 class A:
     def __getitem__(self, idx):
         print(idx)

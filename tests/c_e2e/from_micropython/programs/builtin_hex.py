@@ -1,4 +1,5 @@
 # test builtin hex function
+from __future__ import annotations
 
 print(hex(1))
 print(hex(-1))

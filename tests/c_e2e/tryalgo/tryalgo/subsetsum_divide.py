@@ -7,6 +7,9 @@ christoph dürr et jill-jênn vie - 2014-2019
 
 
 # snip{
+from __future__ import annotations
+
+
 def part_sum(x_table, i=0):
     """All subsetsums from x_table[i:]
 

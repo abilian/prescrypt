@@ -9,6 +9,9 @@ jill-jênn vie, christoph dürr et jean-christophe filliâtre - 2014-2019
 # snip{
 # pylint: disable=too-many-locals, too-many-nested-blocks, unnecessary-pass
 # pylint: disable=inconsistent-return-statements, too-many-branches
+from __future__ import annotations
+
+
 def arithm_expr_target(x, target):
     """ Create arithmetic expression approaching target value
 

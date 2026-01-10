@@ -1,4 +1,5 @@
 # Test parsing ints.
+from __future__ import annotations
 
 try:
     bytearray

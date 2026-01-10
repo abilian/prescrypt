@@ -1,4 +1,6 @@
 # Test calling non-special method inherited from native type
+from __future__ import annotations
+
 
 class mylist(list):
     pass

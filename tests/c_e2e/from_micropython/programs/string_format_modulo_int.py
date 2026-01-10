@@ -1,4 +1,5 @@
 # test string modulo formatting with int values
+from __future__ import annotations
 
 try:
     '' % ()

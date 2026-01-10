@@ -1,5 +1,7 @@
 # Tests for deques with "check overflow" flag and other extensions
 # wrt to CPython.
+from __future__ import annotations
+
 try:
     from collections import deque
 except ImportError:

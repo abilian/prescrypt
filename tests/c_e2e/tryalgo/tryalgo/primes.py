@@ -9,6 +9,9 @@ jill-jenn vie et christoph durr - 2014-2018
 
 # snip{ eratosthene
 # pylint: disable=redefined-outer-name
+from __future__ import annotations
+
+
 def eratosthene(n):
     """Prime numbers by sieve of Eratosthene
 

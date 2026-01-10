@@ -1,5 +1,7 @@
 # Test that returning of NotImplemented from binary op methods leads to
 # TypeError.
+from __future__ import annotations
+
 try:
     NotImplemented
 except NameError:

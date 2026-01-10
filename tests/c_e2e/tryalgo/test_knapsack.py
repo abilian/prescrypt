@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import pytest
 
-from tests.tryalgo.utils import check
+from tests.c_e2e.tryalgo.utils import check
 
 EXAMPLES = [
     ([580, 1616, 1906, 1942, 50, 294], [874, 620, 345, 269, 360, 470], 2000, 1704),

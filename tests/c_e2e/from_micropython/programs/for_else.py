@@ -1,6 +1,8 @@
 # test for-else statement
 
 # test optimised range with simple else
+from __future__ import annotations
+
 for i in range(2):
     print(i)
 else:

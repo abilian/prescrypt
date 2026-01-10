@@ -6,6 +6,8 @@ jill-jenn vie et christoph durr - 2014-2018
 """
 
 # snip{
+from __future__ import annotations
+
 from bisect import bisect_left
 
 

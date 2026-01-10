@@ -4,6 +4,7 @@ Bipartie maximum matching
 
 jill-jenn vie et christoph durr - 2014-2018
 """
+from __future__ import annotations
 
 __all__ = ["max_bipartite_matching", "max_bipartite_matching2"]
 

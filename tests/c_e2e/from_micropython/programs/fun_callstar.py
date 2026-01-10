@@ -1,4 +1,6 @@
 # function calls with *pos
+from __future__ import annotations
+
 
 def foo(a, b, c):
     print(a, b, c)

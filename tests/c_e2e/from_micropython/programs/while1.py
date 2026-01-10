@@ -1,4 +1,5 @@
 # basic while loop
+from __future__ import annotations
 
 x = 0
 while x < 2:

@@ -1,4 +1,5 @@
 # test PEP 526, variable annotations
+from __future__ import annotations
 
 x: int
 print("x" in globals())

@@ -4,6 +4,8 @@ Dynamic Programming speeup tricks
 
 christoph dürr - jill-jênn vie - 2022
 """
+from __future__ import annotations
+
 
 def dyn_prog_Monge(W):
     """ Solves the following dynamic program for 0 <= i < j < n

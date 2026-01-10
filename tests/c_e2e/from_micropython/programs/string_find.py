@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print("hello world".find("ll"))
 print("hello world".find("ll", None))
 print("hello world".find("ll", 1))

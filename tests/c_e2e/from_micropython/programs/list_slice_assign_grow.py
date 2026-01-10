@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 x = list(range(2))
 
 l = list(x)

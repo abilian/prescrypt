@@ -1,4 +1,6 @@
 # test containment operator on subclass of a native type
+from __future__ import annotations
+
 
 class mylist(list):
     pass

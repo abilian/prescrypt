@@ -1,4 +1,6 @@
 # test builtin property
+from __future__ import annotations
+
 try:
     property
 except:

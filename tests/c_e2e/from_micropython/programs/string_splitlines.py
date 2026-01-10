@@ -1,4 +1,5 @@
 # test string.splitlines() method
+from __future__ import annotations
 
 try:
     str.splitlines

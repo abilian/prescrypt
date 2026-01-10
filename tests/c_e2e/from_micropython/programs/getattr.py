@@ -1,4 +1,6 @@
 # test __getattr__
+from __future__ import annotations
+
 
 class A:
     def __init__(self, d):

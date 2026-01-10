@@ -5,6 +5,7 @@ Shortest paths by Dijkstra
 jill-jênn vie et christoph dürr - 2015-2018
 """
 # pylint: disable=wrong-import-position
+from __future__ import annotations
 
 from heapq import heappop, heappush
 

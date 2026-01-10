@@ -1,4 +1,7 @@
 # Calling an inherited classmethod
+from __future__ import annotations
+
+
 class Base:
 
     @classmethod

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print(','.join(()))
 print(','.join(('a',)))
 print(','.join(('a', 'b')))

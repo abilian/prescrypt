@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX

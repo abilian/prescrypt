@@ -3,6 +3,8 @@
 # For this test we need a native class that can be subclassed (has make_new)
 # and is callable (has call).  The only one available is machine.Signal, which
 # in turns needs PinBase.
+from __future__ import annotations
+
 try:
     import machine
     machine.PinBase

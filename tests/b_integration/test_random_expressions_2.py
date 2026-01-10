@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from devtools import debug
 
 from prescrypt import py2js

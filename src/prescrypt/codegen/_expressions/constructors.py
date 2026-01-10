@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from buildstr import Builder
 
 from prescrypt.exceptions import JSError

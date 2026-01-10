@@ -8,6 +8,9 @@ christoph dürr - jill-jênn vie - 2013-2019
 
 
 # snip{ pgcd
+from __future__ import annotations
+
+
 def pgcd(a, b):
     """Greatest common divisor for a and b
 

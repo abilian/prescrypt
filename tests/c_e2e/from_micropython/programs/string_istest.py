@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print("".isspace())
 print(" \t\n\r\v\f".isspace())
 print("a".isspace())

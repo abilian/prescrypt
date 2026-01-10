@@ -1,4 +1,6 @@
 # test equality for classes/instances to other types
+from __future__ import annotations
+
 
 class A:
     pass

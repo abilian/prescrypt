@@ -4,6 +4,7 @@ Predictive text for mobile phones
 
 jill-jenn vie et christoph durr and louis abraham - 2014-2019
 """
+from __future__ import annotations
 
 __all__ = ["predictive_text", "propose"]
 

@@ -2,6 +2,9 @@
 # another try-finally which may affect the behaviour of the return
 
 # case where a simple try-finally executes during an unwinding return
+from __future__ import annotations
+
+
 def f(x):
     try:
         try:

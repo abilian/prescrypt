@@ -1,4 +1,6 @@
 # Calling object.__init__() via super().__init__
+from __future__ import annotations
+
 try:
     # If we don't expose object.__init__ (small ports), there's
     # nothing to test.

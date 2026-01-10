@@ -1,6 +1,8 @@
 # tests basics of bound methods
 
 # uPy and CPython differ when printing a bound method, so just print the type
+from __future__ import annotations
+
 print(type(repr([].append)))
 
 class A:

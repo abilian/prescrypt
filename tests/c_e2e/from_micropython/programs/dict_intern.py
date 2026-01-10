@@ -1,4 +1,5 @@
 # check that interned strings are compared against non-interned strings
+from __future__ import annotations
 
 di = {"key1": "value"}
 

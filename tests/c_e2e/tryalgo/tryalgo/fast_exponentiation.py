@@ -4,6 +4,7 @@ Fast Exponentiation
 
 jill-jenn vie et christoph durr and louis abraham - 2014-2018
 """
+from __future__ import annotations
 
 
 def fast_exponentiation2(a, b, q):

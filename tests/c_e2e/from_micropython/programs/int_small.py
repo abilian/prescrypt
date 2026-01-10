@@ -2,6 +2,7 @@
 
 # Small ints are variable-length encoded in MicroPython, so first
 # test that encoding works as expected.
+from __future__ import annotations
 
 print(0)
 print(1)

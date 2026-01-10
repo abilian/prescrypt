@@ -6,7 +6,7 @@ christoph dürr - jill-jênn vie - 2022
 """
 # http://www.cs.toronto.edu/~denisp/csc373/docs/tutorial3-adv-writeup.pdf
 # https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
-
+from __future__ import annotations
 
 import cmath  # for exp
 import math  # for pi

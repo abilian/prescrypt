@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class A:
     def __eq__(self, other):
         print("A __eq__ called")

@@ -1,4 +1,5 @@
 # test subclassing exceptions and providing __new__
+from __future__ import annotations
 
 
 class Dummy(BaseException):

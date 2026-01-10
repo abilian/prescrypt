@@ -7,6 +7,9 @@ christoph dürr - jill-jênn vie - 2022
 
 
 # snip{
+from __future__ import annotations
+
+
 def eval_poly(P, x):
     """evaluate a polynomial in x.
     :param P: an array representing the polynomial

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from prescrypt.codegen import CodeGen
 from prescrypt.codegen.utils import flatten
 from prescrypt.front import ast

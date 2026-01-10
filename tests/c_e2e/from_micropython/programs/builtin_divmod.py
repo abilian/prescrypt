@@ -1,4 +1,5 @@
 # test builtin divmod
+from __future__ import annotations
 
 print(divmod(0, 2))
 print(divmod(3, 4))

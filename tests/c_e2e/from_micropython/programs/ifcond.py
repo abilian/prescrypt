@@ -1,4 +1,5 @@
 # test if conditions which are optimised by the compiler
+from __future__ import annotations
 
 if 0:
     print(5)

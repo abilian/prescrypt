@@ -1,6 +1,8 @@
 # test for+range, mostly to check optimisation of this pair
 
 # apply args using *
+from __future__ import annotations
+
 for x in range(*(1, 3)):
     print(x)
 for x in range(1, *(6, 2)):

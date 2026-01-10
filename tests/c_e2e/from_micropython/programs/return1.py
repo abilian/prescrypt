@@ -1,4 +1,6 @@
 # test return statement
+from __future__ import annotations
+
 
 def f():
     return

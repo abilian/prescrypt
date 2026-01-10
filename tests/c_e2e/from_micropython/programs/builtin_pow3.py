@@ -1,5 +1,6 @@
 # test builtin pow() with integral values
 # 3 arg version
+from __future__ import annotations
 
 try:
     print(pow(3, 4, 7))

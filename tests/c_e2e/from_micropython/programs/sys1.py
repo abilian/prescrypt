@@ -1,6 +1,8 @@
 # test sys module
+from __future__ import annotations
 
 import sys
+
 print(sys.__name__)
 print(type(sys.path))
 print(type(sys.argv))

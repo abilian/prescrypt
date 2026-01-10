@@ -1,4 +1,5 @@
 # test equality
+from __future__ import annotations
 
 print(None == None)
 

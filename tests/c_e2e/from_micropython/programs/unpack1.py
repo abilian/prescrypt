@@ -1,4 +1,5 @@
 # unpack sequences
+from __future__ import annotations
 
 a, = 1,     ; print(a)
 a, b = 2, 3 ; print(a, b)

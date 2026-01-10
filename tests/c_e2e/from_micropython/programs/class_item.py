@@ -1,4 +1,6 @@
 # test class with __getitem__, __setitem__, __delitem__ methods
+from __future__ import annotations
+
 
 class C:
     def __getitem__(self, item):

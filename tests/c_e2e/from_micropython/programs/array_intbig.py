@@ -1,4 +1,5 @@
 # test array types QqLl that require big-ints
+from __future__ import annotations
 
 try:
     from array import array

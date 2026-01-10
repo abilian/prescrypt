@@ -5,6 +5,7 @@ Lowest common ancestor
 jill-jenn vie et christoph durr - 2014-2018
 """
 # http://leetcode.com/2011/11/longest-palindromic-substring-part-ii.html
+from __future__ import annotations
 
 from tryalgo.range_minimum_query import RangeMinQuery
 

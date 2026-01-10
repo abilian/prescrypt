@@ -4,6 +4,7 @@ Interval tree
 
 christoph dürr - jill-jênn vie - 2013-2018
 """
+from __future__ import annotations
 
 from bisect import bisect_right
 

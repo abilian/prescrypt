@@ -1,4 +1,6 @@
 # Subclass from 2 bases explicitly subclasses from object
+from __future__ import annotations
+
 
 class Base1(object):
     pass

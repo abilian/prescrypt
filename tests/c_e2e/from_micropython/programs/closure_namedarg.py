@@ -1,4 +1,6 @@
 # test passing named arg to closed-over function
+from __future__ import annotations
+
 
 def f():
     x = 1

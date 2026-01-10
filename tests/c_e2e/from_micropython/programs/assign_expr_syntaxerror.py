@@ -1,4 +1,6 @@
 # test SyntaxError with := operator
+from __future__ import annotations
+
 
 def test(code):
     try:

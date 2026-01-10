@@ -1,6 +1,9 @@
 # test large function (stack) state
 
 # this function creates 127 locals
+from __future__ import annotations
+
+
 def f():
     x0 = 1
     x1 = 1

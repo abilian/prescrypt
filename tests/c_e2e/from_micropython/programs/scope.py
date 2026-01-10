@@ -1,6 +1,8 @@
 # test scoping rules
 
 # explicit global variable
+from __future__ import annotations
+
 a = 1
 def f():
     global a

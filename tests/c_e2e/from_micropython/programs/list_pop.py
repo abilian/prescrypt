@@ -1,4 +1,6 @@
 # list poppin'
+from __future__ import annotations
+
 a = [1, 2, 3]
 print(a.pop())
 print(a.pop())

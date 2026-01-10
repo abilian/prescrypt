@@ -1,4 +1,6 @@
 # test calling a function with keywords given by **dict
+from __future__ import annotations
+
 
 def f(a, b):
     print(a, b)

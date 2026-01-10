@@ -1,4 +1,6 @@
 # basic exceptions
+from __future__ import annotations
+
 x = 1
 try:
     x.a()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print("foobar".endswith("bar"))
 print("foobar".endswith("baR"))
 print("foobar".endswith("bar1"))

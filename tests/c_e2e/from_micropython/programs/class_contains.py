@@ -1,4 +1,7 @@
 # A contains everything
+from __future__ import annotations
+
+
 class A:
     def __contains__(self, key):
         return True

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def f():
     return 4
 def g(_):

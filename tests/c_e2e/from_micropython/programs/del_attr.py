@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class C:
     def f():
         pass

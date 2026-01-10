@@ -8,6 +8,9 @@ jill-jenn vie et christoph durr - 2014-2018
 
 
 # snip{
+from __future__ import annotations
+
+
 def matrix_mult_opt_order(M):
     """Matrix chain multiplication optimal order
 

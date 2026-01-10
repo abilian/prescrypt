@@ -8,6 +8,9 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 
 # snip{
+from __future__ import annotations
+
+
 def longest_common_subsequence(x, y):
     """Longest common subsequence
 

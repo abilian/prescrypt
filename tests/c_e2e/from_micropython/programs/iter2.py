@@ -1,4 +1,6 @@
 # user defined iterator used in something other than a for loop
+from __future__ import annotations
+
 
 class MyStopIteration(StopIteration):
     pass

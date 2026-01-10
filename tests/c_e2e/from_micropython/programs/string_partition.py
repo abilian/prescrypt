@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 try:
     str.partition
 except AttributeError:

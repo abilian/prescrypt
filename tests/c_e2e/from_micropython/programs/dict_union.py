@@ -2,6 +2,7 @@
 #
 # The tests sort the resulting dictionaries for now, since map insertion
 # order is not implemented in MicroPython.
+from __future__ import annotations
 
 try:
     {} | {}

@@ -1,4 +1,6 @@
 # basic tuple functionality
+from __future__ import annotations
+
 x = (1, 2, 3 * 4)
 print(x)
 try:

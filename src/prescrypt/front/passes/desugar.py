@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast as _ast
 from typing import cast
 

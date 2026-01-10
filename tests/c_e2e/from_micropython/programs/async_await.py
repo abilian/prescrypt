@@ -1,5 +1,7 @@
 # test basic await expression
 # adapted from PEP0492
+from __future__ import annotations
+
 
 async def abinary(n):
     print(n)

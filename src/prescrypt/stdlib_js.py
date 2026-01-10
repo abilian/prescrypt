@@ -6,6 +6,7 @@
     and then "apply()-ed" to the instance of interest.
     Declaring methods on Object is a bad idea (breaks Bokeh, jquery).
 """
+from __future__ import annotations
 
 import re
 from pathlib import Path

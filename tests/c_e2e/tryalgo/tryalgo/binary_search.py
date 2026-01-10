@@ -6,6 +6,7 @@ jill-jênn vie, christoph dürr et louis abraham - 2014-2020
 """
 
 # pylint: disable=redefined-outer-name
+from __future__ import annotations
 
 __all__ = ["discrete_binary_search", "continuous_binary_search",
            "optimized_binary_search_lower", "optimized_binary_search",

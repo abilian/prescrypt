@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class A:
     def __init__(self):
         self.a = 1

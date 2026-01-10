@@ -1,6 +1,8 @@
 # basic strings
 
 # literals
+from __future__ import annotations
+
 print('abc')
 print(r'abc')
 print(u'abc')

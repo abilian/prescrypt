@@ -7,6 +7,9 @@ jill-jênn vie et christoph durr - 2015-2019
 
 
 # snip{ dfs-recursive
+from __future__ import annotations
+
+
 def dfs_recursive(graph, node, seen):
     """DFS, detect connected component, recursive implementation
 

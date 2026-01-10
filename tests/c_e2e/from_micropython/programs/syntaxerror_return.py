@@ -1,6 +1,7 @@
 # With MICROPY_CPYTHON_COMPAT, the "return" statement can only appear in a
 # function.
 # Otherwise (in minimal builds), it ends execution of a module/class.
+from __future__ import annotations
 
 try:
     exec

@@ -1,4 +1,6 @@
 # outer generator ignores a thrown GeneratorExit (this is allowed)
+from __future__ import annotations
+
 
 def gen():
     try:

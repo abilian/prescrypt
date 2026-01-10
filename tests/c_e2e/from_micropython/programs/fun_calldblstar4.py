@@ -1,4 +1,5 @@
 # test calling a function with multiple **args
+from __future__ import annotations
 
 
 def f(a, b=None, c=None):

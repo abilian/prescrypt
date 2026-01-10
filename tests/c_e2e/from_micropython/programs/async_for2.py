@@ -1,6 +1,8 @@
 # test waiting within "async for" __anext__ function
+from __future__ import annotations
 
 import sys
+
 if sys.implementation.name == 'micropython':
     # uPy allows normal generators to be awaitables
     coroutine = lambda f: f

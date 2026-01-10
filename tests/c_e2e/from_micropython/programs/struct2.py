@@ -1,4 +1,5 @@
 # test struct with a count specified before the type
+from __future__ import annotations
 
 try:
     import struct

@@ -1,4 +1,6 @@
 # test builtin hash function, on generators
+from __future__ import annotations
+
 
 def gen():
     yield

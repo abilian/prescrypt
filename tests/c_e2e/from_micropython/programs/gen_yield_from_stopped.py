@@ -1,4 +1,6 @@
 # Yielding from stopped generator is ok and results in None
+from __future__ import annotations
+
 
 def gen():
     return 1

@@ -1,4 +1,5 @@
 # test builtin print function
+from __future__ import annotations
 
 print()
 print(None)

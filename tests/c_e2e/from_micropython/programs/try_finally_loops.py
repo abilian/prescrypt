@@ -1,4 +1,6 @@
 # Test various loop types, some may be implemented/optimized differently
+from __future__ import annotations
+
 while True:
     try:
         break

@@ -4,6 +4,7 @@ Maximum flow by Dinic
 
 jill-jênn vie et christoph dürr - 2015-2018
 """
+from __future__ import annotations
 
 from collections import deque
 from sys import setrecursionlimit

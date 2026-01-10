@@ -1,4 +1,5 @@
 # test builtin bin function
+from __future__ import annotations
 
 print(bin(1))
 print(bin(-1))

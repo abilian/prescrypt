@@ -2,6 +2,8 @@
 # coding=utf8
 
 # pylint: disable=missing-docstring
+from __future__ import annotations
+
 import unittest
 
 from tryalgo.interval_cover import _solve, interval_cover

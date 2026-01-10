@@ -1,4 +1,5 @@
 # make sure type of first arg (self) to a builtin method is checked
+from __future__ import annotations
 
 list.append
 

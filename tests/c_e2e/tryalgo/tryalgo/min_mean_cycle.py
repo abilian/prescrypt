@@ -8,6 +8,9 @@ jill-jenn vie et christoph durr - 2014-2018
 
 # snip{
 # pylint: disable=too-many-locals
+from __future__ import annotations
+
+
 def min_mean_cycle(graph, weight, start=0):
     """Minimum mean cycle by Karp
 

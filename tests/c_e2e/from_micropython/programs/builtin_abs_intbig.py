@@ -1,6 +1,8 @@
 # test builtin abs
 
 # bignum
+from __future__ import annotations
+
 print(abs(123456789012345678901234567890))
 print(abs(-123456789012345678901234567890))
 

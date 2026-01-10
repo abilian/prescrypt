@@ -1,6 +1,8 @@
 # test errors from bad function calls
 
 # function doesn't take keyword args
+from __future__ import annotations
+
 try:
     [].append(x=1)
 except TypeError:

@@ -4,6 +4,7 @@ Solving 2-SAT boolean formulas
 
 jill-jenn vie et christoph durr - 2015-2019
 """
+from __future__ import annotations
 
 from tryalgo.strongly_connected_components import tarjan
 

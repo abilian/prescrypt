@@ -7,6 +7,9 @@ christoph dürr - jill-jênn vie - 2013-2019
 
 # snip{
 # pylint: disable=anomalous-backslash-in-string
+from __future__ import annotations
+
+
 def anagrams(S):                   # S is a set of strings
     """group a set of words into anagrams
 

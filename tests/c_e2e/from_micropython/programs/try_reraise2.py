@@ -1,4 +1,7 @@
 # Reraise not the latest occurred exception
+from __future__ import annotations
+
+
 def f():
     try:
         raise ValueError("val", 3)

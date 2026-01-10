@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print("foobar".startswith("foo"))
 print("foobar".startswith("Foo"))
 print("foobar".startswith("foo1"))

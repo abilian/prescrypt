@@ -8,7 +8,7 @@ jill-jenn vie et christoph durr - 2014-2019
 # pylint: disable=bad-continuation, bad-whitespace, redefined-outer-name
 # pylint: disable=too-many-arguments
 
-from __future__ import print_function
+from __future__ import annotations, print_function
 
 
 # snip{

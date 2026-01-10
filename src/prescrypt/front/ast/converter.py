@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 
 from . import ast as my_ast

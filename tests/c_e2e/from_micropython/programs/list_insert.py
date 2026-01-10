@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 a = [1, 2, 3]
 a.insert(1, 42)
 print(a)

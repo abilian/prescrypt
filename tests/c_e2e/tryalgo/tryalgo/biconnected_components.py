@@ -4,6 +4,7 @@ bi-connected components, cut vertices and cut cut-nodes
 
 jill-jenn vie, christoph durr et louis abraham - 2015-2019
 """
+from __future__ import annotations
 
 from sys import getrecursionlimit, setrecursionlimit
 

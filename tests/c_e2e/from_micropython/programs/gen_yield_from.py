@@ -1,4 +1,7 @@
 # Case of terminating subgen using return with value
+from __future__ import annotations
+
+
 def gen():
     yield 1
     yield 2

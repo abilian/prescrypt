@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Base:
 
     def __init__(self):

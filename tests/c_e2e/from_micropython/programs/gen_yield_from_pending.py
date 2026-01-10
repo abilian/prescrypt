@@ -1,5 +1,7 @@
 # Tests that the pending exception state is managed correctly
 # (previously failed on native emitter).
+from __future__ import annotations
+
 
 def noop_task():
     print('noop task')

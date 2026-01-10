@@ -10,8 +10,12 @@ jill-jênn vie, christoph dürr et louis abraham - 2014-2019
 
 
 # snip{
-from math import hypot  # hypot(dx, dy) = sqrt(dx * dx + dy * dy)
-from math import floor
+from __future__ import annotations
+
+from math import (
+    floor,
+    hypot,  # hypot(dx, dy) = sqrt(dx * dx + dy * dy)
+)
 from random import randint, shuffle
 
 # snip}

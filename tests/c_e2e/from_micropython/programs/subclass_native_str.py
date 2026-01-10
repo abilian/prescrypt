@@ -1,4 +1,6 @@
 # Test subclassing built-in str
+from __future__ import annotations
+
 
 class S(str):
     pass

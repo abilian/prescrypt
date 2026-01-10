@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Descriptor:
     def __get__(self, obj, cls):
         print('get')

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from . import ast
 from .passes.binder import Binder
 from .passes.desugar import desugar

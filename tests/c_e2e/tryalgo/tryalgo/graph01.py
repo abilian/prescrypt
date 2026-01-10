@@ -4,6 +4,7 @@ Shortest path in a 0,1 weighted graph
 
 jill-jenn vie et christoph durr - 2014-2018
 """
+from __future__ import annotations
 
 from collections import deque
 

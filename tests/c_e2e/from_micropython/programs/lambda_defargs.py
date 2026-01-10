@@ -1,4 +1,5 @@
 # test default args with lambda
+from __future__ import annotations
 
 f = lambda x=1: x
 print(f(), f(2), f(x=3))
