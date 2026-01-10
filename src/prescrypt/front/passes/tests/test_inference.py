@@ -5,9 +5,9 @@ import pytest
 from prescrypt.front import ast
 from prescrypt.testing.data import EXPRESSIONS
 
-from ..binder import Binder
-from ..desugar import desugar
-from ..type_inference import TypeInference
+from prescrypt.front.passes.binder import Binder
+from prescrypt.front.passes.desugar import desugar
+from prescrypt.front.passes.type_inference import TypeInference
 
 
 @pytest.mark.skip("TODO")

@@ -6,8 +6,8 @@ from __future__ import annotations
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
-from ..main import CodeGen, gen_stmt
-from ..utils import js_repr, unify
+from prescrypt.codegen.main import CodeGen, gen_stmt
+from prescrypt.codegen.utils import js_repr, unify
 
 
 @gen_stmt.register

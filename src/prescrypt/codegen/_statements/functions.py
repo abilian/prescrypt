@@ -6,8 +6,8 @@ from devtools import debug
 
 from prescrypt.front import ast
 
-from ..main import CodeGen, gen_stmt
-from ..utils import flatten
+from prescrypt.codegen.main import CodeGen, gen_stmt
+from prescrypt.codegen.utils import flatten
 
 
 @gen_stmt.register
@@ -141,8 +141,6 @@ def _gen_functiondef(codegen: CodeGen, node: ast.AST, is_lambda=False, asyn=Fals
     # - kw_defaults: list[None] | list[expr]
     # - kwarg: None | arg
     # - defaults: list[expr]
-
-    print("args:", ast.dump(args_node))
 
     args = args_node.args
 

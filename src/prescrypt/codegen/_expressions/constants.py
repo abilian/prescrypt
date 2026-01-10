@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from prescrypt.front import ast
 
-from ..main import CodeGen, gen_expr
+from prescrypt.codegen.main import CodeGen, gen_expr
 
 MAP = {True: "true", False: "false", None: "null"}
 

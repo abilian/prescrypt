@@ -4,6 +4,7 @@ from pathlib import Path
 
 from .codegen import CodeGen
 from .front import ast
+from .front.passes.binder import Binder
 from .front.passes.desugar import desugar
 
 
@@ -11,6 +12,7 @@ class Compiler:
     def compile(self, source: str, include_stdlib=True) -> str:
         tree = ast.parse(source)
         tree = desugar(tree)
+        Binder().visit(tree)
         codegen = CodeGen(tree)
         js_code = codegen.gen()
         if not include_stdlib:

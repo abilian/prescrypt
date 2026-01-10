@@ -7,8 +7,8 @@ import pytest
 from prescrypt.front import ast
 from prescrypt.testing.data import EXPRESSIONS
 
-from ..desugar import desugar
-from ..scope import get_top_scope
+from prescrypt.front.passes.desugar import desugar
+from prescrypt.front.passes.scope import get_top_scope
 
 
 @pytest.mark.parametrize("expression", EXPRESSIONS)

@@ -32,19 +32,59 @@ class Desugarer(ast.NodeTransformer):
         call = ast.Call(ast.Name("AssertionError", load), args, keywords)
         return ast.If(node.test, [], [ast.Raise(call, None)])
 
+    # -------------------------------------------------------------------------
+    # DESIGN ALTERNATIVES (not implemented)
+    # -------------------------------------------------------------------------
+    # The following visitors represent alternative desugaring strategies that
+    # were explored. They lower higher-level constructs to simpler primitives,
+    # which can simplify code generation but may lose semantic information.
+    #
+    # Alternative 1: Lambda as anonymous function assignment
+    # -------------------------------------------------------
     # @rewriter
     # def visit_Lambda(self, node: ast.Lambda):
+    #     """Desugar lambda to a named function expression.
+    #
+    #     `lambda x: x + 1` becomes `Function("<lambda>", args, [Return(body)])`
+    #
+    #     Pros: Uniform handling of all functions
+    #     Cons: Loses lambda identity, complicates source maps
+    #     """
     #     return Function("<lambda>", node.args, [ast.Return(node.body)])
-
+    #
+    # Alternative 2: Function definitions as assignments
+    # ---------------------------------------------------
     # @rewriter
     # def visit_FunctionDef(self, node: ast.FunctionDef):
+    #     """Desugar `def f(x): body` to `f = Function("f", args, body)`.
+    #
+    #     Also applies decorators: `@dec def f(): ...` becomes `f = dec(f)`
+    #
+    #     Pros: Makes function definition explicit as assignment
+    #     Cons: Loses hoisting semantics, decorator handling complexity
+    #     """
     #     fn = Function(node.name, node.args, node.body)
     #     for d in reversed(node.decorator_list):
     #         fn = ast.Call(d, [fn])
     #     return ast.Assign([ast.Name(node.name, store)], fn)
-
+    #
+    # Alternative 3: List comprehensions as explicit loops
+    # -----------------------------------------------------
     # @rewriter
     # def visit_ListComp(self, node: ast.ListComp):
+    #     """Desugar `[expr for x in iter]` to explicit loop with append.
+    #
+    #     Becomes:
+    #         (lambda .0:
+    #             for x in iter:
+    #                 for cond in ifs:
+    #                     .0.append(expr)
+    #             return .0
+    #         )([])
+    #
+    #     Pros: Reduces comprehension to loops (simpler codegen)
+    #     Cons: Performance (append vs array literal), loses optimization hints
+    #     """
     #     result_append = ast.Attribute(ast.Name(".0", load), "append", load)
     #     body = ast.Expr(ast.Call(result_append, [node.elt]))
     #     for loop in reversed(node.generators):
@@ -54,6 +94,7 @@ class Desugarer(ast.NodeTransformer):
     #     fn = [body, ast.Return(ast.Name(".0", load))]
     #     args = ast.arguments([ast.arg(".0", None)], None, [], None, [], [])
     #     return ast.Call(Function("<listcomp>", args, fn), [ast.List([], load)])
+    # -------------------------------------------------------------------------
 
     @rewriter
     def visit_Compare(self, node: ast.Compare):
@@ -72,7 +113,6 @@ class Desugarer(ast.NodeTransformer):
             groups.append(compare)
             left = right
 
-        # desugaring the And list as we go
         return self.visit(ast.BoolOp(ast.And(), groups))
 
     @rewriter
@@ -118,7 +158,6 @@ class Desugarer(ast.NodeTransformer):
         """
         assert len(node.values) > 1
         if len(node.values) == 2:
-            # the node is binary, stop here
             return node
 
         left = node.values.pop(0)

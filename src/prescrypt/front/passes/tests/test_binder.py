@@ -7,8 +7,8 @@ import pytest
 from prescrypt.front import Variable, ast
 from prescrypt.testing.data import EXPRESSIONS as _EXPRESSIONS
 
-from ..binder import Binder
-from ..desugar import desugar
+from prescrypt.front.passes.binder import Binder
+from prescrypt.front.passes.desugar import desugar
 
 EXPRESSIONS = _EXPRESSIONS + [
     "f = lambda x: x",

@@ -3,29 +3,23 @@ from __future__ import annotations
 from prescrypt.constants import ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.front import ast
 
-from ..main import CodeGen, gen_expr
-from ..utils import unify
+from prescrypt.codegen.main import CodeGen, gen_expr
+from prescrypt.codegen.utils import unify
 
 
 @gen_expr.register
 def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
-    value_node, attr, ctx = node.value, node.attr, node.ctx
+    value_node, attr = node.value, node.attr
 
-    # fullname = attr + "." + fullname if fullname else attr
-    match value_node:
-        case ast.Name():
-            base_name = codegen.gen_expr(value_node)
-        case ast.Attribute():
-            base_name = self.gen_attribute(value_node, ctx, fullname)
-        case _:
-            base_name = unify(codegen.gen_expr(value_node))
+    # Generate the base expression
+    base_name = unify(codegen.gen_expr(value_node))
 
-    # Double underscore name mangling
+    # Double underscore name mangling (for private attributes)
     if attr.startswith("__") and not attr.endswith("__") and base_name == "this":
-        for i in range(len(self._stack) - 1, -1, -1):
-            if self._stack[i][0] == "class":
-                classname = self._stack[i][1]
-                attr = "_" + classname + attr
+        # Find enclosing class in the namespace stack
+        for ns in reversed(codegen._stack):
+            if ns.type == "class":
+                attr = "_" + ns.name + attr
                 break
 
     if attr in ATTRIBUTE_MAP:

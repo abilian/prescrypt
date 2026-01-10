@@ -3,8 +3,8 @@ from __future__ import annotations
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
-from ..main import CodeGen
-from ..utils import flatten, unify
+from prescrypt.codegen.main import CodeGen
+from prescrypt.codegen.utils import flatten, unify
 from .constructors import function_str
 
 

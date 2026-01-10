@@ -1,3 +1,38 @@
+"""
+Namespace tracking for variable scoping during code generation.
+
+DESIGN NOTE: Scope Implementation Alternatives
+==============================================
+
+This codebase has multiple scope-tracking implementations with different purposes:
+
+1. `front/ast/scope.py` - Scope/Variable (attrs classes)
+   - Simple parent-linked scope chain
+   - Used by Binder for semantic analysis
+   - Tracks variable constness (single vs multiple assignment)
+
+2. `front/passes/scope.py` - Scope (Visitor class)
+   - Python closure semantics (cellvars, freevars, derefvars)
+   - Based on Tailbiter/Compylo
+   - For analyzing variable capture in closures
+
+3. `front/passes/scopes.py` - ScopedMap
+   - Symbol-based scope tracking
+   - Stack of named scopes with Symbol objects
+
+4. This file (`namespace.py`) - NameSpace (dict subclass)
+   - Used during code generation (not semantic analysis)
+   - Tracks how variables are accessed (local/nonlocal/global)
+   - Supports scope leaking for nested function variable hoisting
+   - Originally from PScript for JavaScript var declaration generation
+
+The key difference: Binder's Scope tracks what variables exist and their properties,
+while NameSpace tracks how to declare them in the generated JavaScript output
+(var, let, const, or nothing for globals).
+
+TODO: Consider consolidating these implementations or clearly documenting
+when each should be used.
+"""
 from __future__ import annotations
 
 LOCAL = 1
@@ -7,15 +42,18 @@ GLOBAL_SUB = 4
 
 
 class NameSpace(dict):
-    """Representation of the namespace in a certain scope. It looks a bit like
-    a set, but makes a distinction between used/defined and local/nonlocal.
+    """Representation of the namespace in a certain scope for code generation.
+
+    Tracks variables and their declaration requirements for JavaScript output.
+    It looks a bit like a set, but makes a distinction between used/defined
+    and local/nonlocal.
 
     The value of an item in this dict can be:
-    * 1: variable defined in this scope.
-    * 2: nonlocal variable (set nonlocal in this scope).
-    * 3: global variable (set global in this scope).
-    * 4: global variable (set in a subscope).
-    * set: variable used here (or in a subscope) but not defined here.
+    * 1 (LOCAL): variable defined in this scope (needs `var`/`let` declaration)
+    * 2 (NONLOCAL): nonlocal variable (set nonlocal in this scope)
+    * 3 (GLOBAL): global variable (set global in this scope)
+    * 4 (GLOBAL_SUB): global variable (set in a subscope)
+    * set: variable used here (or in a subscope) but not defined here
     """
 
     def set_nonlocal(self, key):
@@ -25,7 +63,6 @@ class NameSpace(dict):
     def set_global(self, key):
         """Explicitly declare a name as global."""
         self[key] = GLOBAL  # also if already exists
-        # becomes 4 in parent scope
 
     def use(self, key, how):
         """Declare a name as used and how (the full name.foo.bar).
@@ -55,14 +92,24 @@ class NameSpace(dict):
     def leak_stack(self, sub):
         """Leak a child namespace into the current one.
 
-        Undefined variables and nonlocals are moved upwards.
+        When a nested function/class scope is popped, undefined variables and
+        nonlocals need to be propagated upward. This is essential for:
+
+        1. JavaScript `var` hoisting - variables used in inner scopes but
+           defined in outer scopes need to be declared in the outer scope
+
+        2. Closure variable tracking - knowing which variables are captured
+
+        Example:
+            def outer():
+                def inner():
+                    return x  # x is undefined in inner, should be found in outer
+                x = 1
         """
-        for name in sub.get_globals():
+        for name in self.get_globals():
             sub.discard(name)
             if name not in self:
                 self[name] = GLOBAL_SUB
-            # elif self[name] not in (3, 4):  ... dont know whether outer scope
-            #     raise JSError('Cannot use non-global that is global in subscope.')
         for name, hows in sub.get_undefined():
             sub.discard(name)
             for how in hows:
@@ -74,7 +121,10 @@ class NameSpace(dict):
         return self.get(name, 0) in (LOCAL, NONLOCAL, GLOBAL)
 
     def get_defined(self):
-        """Get list of variable names that the current scope defines."""
+        """Get list of variable names that the current scope defines.
+
+        These are the names that need `var`/`let` declarations in JavaScript.
+        """
         return {name for name, val in self.items() if val == LOCAL}
 
     def get_globals(self):
@@ -86,34 +136,6 @@ class NameSpace(dict):
         """Get (name, set) tuples for variables that are used, but not defined.
 
         The set contains the ways in which the variable is used (e.g.
-        name.foo.bar).
+        name.foo.bar). These may need to be resolved in an enclosing scope.
         """
         return [(name, val) for name, val in self.items() if isinstance(val, set)]
-
-
-# class Stack:
-#     def __init__(self):
-#         self.stack = []
-#
-#     def push(self, item):
-#         self.stack.append(item)
-#
-#     def pop(self):
-#         return self.stack.pop()
-#
-#     def push(self, type, name):
-#         """New namespace stack.
-#
-#         Match a call to this with a call to pop_stack() and process the
-#         resulting line to declare the used variables. type must be
-#         'module', 'class' or 'function'.
-#         """
-#         assert type in ("module", "class", "function")
-#         self._stack.append((type, name, NameSpace()))
-#
-#     def pop(self):
-#         """Pop the current stack and return the namespace."""
-#         # Pop
-#         nstype, nsname, ns = self._stack.pop(-1)
-#         self.vars.leak_stack(ns)
-#         return ns

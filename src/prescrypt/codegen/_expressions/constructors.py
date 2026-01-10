@@ -6,8 +6,8 @@ from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX
 
-from ..main import CodeGen, gen_expr
-from ..utils import flatten, unify
+from prescrypt.codegen.main import CodeGen, gen_expr
+from prescrypt.codegen.utils import flatten, unify
 
 
 @gen_expr.register

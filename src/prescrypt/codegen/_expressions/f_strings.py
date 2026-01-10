@@ -3,8 +3,8 @@ from __future__ import annotations
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
-from ..main import CodeGen, gen_expr
-from ..utils import js_repr
+from prescrypt.codegen.main import CodeGen, gen_expr
+from prescrypt.codegen.utils import js_repr
 
 
 @gen_expr.register

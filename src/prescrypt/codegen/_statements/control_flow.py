@@ -3,8 +3,8 @@ from __future__ import annotations
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
-from ..main import CodeGen, gen_stmt
-from ..utils import flatten
+from prescrypt.codegen.main import CodeGen, gen_stmt
+from prescrypt.codegen.utils import flatten
 
 
 @gen_stmt.register

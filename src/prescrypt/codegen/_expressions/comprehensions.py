@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from prescrypt.front import ast
 
-from ..main import CodeGen, gen_expr
-from ..utils import flatten, unify
+from prescrypt.codegen.main import CodeGen, gen_expr
+from prescrypt.codegen.utils import flatten, unify
 
 
 @gen_expr.register

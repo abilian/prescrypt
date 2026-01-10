@@ -5,7 +5,7 @@ import pytest
 from prescrypt.front import ast
 from prescrypt.testing.data import EXPRESSIONS
 
-from ..desugar import desugar
+from prescrypt.front.passes.desugar import desugar
 
 
 def test_desugar_addition():

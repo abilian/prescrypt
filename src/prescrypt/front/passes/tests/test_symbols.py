@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..symbol import Symbol
+from prescrypt.front.passes.symbol import Symbol
 
 
 def test_symbols():
