@@ -117,12 +117,15 @@ class CodeGen:
         return f"{mangled_name}({', '.join(js_args)})"
 
     def call_std_method(self, base, name: str, args: list) -> str:
-        """Generate a method call from the Prescrypt standard library."""
+        """Generate a method call from the Prescrypt standard library.
+
+        Uses Function.prototype.call() to invoke the method with `base` as `this`.
+        """
         mangled_name = METHOD_PREFIX + name
         js_args = list(self.gen_js_args(args))
-        # FIXME: what does this do?
-        # args.insert(0, base)
-        return f"{mangled_name}.call({', '.join(js_args)})"
+        # First argument to .call() is the `this` value (the object to call method on)
+        all_args = [base] + js_args
+        return f"{mangled_name}.call({', '.join(all_args)})"
 
     def gen_js_args(self, args) -> Iterator[str]:
         for arg in args:
@@ -173,11 +176,12 @@ class CodeGen:
         #     return self.use_std_method(thestring, 'format', value_nodes)
 
         assert isinstance(left, ast.Constant) and isinstance(left.value, str)
+        left_str = left.value
         js_left = "".join(self.gen_expr(left))
-        sep, js_left = js_left[0], js_left[1:-1]
+        sep = js_left[0]  # Quote character
 
         # Get matches
-        matches = list(re.finditer(r"%[0-9.+#-]*[srdeEfgGioxXc]", js_left))
+        matches = list(re.finditer(r"%[0-9.+#-]*[srdeEfgGioxXc]", left_str))
         if len(matches) != len(value_nodes):
             raise JSError(
                 "In string formatting, number of placeholders "
@@ -191,10 +195,10 @@ class CodeGen:
             fmt = m.group(0)
             fmt = {"%r": "!r", "%s": ""}.get(fmt, ":" + fmt[1:])
             # Add the part in front of the match (and after prev match)
-            parts.append(left[start : m.start()])
-            parts.append(f"{fmt}")
+            parts.append(left_str[start : m.start()])
+            parts.append("{" + fmt + "}")
             start = m.end()
-        parts.append(left[start:])
+        parts.append(left_str[start:])
         thestring = sep + flatten(parts) + sep
 
         return self.call_std_method(thestring, "format", value_nodes)
