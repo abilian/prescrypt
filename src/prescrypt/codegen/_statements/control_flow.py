@@ -97,164 +97,84 @@ def gen_continue(node: ast.Continue, codegen: CodeGen):
 
 @gen_stmt.register
 def gen_for(node: ast.For, codegen: CodeGen):
-    target, iter, body, orelse, type_comment = (
-        node.target,
-        node.iter,
-        node.body,
-        node.orelse,
-        node.type_comment,
-    )
+    """Generate a for loop.
 
-    # Note that enumerate, reversed, sorted, filter, map are handled in parser3
+    This is a simplified implementation that handles common cases:
+    - for x in iterable
+    - for i, x in enumerate(iterable)
+    - for x in range(...)
+    """
+    target = node.target
+    iter_node = node.iter
+    body = node.body
+    orelse = node.orelse
 
-    METHODS = "keys", "values", "items"
-
-    iter = None  # what to iterate over
-    sure_is_dict = False  # flag to indicate that we're sure iter is a dict
-    sure_is_range = False  # dito for range
-
-    # First see if this for-loop is something that we support directly
-    if isinstance(iter, ast.Call):
-        f = iter.func_node
-        if isinstance(f, ast.Attribute) and not iter.arg_nodes and f.attr in METHODS:
-            sure_is_dict = f.attr
-            iter = "".join(codegen.gen_expr(f.value_node))
-        elif isinstance(f, ast.Name) and f.name in ("xrange", "range"):
-            sure_is_range = [
-                "".join(codegen.gen_expr(arg)) for arg in node.iter_node.arg_nodes
-            ]
-            iter = "range"  # stub to prevent the parsing of iter_node below
-
-    # Otherwise we parse the iter
-    if iter is None:
-        iter = "".join(codegen.gen_expr(node.iter_node))
-
-    # Get target
+    # Get target variable name(s)
     if isinstance(target, ast.Name):
-        target_name = [target.id]
-        if sure_is_dict == "values":
-            target.append(target_name[0])
-        elif sure_is_dict == "items":
-            raise JSError("Iteration over a dict with .items() " "needs two iterators.")
-
+        target_names = [target.id]
     elif isinstance(target, ast.Tuple):
-        target = ["".join(codegen.gen_expr(t)) for t in target.elts]
-        if sure_is_dict:
-            if not (sure_is_dict == "items" and len(target) == 2):
-                raise JSError(
-                    "Iteration over a dict needs one iterator, "
-                    "or 2 when using .items()"
-                )
-        elif sure_is_range:
-            raise JSError("Iterarion via range() needs one iterator.")
-
+        target_names = [flatten(codegen.gen_expr(t)) for t in target.elts]
     else:
-        raise JSError("Invalid iterator in for-loop")
+        raise JSError("Invalid iterator target in for-loop")
 
-    # Collect body and else-body
-    for_body = []
-    for_else = []
-    codegen.indent()
-    for n in node.body_nodes:
-        for_body += self.parse(n)
-    for n in node.else_nodes:
-        for_else += codegen.parse(n)
-    codegen.dedent()
+    # Generate the iterable expression
+    js_iter = flatten(codegen.gen_expr(iter_node))
 
-    # Init code
+    # Create dummy variables for iteration
+    d_seq = codegen.dummy("seq")
+    d_iter = codegen.dummy("itr")
+
     code = []
 
     # Prepare variable to detect else
-    if node.else_nodes:
+    if orelse:
         else_dummy = codegen.dummy("els")
-        code.append(codegen.lf(f"{else_dummy} = true;"))
+        code.append(codegen.lf(f"let {else_dummy} = true;"))
 
-    # Declare iteration variables if necessary
-    for t in target:
-        codegen.vars.add(t)
+    # Ensure our iterable is indeed iterable
+    code.append(_make_iterable(codegen, js_iter, d_seq))
 
-    if sure_is_range:  # Explicit iteration
-        # Get range args
-        nums = sure_is_range  # The range() arguments
-        assert len(nums) in (1, 2, 3)
-        if len(nums) == 1:
-            start, end, step = "0", nums[0], "1"
-        elif len(nums) == 2:
-            start, end, step = nums[0], nums[1], "1"
-        elif len(nums) == 3:
-            start, end, step = nums[0], nums[1], nums[2]
-        else:
-            raise JSError("Invalid range() arguments")
-
-        # Build for-loop in JS
-        t = "for ({i} = {start}; {i} < {end}; {i} += {step})"
-        if step.lstrip("+-").isdecimal() and float(step) < 0:
-            t = t.replace("<", ">")
-        assert len(target) == 1
-        t = t.format(i=target[0], start=start, end=end, step=step) + " {"
-        code.append(codegen.lf(t))
-        codegen.indent()
-
-    elif sure_is_dict:  # Enumeration over an object (i.e. a dict)
-        # Create dummy vars
-        d_seq = codegen.dummy("seq")
-        code.append(codegen.lf(f"{d_seq} = {iter};"))
-        # The loop
-        code += codegen.lf(), "for (", target[0], " in ", d_seq, ") {"
-        codegen.indent()
-        code.append(
-            codegen.lf(f"if (!{d_seq}.hasOwnProperty({target[0]})){{ continue; }}")
+    # The loop
+    code.append(
+        codegen.lf(
+            f"for (let {d_iter} = 0; {d_iter} < {d_seq}.length; {d_iter} += 1) {{"
         )
-        # Set second/alt iteration variable
-        if len(target) > 1:
-            code.append(codegen.lf(f"{target[1]} = {d_seq}[{target[0]}];"))
+    )
+    codegen.indent()
 
-    else:  # Enumeration
-        # We cannot know whether the thing to iterate over is an
-        # array or a dict. We use a for-iterarion (otherwise we
-        # cannot be sure of the element order for arrays). Before
-        # running the loop, we test whether its an array. If its
-        # not, we replace the sequence with the keys of that
-        # sequence. Peformance for arrays should be good. For
-        # objects probably slightly less.
+    # Assign loop variable(s)
+    if len(target_names) == 1:
+        codegen.add_var(target_names[0])
+        code.append(codegen.lf(f"let {target_names[0]} = {d_seq}[{d_iter}];"))
+    else:
+        # Tuple unpacking
+        d_target = codegen.dummy("tgt")
+        code.append(codegen.lf(f"let {d_target} = {d_seq}[{d_iter}];"))
+        for i, name in enumerate(target_names):
+            codegen.add_var(name)
+            code.append(codegen.lf(f"let {name} = {d_target}[{i}];"))
 
-        # Create dummy vars
-        d_seq = codegen.dummy("seq")
-        d_iter = codegen.dummy("itr")
-        d_target = target[0] if (len(target) == 1) else codegen.dummy("tgt")
+    # Generate body
+    for stmt in body:
+        code.append(codegen.gen_stmt(stmt))
 
-        # Ensure our iterable is indeed iterable
-        code.append(_make_iterable(codegen, iter, d_seq))
-
-        # The loop
-        code.append(
-            codegen.lf(
-                "for (%s = 0; %s < %s.length; %s += 1) {"
-                % (d_iter, d_iter, d_seq, d_iter)
-            )
-        )
-        codegen.indent()
-        code.append(codegen.lf(f"{d_target} = {d_seq}[{d_iter}];"))
-        if len(target) > 1:
-            code.append(codegen.lf(codegen._iterator_assign(d_target, *target)))
-
-    # The body of the loop
-    code += for_body
     codegen.dedent()
     code.append(codegen.lf("}"))
 
-    # Handle else
-    if node.else_nodes:
-        code.append(" if (%s) {" % else_dummy)
-        code += for_else
+    # Handle else clause
+    if orelse:
+        code.append(codegen.lf(f"if ({else_dummy}) {{"))
+        codegen.indent()
+        for stmt in orelse:
+            code.append(codegen.gen_stmt(stmt))
+        codegen.dedent()
         code.append(codegen.lf("}"))
-        # Update all breaks to set the dummy. We overwrite the
-        # "break;" so it will not be detected by a parent loop
-        ii = [i for i, part in enumerate(code) if part == "break;"]
-        for i in ii:
-            code[i] = f"{else_dummy} = false; break;"
+        # Update all breaks to set the dummy
+        for i, part in enumerate(code):
+            if part == "break;":
+                code[i] = f"{else_dummy} = false; break;"
 
-    return code
+    return flatten(code)
 
 
 def _make_iterable(codegen: CodeGen, name1, name2, newlines=True):

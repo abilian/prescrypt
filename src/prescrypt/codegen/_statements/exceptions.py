@@ -36,7 +36,7 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
             err_msg = "".join(codegen.gen_expr(exc_node))
 
     err_name = "err_%i" % codegen._indent
-    codegen.vars.add(err_name)
+    codegen.add_var(err_name)
 
     # Build code to throw
     if err_cls:
@@ -130,7 +130,7 @@ def gen_excepthandler(node: ast.ExceptHandler, codegen: CodeGen):
     # Set up the catch
     code = []
     err_type = unify(codegen.gen_expr(type_node)) if type_node else ""
-    codegen.vars.discard(err_type)
+    # Note: err_type is a string like "Exception", not a variable to discard
     if err_type and err_type != "Exception":
         code.append(
             f'if ({err_name} instanceof Error && {err_name}.name === "{err_type}") {{'
@@ -140,10 +140,10 @@ def gen_excepthandler(node: ast.ExceptHandler, codegen: CodeGen):
     codegen.indent()
     if node.name:
         code.append(codegen.lf(f"{node.name} = {err_name};"))
-        codegen.vars.add(node.name)
+        codegen.add_var(node.name)
 
     # Insert the body
-    for n in node.body_nodes:
+    for n in node.body:
         code += codegen.gen_stmt(n)
     codegen.dedent()
 

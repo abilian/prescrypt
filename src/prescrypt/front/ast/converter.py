@@ -20,9 +20,13 @@ def convert(node: ast.AST) -> my_ast.AST:
         v = getattr(node, k)
         match v:
             case list():
-                assert all(isinstance(y, ast.AST) for y in v)
-                kwargs[k] = [convert(x) for x in v]
-                children += kwargs[k]
+                # Handle lists - could be AST nodes or primitives (e.g., Global.names is list[str])
+                if v and isinstance(v[0], ast.AST):
+                    kwargs[k] = [convert(x) for x in v]
+                    children += kwargs[k]
+                else:
+                    # List of primitives (strings, etc.) - keep as-is
+                    kwargs[k] = v
             case ast.AST():
                 kwargs[k] = convert(v)
                 children.append(kwargs[k])
