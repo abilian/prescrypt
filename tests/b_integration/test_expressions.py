@@ -2,8 +2,7 @@ import pytest
 from devtools import debug
 
 from prescrypt import py2js
-from prescrypt.testing import EXPRESSIONS, js_eq
-from prescrypt.testing import js_eval
+from prescrypt.testing import EXPRESSIONS, js_eq, js_eval
 
 
 @pytest.mark.parametrize("expression", EXPRESSIONS)
