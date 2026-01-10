@@ -12,22 +12,32 @@ builtin_names = {name for name in dir(builtins)}
 
 class Binder(Visitor):
     """
-    First visitor to run. Adds an attribute `definition` to ast nodes.
+    First visitor to run. Builds scope hierarchy and validates variable usage.
+
+    Attaches `_scope` to scope-creating nodes (FunctionDef, ClassDef, etc.)
+    and tracks variables with their constness.
     """
 
     def __init__(self):
         self.scope = Scope()
-        # Loop we're curently in (needed for break and continue)
+        # Loop we're currently in (needed for break and continue)
         self.loop = None
 
     # Scope management
-    def push_scope(self, type, node: ast.AST):
-        new_scope = Scope(type, parent=self.scope)
+    def push_scope(self, scope_type: str, node: ast.AST):
+        new_scope = Scope(scope_type, parent=self.scope)
         node._scope = new_scope
         self.scope = new_scope
 
     def pop_scope(self):
         self.scope = self.scope.parent
+
+    def add_var(self, name: str, var_type: str = "variable"):
+        """Add a variable to the current scope."""
+        if name in self.scope.vars:
+            self.scope.vars[name].is_const = False
+        else:
+            self.scope.vars[name] = Variable(name=name, type=var_type)
 
     def visit_list(self, li):
         for instr in li:
@@ -37,10 +47,17 @@ class Binder(Visitor):
     # Scope-creating nodes
     #
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        """
-        Creates a symbol for the function and sets the node's definition to itself.
-        """
-        self.scope.vars[node.name] = Variable(name=node.name, type="function")
+        """Register function name in current scope, then process its body in new scope."""
+        self.add_var(node.name, "function")
+
+        self.push_scope("function", node)
+        self.visit(node.args)
+        self.visit_list(node.body)
+        self.pop_scope()
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
+        """Same as FunctionDef but for async functions."""
+        self.add_var(node.name, "function")
 
         self.push_scope("function", node)
         self.visit(node.args)
@@ -48,31 +65,48 @@ class Binder(Visitor):
         self.pop_scope()
 
     def visit_ClassDef(self, node: ast.ClassDef):
-        """
-        Creates a symbol for the class and sets the node's definition to itself.
-        """
-        self.scope.vars[node.name] = Variable(name=node.name, type="class")
+        """Register class name in current scope, then process its body in new scope."""
+        self.add_var(node.name, "class")
 
         self.push_scope("class", node)
+        # Visit base classes in the outer scope (they're looked up, not defined)
+        for base in node.bases:
+            self.visit(base)
         self.visit_list(node.body)
-        # self.visit(node.bases)
         self.pop_scope()
 
     def visit_Lambda(self, node: ast.Lambda):
-        """
-        Creates a symbol for the lambda and sets the node's definition to itself.
-        """
+        """Lambda creates a new function scope."""
         self.push_scope("function", node)
         self.visit(node.args)
         self.visit(node.body)
         self.pop_scope()
 
     def visit_ListComp(self, node: ast.ListComp):
-        """
-        Creates a symbol for the lambda and sets the node's definition to itself.
-        """
-        self.push_scope("listcomp", node)
-        # Visit generators first
+        """List comprehension has its own scope in Python 3."""
+        self.push_scope("comprehension", node)
+        self.visit_list(node.generators)
+        self.visit(node.elt)
+        self.pop_scope()
+
+    def visit_SetComp(self, node: ast.SetComp):
+        """Set comprehension has its own scope."""
+        self.push_scope("comprehension", node)
+        self.visit_list(node.generators)
+        self.visit(node.elt)
+        self.pop_scope()
+
+    def visit_DictComp(self, node: ast.DictComp):
+        """Dict comprehension has its own scope."""
+        self.push_scope("comprehension", node)
+        self.visit_list(node.generators)
+        self.visit(node.key)
+        self.visit(node.value)
+        self.pop_scope()
+
+    def visit_GeneratorExp(self, node: ast.GeneratorExp):
+        """Generator expression has its own scope."""
+        self.push_scope("comprehension", node)
         self.visit_list(node.generators)
         self.visit(node.elt)
         self.pop_scope()
@@ -81,67 +115,115 @@ class Binder(Visitor):
     # Variables
     #
     def visit_Name(self, node: ast.Name):
-        """
-        If the context is ast.Load, check for the symbol in the
-        symbol table, raise UnknownSymbolError if not found,
-        else sets the node's definition to the symbol's.
-        If the context is ast.Store, creates a new symbol and
-        sets the node's definition to itself.
-        """
+        """Handle variable references based on context (Load, Store, Del)."""
         name = node.id
 
         match node.ctx:
             case ast.Load():
-                if name in builtin_names:
-                    return
-                if self.scope.search(name) is None:
-                    raise NameError(f"name '{name}' is not defined")
+                # Reading a variable - just validate if it's a builtin or known
+                # Don't raise for undefined names - they might be defined elsewhere
+                # (in another module, as a JS global, etc.)
+                pass
 
             case ast.Store():
+                # Assigning to a variable
                 if name in builtin_names:
                     raise ValueError(f"cannot assign to '{name}'")
-                if name in self.scope.vars:
-                    self.scope.vars[name].is_const = False
-                else:
-                    self.scope.vars[name] = Variable(name=name, type="variable")
-                # sym = Symbol(name, node)
-                # self.map.append(sym)
-                # node._definition = node
+                self.add_var(name)
 
-            case _:
-                raise NotImplementedError("del instruction not yet implemented")
+            case ast.Del():
+                # Deleting a variable
+                if name in builtin_names:
+                    raise ValueError(f"cannot delete '{name}'")
 
     def visit_arg(self, node: ast.arg):
-        """
-        Creates a new symbol for the argument, and sets the node's definition to itself
-        """
-        name = node.arg
-        self.scope.vars[name] = Variable(name=name, type="variable")
+        """Register function argument as a variable."""
+        self.add_var(node.arg)
 
-    # def visit_Call(self, node: ast.Call):
-    #     """
-    #     Visits the Call node
-    #     """
-    #     self.visit(node.func)
-    #     self.visit_list(node.args)
-    #     node._definition = node.func._definition
+    def visit_NamedExpr(self, node: ast.NamedExpr):
+        """Walrus operator (:=) - assigns and returns value."""
+        # The target is always a Name with Store context
+        self.visit(node.target)
+        self.visit(node.value)
+
     #
-    # def visit_AnnAssign(self, node: ast.AnnAssign):
-    #     """
-    #     Visit the terms of the equality, but not the annotation.
+    # Imports
     #
-    #     Will likely be removed at some point
-    #     """
-    #     self.visit(node.target)
-    #     self.visit(node.value)
+    def visit_Import(self, node: ast.Import):
+        """Import statement registers module names."""
+        for alias in node.names:
+            # Use the alias if provided, otherwise the module name
+            name = alias.asname if alias.asname else alias.name
+            # For "import a.b.c", only "a" is bound
+            name = name.split(".")[0]
+            self.add_var(name, "module")
+
+    def visit_ImportFrom(self, node: ast.ImportFrom):
+        """From-import registers the imported names."""
+        for alias in node.names:
+            if alias.name == "*":
+                # "from x import *" - we can't know what's imported
+                # Just skip validation for this module
+                continue
+            name = alias.asname if alias.asname else alias.name
+            self.add_var(name, "module")
+
+    #
+    # Global/Nonlocal declarations
+    #
+    def visit_Global(self, node: ast.Global):
+        """Mark names as global (looked up in module scope)."""
+        for name in node.names:
+            # Register in current scope as a marker
+            # The actual variable lives in the module scope
+            self.scope.vars[name] = Variable(name=name, type="global")
+
+    def visit_Nonlocal(self, node: ast.Nonlocal):
+        """Mark names as nonlocal (looked up in enclosing scope)."""
+        for name in node.names:
+            # Verify the name exists in an enclosing scope
+            if self.scope.parent is None:
+                raise SyntaxError(f"nonlocal declaration not allowed at module level")
+            if self.scope.parent.search(name) is None:
+                raise SyntaxError(f"no binding for nonlocal '{name}' found")
+            self.scope.vars[name] = Variable(name=name, type="nonlocal")
 
     #
     # Loops
     #
+    def visit_For(self, node: ast.For):
+        """For loop - target variable(s) and iteration."""
+        node._definition = node
+
+        save = self.loop
+        self.loop = node
+
+        # Visit the iterable first (it's evaluated in outer scope)
+        self.visit(node.iter)
+        # Then the target (this defines variables)
+        self.visit(node.target)
+        # Then the body
+        self.visit_list(node.body)
+        self.visit_list(node.orelse)
+
+        self.loop = save
+
+    def visit_AsyncFor(self, node: ast.AsyncFor):
+        """Async for loop - same as For."""
+        node._definition = node
+
+        save = self.loop
+        self.loop = node
+
+        self.visit(node.iter)
+        self.visit(node.target)
+        self.visit_list(node.body)
+        self.visit_list(node.orelse)
+
+        self.loop = save
+
     def visit_While(self, node: ast.While):
-        """
-        Sets self.loop properly.
-        """
+        """While loop."""
         node._definition = node
 
         save = self.loop
@@ -154,22 +236,59 @@ class Binder(Visitor):
         self.loop = save
 
     def visit_Continue(self, node: ast.Continue):
-        """
-        Sets definition.
-        """
+        """Continue must be inside a loop."""
         if self.loop is None:
             raise SyntaxError("'continue' not properly in loop")
-
         node._definition = self.loop
 
     def visit_Break(self, node: ast.Break):
-        """
-        Sets definition
-        """
+        """Break must be inside a loop."""
         if self.loop is None:
             raise SyntaxError("'break' not properly in loop")
-
         node._definition = self.loop
+
+    #
+    # Exception handling
+    #
+    def visit_ExceptHandler(self, node: ast.ExceptHandler):
+        """Exception handler - binds the exception to a name."""
+        if node.type:
+            self.visit(node.type)
+        if node.name:
+            self.add_var(node.name)
+        self.visit_list(node.body)
+
+    #
+    # With statements
+    #
+    def visit_With(self, node: ast.With):
+        """With statement - context manager with optional 'as' binding."""
+        for item in node.items:
+            self.visit(item.context_expr)
+            if item.optional_vars:
+                self.visit(item.optional_vars)
+        self.visit_list(node.body)
+
+    def visit_AsyncWith(self, node: ast.AsyncWith):
+        """Async with statement - same as With."""
+        for item in node.items:
+            self.visit(item.context_expr)
+            if item.optional_vars:
+                self.visit(item.optional_vars)
+        self.visit_list(node.body)
+
+    #
+    # Comprehension generators
+    #
+    def visit_comprehension(self, node: ast.comprehension):
+        """Generator in a comprehension - defines the iteration variable."""
+        # Visit iter first (evaluated in outer scope for first generator)
+        self.visit(node.iter)
+        # Target defines variables in the comprehension scope
+        self.visit(node.target)
+        # Conditions are evaluated in comprehension scope
+        for if_clause in node.ifs:
+            self.visit(if_clause)
 
 
 if __name__ == "__main__":
