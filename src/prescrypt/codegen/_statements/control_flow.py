@@ -73,8 +73,19 @@ def gen_if(node: ast.If, codegen: CodeGen):
 
     if orelse:
         if len(orelse) == 1 and isinstance(orelse[0], ast.If):
+            # gen_stmt returns a string like "\nif (...) {...\n}"
+            # We need to skip the "\nif (" at start and "\n}" at end
+            inner_if = codegen.gen_stmt(orelse[0])
+            # Remove leading newline and "if (" prefix
+            inner_if = inner_if.lstrip("\n")
+            if inner_if.startswith("if ("):
+                inner_if = inner_if[4:]  # Skip "if ("
+            # Remove trailing "}" and newline
+            inner_if = inner_if.rstrip()
+            if inner_if.endswith("}"):
+                inner_if = inner_if[:-1]
             code.append(codegen.lf("} else if ("))
-            code += codegen.gen_stmt(orelse[0])[1:-1]  # skip first and last
+            code.append(inner_if)
         else:
             code.append(codegen.lf("} else {"))
             codegen.indent()
@@ -173,8 +184,8 @@ def gen_for(node: ast.For, codegen: CodeGen):
         code.append(codegen.lf("}"))
         # Update all breaks to set the dummy
         for i, part in enumerate(code):
-            if part == "break;":
-                code[i] = f"{else_dummy} = false; break;"
+            if "break;" in part:
+                code[i] = part.replace("break;", f"{else_dummy} = false; break;")
 
     return flatten(code)
 
@@ -232,9 +243,9 @@ def gen_while(node: ast.While, codegen: CodeGen):
         code.append(codegen.lf("}"))
         # Update all breaks to set the dummy. We overwrite the
         # "break;" so it will not be detected by a parent loop
-        ii = [i for i, part in enumerate(code) if part == "break;"]
-        for i in ii:
-            code[i] = f"{else_dummy} = false; break;"
+        for i, part in enumerate(code):
+            if "break;" in part:
+                code[i] = part.replace("break;", f"{else_dummy} = false; break;")
 
     return code
 
@@ -247,3 +258,85 @@ def _iterator_assign(val, *names):
         for i, name in enumerate(names):
             code.append("%s = %s[%i];" % (name, val, i))
         return " ".join(code)
+
+
+@gen_stmt.register
+def gen_with(node: ast.With, codegen: CodeGen):
+    """Generate a with statement.
+
+    Transpiles Python `with` to JavaScript try/finally:
+
+        with open('file.txt') as f:
+            x = f.read()
+
+    becomes:
+
+        const f = open('file.txt');
+        try {
+            const x = f.read();
+        } finally {
+            if (f && typeof f.close === 'function') f.close();
+        }
+
+    Note: This is a simplified implementation that only handles:
+    - Single context manager
+    - Context managers with optional variable binding
+    - Assumes .close() for cleanup (works for file-like objects)
+
+    For full Python semantics, we'd need __enter__/__exit__ support.
+    """
+    items = node.items
+    body = node.body
+
+    if len(items) > 1:
+        raise JSError("Multiple context managers in a single 'with' statement not yet supported")
+
+    item = items[0]
+    context_expr = item.context_expr
+    optional_vars = item.optional_vars
+
+    code = []
+
+    # Generate the context expression
+    js_context = flatten(codegen.gen_expr(context_expr))
+
+    # If there's a binding variable (as x), assign it
+    if optional_vars:
+        if isinstance(optional_vars, ast.Name):
+            var_name = optional_vars.id
+            codegen.add_var(var_name)
+            decl = codegen.get_declaration_kind(var_name)
+            if decl:
+                code.append(codegen.lf(f"{decl} {var_name} = {js_context};"))
+            else:
+                code.append(codegen.lf(f"{var_name} = {js_context};"))
+        else:
+            raise JSError("Complex 'with' variable binding not supported")
+        cleanup_var = var_name
+    else:
+        # No binding, create a dummy variable for cleanup
+        cleanup_var = codegen.dummy("ctx")
+        code.append(codegen.lf(f"let {cleanup_var} = {js_context};"))
+
+    # Generate try block
+    code.append(codegen.lf("try {"))
+    codegen.indent()
+    for stmt in body:
+        code.append(codegen.gen_stmt(stmt))
+    codegen.dedent()
+    code.append(codegen.lf("}"))
+
+    # Generate finally block with cleanup
+    code.append(" finally {")
+    codegen.indent()
+    # Check if the object has a close method and call it
+    code.append(
+        codegen.lf(
+            f"if ({cleanup_var} && typeof {cleanup_var}.close === 'function') "
+            f"{cleanup_var}.close();"
+        )
+    )
+    codegen.dedent()
+    code.append(codegen.lf("}"))
+
+    return flatten(code)

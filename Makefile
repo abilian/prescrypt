@@ -51,7 +51,7 @@ test-randomly:
 
 ## Lint / check typing
 lint:
-	ruff check
+	ruff check src tests
 	# adt check src
 	# adt check src tests
 
@@ -62,9 +62,10 @@ lint:
 
 ## Format / beautify code
 format:
+	ruff format src tests/a_unit tests/b_integration
 	# docformatter -i -r src
-	black src tests/*.py tests/tryalgo/test_*.py
-	isort src tests/*.py tests/tryalgo/test_*.py
+	# black src tests/*.py tests/tryalgo/test_*.py
+	# isort src tests/*.py tests/tryalgo/test_*.py
 
 
 #

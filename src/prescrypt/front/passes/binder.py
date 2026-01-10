@@ -183,15 +183,33 @@ class Binder(Visitor):
             # The actual variable lives in the module scope
             self.scope.vars[name] = Variable(name=name, type="global")
 
+            # Mark the module-level variable as mutable since it can be modified
+            # via the global declaration
+            module_scope = self._get_module_scope()
+            if module_scope and name in module_scope.vars:
+                module_scope.vars[name].is_const = False
+
+    def _get_module_scope(self) -> "Scope | None":
+        """Find the module (root) scope."""
+        scope = self.scope
+        while scope.parent is not None:
+            scope = scope.parent
+        return scope
+
     def visit_Nonlocal(self, node: ast.Nonlocal):
         """Mark names as nonlocal (looked up in enclosing scope)."""
         for name in node.names:
             # Verify the name exists in an enclosing scope
             if self.scope.parent is None:
                 raise SyntaxError(f"nonlocal declaration not allowed at module level")
-            if self.scope.parent.search(name) is None:
+            enclosing_var = self.scope.parent.search(name)
+            if enclosing_var is None:
                 raise SyntaxError(f"no binding for nonlocal '{name}' found")
             self.scope.vars[name] = Variable(name=name, type="nonlocal")
+
+            # Mark the enclosing variable as mutable since it can be modified
+            # via the nonlocal declaration
+            enclosing_var.is_const = False
 
     #
     # Loops
