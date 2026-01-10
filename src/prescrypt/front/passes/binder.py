@@ -43,6 +43,11 @@ class Binder(Visitor):
         for instr in li:
             self.visit(instr)
 
+    def visit_Module(self, node: ast.Module):
+        """Attach the module scope to the Module node."""
+        node._scope = self.scope
+        self.visit_list(node.body)
+
     #
     # Scope-creating nodes
     #

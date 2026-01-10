@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import ast
-
 import pytest
-from devtools import debug
 
 from prescrypt.codegen.main import CodeGen
 from prescrypt.front import ast
+from prescrypt.front.passes.binder import Binder
 from prescrypt.front.passes.desugar import desugar
 from prescrypt.testing.data import EXPRESSIONS
 
@@ -31,26 +29,26 @@ def test_int():
 
 def test_assignment():
     prog = "a = 1"
-    expected = "let a = 1;"
+    expected = "const a = 1;"  # Single assignment -> const
     assert _py2js(prog) == expected
 
 
 def test_assignment_subscript():
     prog = "a = [0]; a[0] = 1"
-    expected = "let a = [0];\na[0] = 1;"
+    expected = "const a = [0];\na[0] = 1;"  # Single assignment -> const
     assert _py2js(prog) == expected
 
 
 @pytest.mark.skip("TODO")
 def test_multiple_assignment():
     prog = "a, b = 1, 2"
-    expected = "let a = 1;"
-    debug(_py2js(prog))
+    expected = "const a = 1;"
     assert _py2js(prog) == expected
 
 
 def _py2js(prog):
     tree = ast.parse(prog)
     tree = desugar(tree)
+    Binder().visit(tree)  # Run Binder to get scope info
     codegen = CodeGen(tree)
     return codegen.gen().strip()

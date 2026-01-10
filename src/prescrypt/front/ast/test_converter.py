@@ -6,8 +6,8 @@ import pytest
 
 from prescrypt.testing.data import EXPRESSIONS
 
-from . import ast
-from .converter import convert
+from prescrypt.front.ast import ast
+from prescrypt.front.ast.converter import convert
 
 
 def test_converter():

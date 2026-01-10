@@ -1,37 +1,25 @@
 """
 Namespace tracking for variable scoping during code generation.
 
-DESIGN NOTE: Scope Implementation Alternatives
-==============================================
+DESIGN NOTE: Scope Implementations
+==================================
 
-This codebase has multiple scope-tracking implementations with different purposes:
+The codebase has two scope-tracking systems with distinct purposes:
 
 1. `front/ast/scope.py` - Scope/Variable (attrs classes)
-   - Simple parent-linked scope chain
    - Used by Binder for semantic analysis
+   - Builds parent-linked scope chain attached to AST nodes
    - Tracks variable constness (single vs multiple assignment)
+   - Purpose: Semantic analysis, error detection, closure detection
 
-2. `front/passes/scope.py` - Scope (Visitor class)
-   - Python closure semantics (cellvars, freevars, derefvars)
-   - Based on Tailbiter/Compylo
-   - For analyzing variable capture in closures
-
-3. `front/passes/scopes.py` - ScopedMap
-   - Symbol-based scope tracking
-   - Stack of named scopes with Symbol objects
-
-4. This file (`namespace.py`) - NameSpace (dict subclass)
-   - Used during code generation (not semantic analysis)
-   - Tracks how variables are accessed (local/nonlocal/global)
+2. This file (`namespace.py`) - NameSpace (dict subclass)
+   - Used during code generation
+   - Tracks how variables should be declared in JavaScript output
    - Supports scope leaking for nested function variable hoisting
-   - Originally from PScript for JavaScript var declaration generation
+   - Purpose: Generating correct let/const/var declarations
 
-The key difference: Binder's Scope tracks what variables exist and their properties,
-while NameSpace tracks how to declare them in the generated JavaScript output
-(var, let, const, or nothing for globals).
-
-TODO: Consider consolidating these implementations or clearly documenting
-when each should be used.
+The Binder's Scope answers "what variables exist and their properties?"
+The NameSpace answers "how should we declare them in JavaScript?"
 """
 from __future__ import annotations
 

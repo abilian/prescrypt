@@ -6,7 +6,7 @@ from typing import Iterator
 
 from prescrypt.constants import RETURNING_BOOL
 from prescrypt.exceptions import JSError
-from prescrypt.front import ast
+from prescrypt.front import Scope, ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX
 
 from .utils import flatten, unify
@@ -42,7 +42,32 @@ class CodeGen:
         self._seen_class_names = set()
         self._std_methods = set()
 
+        # Track binding scope from Binder (if available)
+        self._binding_scope: Scope | None = getattr(module, "_scope", None)
+
         self._init_dispatch()
+
+    @property
+    def binding_scope(self) -> Scope | None:
+        """Get the current binding scope from the Binder pass."""
+        return self._binding_scope
+
+    def get_declaration_kind(self, name: str) -> str:
+        """Get the JS declaration keyword for a variable.
+
+        Returns "const", "let", or "" (empty for no declaration needed).
+        """
+        if self._binding_scope is None:
+            # No Binder info available, default to "let"
+            return "let"
+
+        var = self._binding_scope.vars.get(name)
+        if var is None:
+            # Variable not found in scope, default to "let"
+            return "let"
+
+        kind = var.declaration_kind
+        return kind if kind != "none" else ""
 
     #
     # Deferred initialization of dispatched functions

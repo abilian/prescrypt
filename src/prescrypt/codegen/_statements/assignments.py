@@ -23,10 +23,17 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
     match target_node:
         case ast.Name(id):
             if codegen.ns.is_known(id):
+                # Already declared, just assign
                 return f"{codegen.with_prefix(id)} = {js_value};"
             else:
+                # First assignment - determine declaration keyword
                 codegen.add_var(id)
-                return f"let {codegen.with_prefix(id)} = {js_value};"
+                decl = codegen.get_declaration_kind(id)
+                if decl:
+                    return f"{decl} {codegen.with_prefix(id)} = {js_value};"
+                else:
+                    # No declaration needed (global/nonlocal)
+                    return f"{codegen.with_prefix(id)} = {js_value};"
 
         case ast.Attribute(value, attr):
             js_target = flatten(codegen.gen_expr(target_node))
