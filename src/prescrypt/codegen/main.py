@@ -38,6 +38,10 @@ class CodeGen:
 
         self._methods = {}
         self._functions = {}
+
+        # Track used stdlib functions/methods for tree-shaking
+        self._used_std_functions: set[str] = set()
+        self._used_std_methods: set[str] = set()
         self._seen_func_names = set()
         self._seen_class_names = set()
         self._std_methods = set()
@@ -51,6 +55,16 @@ class CodeGen:
     def binding_scope(self) -> Scope | None:
         """Get the current binding scope from the Binder pass."""
         return self._binding_scope
+
+    @property
+    def used_std_functions(self) -> set[str]:
+        """Get the set of stdlib functions used during code generation."""
+        return self._used_std_functions
+
+    @property
+    def used_std_methods(self) -> set[str]:
+        """Get the set of stdlib methods used during code generation."""
+        return self._used_std_methods
 
     def get_declaration_kind(self, name: str) -> str:
         """Get the JS declaration keyword for a variable.
@@ -112,6 +126,9 @@ class CodeGen:
     #
     def call_std_function(self, name: str, args: list[str | ast.expr]) -> str:
         """Generate a function call from the Prescrypt standard library."""
+        # Track usage for tree-shaking
+        self._used_std_functions.add(name)
+
         mangled_name = FUNCTION_PREFIX + name
         js_args = list(self.gen_js_args(args))
         return f"{mangled_name}({', '.join(js_args)})"
@@ -121,6 +138,9 @@ class CodeGen:
 
         Uses Function.prototype.call() to invoke the method with `base` as `this`.
         """
+        # Track usage for tree-shaking
+        self._used_std_methods.add(name)
+
         mangled_name = METHOD_PREFIX + name
         js_args = list(self.gen_js_args(args))
         # First argument to .call() is the `this` value (the object to call method on)

@@ -1,12 +1,15 @@
 TODO
 ====
 
-## Short term (Stage 5)
+## Short term (Stage 5 - In Progress)
 
 - [ ] Unify `stdlib_js` and `stdlib_py` into single `stdlib/` directory
-- [ ] Minimize stdlib code generation (tree-shake unused functions)
-- [ ] Pre-mangle stdlib names / find a way to avoid NS pollution
-- [ ] Add more compile-time optimizations
+- [x] **Minimize stdlib code generation (tree-shake unused functions)** - DONE
+  - Track used functions/methods during codegen
+  - Resolve transitive dependencies
+  - 94-99% size reduction (33KB → 177 bytes for simple code)
+- [ ] Pre-mangle stdlib names / configurable namespace prefixes
+- [ ] Add more compile-time optimizations (constant folding, inlining)
 
 ## Medium term (Stage 6)
 

@@ -60,12 +60,12 @@ def gen_dict(node: ast.Dict, codegen: CodeGen):
     # return code
 
 
-def _gen_dict_fallback(codegen, keys: list[ast.expr], values: list[ast.expr]) -> str:
+def _gen_dict_fallback(codegen: CodeGen, keys: list[ast.expr], values: list[ast.expr]) -> str:
     func_args = []
     for key, val in zip(keys, values):
         func_args += [
             unify(gen_expr(key, codegen)),
             unify(gen_expr(val, codegen)),
         ]
-    # self.call_std_function("create_dict", [])
-    return FUNCTION_PREFIX + "create_dict(" + ", ".join(func_args) + ")"
+    # Use call_std_function for usage tracking
+    return codegen.call_std_function("create_dict", func_args)

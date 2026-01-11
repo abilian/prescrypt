@@ -51,8 +51,8 @@ class FuncCall:
                 return res
 
         if func_name in stdlib_js.functions:
-            args_js = [unify(self.gen_expr(arg)) for arg in args]
-            return f"{FUNCTION_PREFIX}{func_name}({', '.join(args_js)})"
+            # Use codegen.call_std_function for usage tracking
+            return self.codegen.call_std_function(func_name, args)
 
         return f"{self.gen_func()}{self.gen_args()}"
 
@@ -60,15 +60,15 @@ class FuncCall:
         stdlib_py = stdlib
         stdlib_js = StdlibJs()
 
-        obj_js = self.gen_expr(value)
+        obj_js = unify(self.gen_expr(value))
 
         if builtin_meth := stdlib_py.get_method(method_name):
             if res := builtin_meth(self.codegen, obj_js, args, keywords):
                 return res
 
         if method_name in stdlib_js.methods:
-            args_js = [obj_js] + [unify(self.gen_expr(arg)) for arg in args]
-            return f"{METHOD_PREFIX}{method_name}.call({', '.join(args_js)})"
+            # Use codegen.call_std_method for usage tracking
+            return self.codegen.call_std_method(obj_js, method_name, args)
 
         return f"{self.gen_func()}{self.gen_args()}"
 

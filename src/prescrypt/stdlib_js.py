@@ -19,6 +19,8 @@ METHOD_PREFIX = "_pymeth_"
 class StdlibJs:
     functions: dict[str, str]
     methods: dict[str, str]
+    function_deps: dict[str, set[str]]  # function -> set of function dependencies
+    method_deps: dict[str, set[str]]  # function -> set of method dependencies
 
     function_prefix: str = FUNCTION_PREFIX
     method_prefix: str = METHOD_PREFIX
@@ -26,6 +28,8 @@ class StdlibJs:
     def __init__(self):
         self.functions = self.get_functions("functions.js")
         self.methods = self.get_functions("methods.js")
+        # Parse dependencies
+        self.function_deps, self.method_deps = self._parse_all_dependencies()
 
     def get_functions(self, filename: str) -> dict[str, str]:
         result = {}
@@ -57,6 +61,79 @@ class StdlibJs:
             )
 
         return result
+
+    def _parse_all_dependencies(self) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+        """Parse dependencies for all functions and methods."""
+        func_deps = {}
+        meth_deps = {}
+
+        # Parse function dependencies
+        for name, code in self.functions.items():
+            f_deps, m_deps = self._parse_dependencies(code)
+            func_deps[name] = f_deps
+            meth_deps[name] = m_deps
+
+        # Parse method dependencies
+        for name, code in self.methods.items():
+            f_deps, m_deps = self._parse_dependencies(code)
+            func_deps[name] = f_deps
+            meth_deps[name] = m_deps
+
+        return func_deps, meth_deps
+
+    def _parse_dependencies(self, code: str) -> tuple[set[str], set[str]]:
+        """Parse a stdlib code block to find dependencies on other stdlib functions/methods."""
+        # Find function dependencies (look for _pyfunc_xxx patterns)
+        func_pattern = re.escape(self.function_prefix) + r"(\w+)"
+        func_deps = set(re.findall(func_pattern, code))
+
+        # Find method dependencies (look for _pymeth_xxx patterns)
+        meth_pattern = re.escape(self.method_prefix) + r"(\w+)"
+        meth_deps = set(re.findall(meth_pattern, code))
+
+        return func_deps, meth_deps
+
+    def resolve_dependencies(
+        self, func_names: set[str], method_names: set[str]
+    ) -> tuple[set[str], set[str]]:
+        """Resolve all dependencies for the given functions and methods.
+
+        Returns the complete set of functions and methods needed, including
+        all transitive dependencies.
+        """
+        all_funcs = set(func_names)
+        all_methods = set(method_names)
+
+        # Keep resolving until no new dependencies are found
+        changed = True
+        while changed:
+            changed = False
+            prev_funcs = len(all_funcs)
+            prev_methods = len(all_methods)
+
+            # Add dependencies for all known functions
+            for name in list(all_funcs):
+                if name in self.function_deps:
+                    all_funcs.update(self.function_deps[name])
+                if name in self.method_deps:
+                    all_methods.update(self.method_deps[name])
+
+            # Add dependencies for all known methods
+            for name in list(all_methods):
+                if name in self.function_deps:
+                    all_funcs.update(self.function_deps[name])
+                if name in self.method_deps:
+                    all_methods.update(self.method_deps[name])
+
+            # Check if anything changed
+            if len(all_funcs) != prev_funcs or len(all_methods) != prev_methods:
+                changed = True
+
+        # Filter to only include functions/methods that actually exist
+        all_funcs = {f for f in all_funcs if f in self.functions}
+        all_methods = {m for m in all_methods if m in self.methods}
+
+        return all_funcs, all_methods
 
     def get_full_std_lib(self, indent=0):
         """Get the code for the full Prescrypt standard library.
