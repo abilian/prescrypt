@@ -154,3 +154,90 @@ except:
 result
 """
         check_gen_exec(code, "raised")
+
+    def test_assert_with_message(self):
+        """Test assert with message."""
+        code = """
+result = 'passed'
+assert True, 'should pass'
+result
+"""
+        check_gen_exec(code, "passed")
+
+
+class TestExceptionEdgeCases:
+    """Test exception handling edge cases."""
+
+    def test_nested_try_except(self):
+        """Test deeply nested try/except."""
+        code = """
+result = []
+try:
+    result.append('outer try')
+    try:
+        result.append('inner try')
+        raise ValueError('inner')
+    except ValueError:
+        result.append('inner except')
+        raise TypeError('from inner')
+except TypeError:
+    result.append('outer except')
+result
+"""
+        check_gen_exec(code, ["outer try", "inner try", "inner except", "outer except"])
+
+    def test_try_except_with_return(self):
+        """Test try/except inside function with return."""
+        code = """
+def foo():
+    try:
+        raise ValueError('test')
+    except ValueError:
+        return 'caught'
+    return 'not caught'
+
+foo()
+"""
+        check_gen_exec(code, "caught")
+
+    def test_finally_with_return(self):
+        """Test finally block with return in try."""
+        code = """
+def foo():
+    result = []
+    try:
+        result.append('try')
+        return result
+    finally:
+        result.append('finally')
+
+foo()
+"""
+        check_gen_exec(code, ["try", "finally"])
+
+    def test_exception_in_finally(self):
+        """Test exception raised in finally block."""
+        code = """
+result = 'no error'
+try:
+    try:
+        pass
+    finally:
+        raise ValueError('from finally')
+except ValueError:
+    result = 'caught from finally'
+result
+"""
+        check_gen_exec(code, "caught from finally")
+
+    def test_exception_variable_binding(self):
+        """Test except clause with variable binding."""
+        code = """
+result = 'no error'
+try:
+    raise ValueError('test message')
+except ValueError as e:
+    result = 'caught'
+result
+"""
+        check_gen_exec(code, "caught")

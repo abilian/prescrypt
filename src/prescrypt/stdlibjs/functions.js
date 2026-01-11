@@ -226,7 +226,10 @@ export const range = function (start, end, step) {
 
 // function: format
 export const format = function (v, fmt) {
-  // nargs: 2
+  // nargs: 1 2
+  if (fmt === undefined) {
+    return String(v);
+  }
   fmt = fmt.toLowerCase();
   let s = String(v);
   if (fmt.indexOf("!r") >= 0) {
@@ -260,6 +263,10 @@ export const format = function (v, fmt) {
     } else {
       spec1 = fmt.slice(i0 + 1);
     }
+  } else if (i1 >= 0) {
+    // No colon, but has dot (e.g., ".2f" after removing "f")
+    spec1 = fmt.slice(0, i1);
+    spec2 = fmt.slice(i1 + 1);
   }
   // Format numbers
   if (fmt_type == "") {
@@ -339,7 +346,14 @@ export const sum = function (x) {
 // ---
 
 // function: round
-export const round = Math.round; // nargs: 1;
+export const round = function (x, ndigits) {
+  // nargs: 1 2
+  if (ndigits === undefined || ndigits === 0) {
+    return Math.round(x);
+  }
+  const factor = Math.pow(10, ndigits);
+  return Math.round(x * factor) / factor;
+};
 
 // ---
 

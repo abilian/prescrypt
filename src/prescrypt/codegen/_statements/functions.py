@@ -218,7 +218,11 @@ class BaseFunDef:
 
         code = []
         for child in self.node.body:
-            code += [self.codegen.gen_stmt(child)]
+            result = self.codegen.gen_stmt(child)
+            if isinstance(result, list):
+                code.append(flatten(result))
+            else:
+                code.append(result)
 
         # Restore previous binding scope
         self.codegen._binding_scope = old_binding_scope

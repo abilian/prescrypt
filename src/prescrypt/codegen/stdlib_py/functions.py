@@ -32,9 +32,10 @@ def function_isinstance(codegen: CodeGen, args, kwargs):
     )
 
     MAP = {
+        "int": "number",
+        "float": "number",
         "[int, float]": "number",
         "[float, int]": "number",
-        "float": "number",
         "str": "string",
         "bool": "boolean",
         "FunctionType": "function",
@@ -71,7 +72,7 @@ def function_isinstance(codegen: CodeGen, args, kwargs):
         cmp = unify(cls)
         if cmp[0] == "(":
             raise JSError("isinstance() can only compare to simple types")
-        return ob, " instanceof ", cmp
+        return [ob, " instanceof ", cmp]
 
 
 def function_issubclass(codegen: CodeGen, args, kwargs):
@@ -90,14 +91,14 @@ def function_print(codegen: CodeGen, args, kwargs):
     # Process keywords
     sep, end = '" "', ""
     for kw in kwargs:
-        if kw.name == "sep":
+        if kw.arg == "sep":
             sep = flatten(codegen.gen_expr(kw.value))
-        elif kw.name == "end":
+        elif kw.arg == "end":
             end = flatten(codegen.gen_expr(kw.value))
-        elif kw.name in ("file", "flush"):
+        elif kw.arg in ("file", "flush"):
             raise JSError("print() file and flush args not supported")
         else:
-            raise JSError(f"Invalid argument for print(): {kw.name!r}")
+            raise JSError(f"Invalid argument for print(): {kw.arg!r}")
 
     # Combine args
     js_args = []
@@ -193,12 +194,12 @@ def function_sorted(codegen: CodeGen, args, kwargs):
 
     key, reverse = "undefined", ast.Constant(False)
     for kw in kwargs:
-        if kw.name == "key":
+        if kw.arg == "key":
             key = kw.value
-        elif kw.name == "reverse":
+        elif kw.arg == "reverse":
             reverse = kw.value
         else:
-            raise JSError(f"Invalid keyword argument for sorted: {kw.name!r}")
+            raise JSError(f"Invalid keyword argument for sorted: {kw.arg!r}")
 
     return codegen.call_std_function("sorted", [args[0], key, reverse])
 

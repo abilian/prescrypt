@@ -78,7 +78,10 @@ var _pyfunc_filter = function (func, iter) {
 };
 var _pyfunc_float = Number;;
 var _pyfunc_format = function (v, fmt) {
-  // nargs: 2
+  // nargs: 1 2
+  if (fmt === undefined) {
+    return String(v);
+  }
   fmt = fmt.toLowerCase();
   let s = String(v);
   if (fmt.indexOf("!r") >= 0) {
@@ -112,6 +115,10 @@ var _pyfunc_format = function (v, fmt) {
     } else {
       spec1 = fmt.slice(i0 + 1);
     }
+  } else if (i1 >= 0) {
+    // No colon, but has dot (e.g., ".2f" after removing "f")
+    spec1 = fmt.slice(0, i1);
+    spec2 = fmt.slice(i1 + 1);
   }
   // Format numbers
   if (fmt_type == "") {
@@ -454,7 +461,14 @@ var _pyfunc_reversed = function (iter) {
   }
   return iter.slice().reverse();
 };
-var _pyfunc_round = Math.round;;
+var _pyfunc_round = function (x, ndigits) {
+  // nargs: 1 2
+  if (ndigits === undefined || ndigits === 0) {
+    return Math.round(x);
+  }
+  const factor = Math.pow(10, ndigits);
+  return Math.round(x * factor) / factor;
+};
 var _pyfunc_setattr = function (ob, name, value) {
   // nargs: 3
   ob[name] = value;
