@@ -188,11 +188,6 @@ def test_module(source_file):
 
     try:
         p1 = subprocess.run(["node", str(dst)], stdout=subprocess.PIPE, check=True)
-    except:
-        assert False, "Node failed"
-
-    # return
-    try:
         p2 = subprocess.run(["python", str(src)], stdout=subprocess.PIPE, check=True)
 
         stdout1 = p1.stdout.decode("utf-8").strip()
