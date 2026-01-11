@@ -3,9 +3,8 @@
 #
 from __future__ import annotations
 
-from prescrypt.front import ast
-
 from prescrypt.codegen.main import CodeGen, gen_expr
+from prescrypt.front import ast
 
 
 @gen_expr.register

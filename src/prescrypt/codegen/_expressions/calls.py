@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from attr import define
 
-from prescrypt.front import ast
-from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
-
 from prescrypt.codegen.main import CodeGen, gen_expr
 from prescrypt.codegen.stdlib_py import stdlib
 from prescrypt.codegen.utils import flatten, unify
+from prescrypt.front import ast
+from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
 
 
 @gen_expr.register

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from prescrypt import py2js
 from prescrypt.codegen import CodeGen
 from prescrypt.codegen.utils import flatten
 from prescrypt.front import ast, to_ast
 from prescrypt.testing import js_eq, js_eval
-from prescrypt import py2js
 
 
 def check_gen(code, expected):

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from prescrypt.codegen.main import CodeGen, gen_expr
 from prescrypt.constants import JS_RESERVED_NAMES
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
-
-from prescrypt.codegen.main import CodeGen, gen_expr
 
 
 @gen_expr.register

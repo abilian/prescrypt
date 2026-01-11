@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from prescrypt.constants import ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
-from prescrypt.front import ast
-
 from prescrypt.codegen.main import CodeGen, gen_expr
 from prescrypt.codegen.utils import flatten, unify
+from prescrypt.constants import ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
+from prescrypt.front import ast
 
 
 @gen_expr.register

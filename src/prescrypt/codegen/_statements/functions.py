@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from textwrap import dedent
 
-from prescrypt.front import ast
-
 from prescrypt.codegen.main import CodeGen, gen_stmt
 from prescrypt.codegen.utils import flatten
+from prescrypt.front import ast
 
 
 @gen_stmt.register

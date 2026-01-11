@@ -3,9 +3,8 @@ from __future__ import annotations
 import pytest
 
 from prescrypt.front import ast
-from prescrypt.testing.data import EXPRESSIONS
-
 from prescrypt.front.passes.desugar import desugar
+from prescrypt.testing.data import EXPRESSIONS
 
 
 def test_desugar_addition():

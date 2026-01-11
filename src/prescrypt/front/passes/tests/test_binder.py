@@ -5,10 +5,9 @@ from textwrap import dedent
 import pytest
 
 from prescrypt.front import Variable, ast
-from prescrypt.testing.data import EXPRESSIONS as _EXPRESSIONS
-
 from prescrypt.front.passes.binder import Binder
 from prescrypt.front.passes.desugar import desugar
+from prescrypt.testing.data import EXPRESSIONS as _EXPRESSIONS
 
 EXPRESSIONS = _EXPRESSIONS + [
     "f = lambda x: x",

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+from prescrypt.codegen.main import CodeGen, gen_stmt
+from prescrypt.codegen.utils import flatten, js_repr
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX
-
-from prescrypt.codegen.main import CodeGen, gen_stmt
-from prescrypt.codegen.utils import flatten, js_repr
 
 
 @gen_stmt.register

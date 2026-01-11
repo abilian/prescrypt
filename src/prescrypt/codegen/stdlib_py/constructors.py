@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from prescrypt.exceptions import JSError
-
 from prescrypt.codegen.main import CodeGen
 from prescrypt.codegen.utils import unify
+from prescrypt.exceptions import JSError
 
 
 #

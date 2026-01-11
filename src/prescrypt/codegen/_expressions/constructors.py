@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from buildstr import Builder
 
+from prescrypt.codegen.main import CodeGen, gen_expr
+from prescrypt.codegen.utils import flatten, unify
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 from prescrypt.stdlib_js import FUNCTION_PREFIX
-
-from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.utils import flatten, unify
 
 
 @gen_expr.register

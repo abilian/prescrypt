@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from prescrypt import py2js
-from prescrypt.testing import js_eval, js_eq
+from prescrypt.testing import js_eq, js_eval
 
 
 class TestBasicClasses:
@@ -12,20 +12,20 @@ class TestBasicClasses:
 
     def test_simple_class(self):
         """Test simple class with __init__."""
-        code = '''
+        code = """
 class Foo:
     def __init__(self):
         self.x = 42
 
 f = Foo()
 f.x
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 42
 
     def test_class_with_args(self):
         """Test class __init__ with arguments."""
-        code = '''
+        code = """
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -33,13 +33,13 @@ class Point:
 
 p = Point(3, 4)
 p.x + p.y
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 7
 
     def test_method_call(self):
         """Test calling instance methods."""
-        code = '''
+        code = """
 class Counter:
     def __init__(self):
         self.count = 0
@@ -52,7 +52,7 @@ c = Counter()
 c.increment()
 c.increment()
 c.count
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 2
 
@@ -62,7 +62,7 @@ class TestInheritance:
 
     def test_simple_inheritance(self):
         """Test basic inheritance."""
-        code = '''
+        code = """
 class Animal:
     def __init__(self):
         self.alive = True
@@ -74,13 +74,13 @@ class Dog(Animal):
 
 d = Dog()
 d.alive
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == True
 
     def test_method_override(self):
         """Test method overriding."""
-        code = '''
+        code = """
 class Base:
     def greet(self):
         return "Hello from Base"
@@ -91,7 +91,7 @@ class Sub(Base):
 
 s = Sub()
 s.greet()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == "Hello from Sub"
 
@@ -101,7 +101,7 @@ class TestSuper:
 
     def test_super_init(self):
         """Test super().__init__() call."""
-        code = '''
+        code = """
 class Base:
     def __init__(self):
         self.base_val = 10
@@ -113,13 +113,13 @@ class Sub(Base):
 
 s = Sub()
 s.base_val + s.sub_val
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 30
 
     def test_super_init_with_args(self):
         """Test super().__init__() with arguments."""
-        code = '''
+        code = """
 class Base:
     def __init__(self, x):
         self.x = x
@@ -131,13 +131,13 @@ class Sub(Base):
 
 s = Sub(10, 20)
 s.x + s.y
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 30
 
     def test_super_method(self):
         """Test super().method() call."""
-        code = '''
+        code = """
 class Base:
     def greet(self):
         return "Hello"
@@ -149,13 +149,13 @@ class Sub(Base):
 
 s = Sub()
 s.greet()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == "Hello World"
 
     def test_super_attribute(self):
         """Test accessing class attribute via super()."""
-        code = '''
+        code = """
 class Base:
     value = 100
 
@@ -167,13 +167,13 @@ class Sub(Base):
 
 s = Sub()
 s.get_base_value()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 100
 
     def test_super_chain(self):
         """Test chaining method calls after super()."""
-        code = '''
+        code = """
 class Base:
     def get_list(self):
         return [1, 2, 3, 2, 1]
@@ -184,7 +184,7 @@ class Sub(Base):
 
 s = Sub()
 s.count_twos()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 2
 
@@ -194,20 +194,20 @@ class TestStaticMethod:
 
     def test_staticmethod_basic(self):
         """Test basic static method."""
-        code = '''
+        code = """
 class Math:
     @staticmethod
     def add(a, b):
         return a + b
 
 Math.add(3, 4)
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 7
 
     def test_staticmethod_no_self(self):
         """Test static method doesn't require instance."""
-        code = '''
+        code = """
 class Counter:
     count = 0
 
@@ -216,13 +216,13 @@ class Counter:
         return 1
 
 Counter.increment()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 1
 
     def test_staticmethod_called_on_instance(self):
         """Test static method can be called on instance too."""
-        code = '''
+        code = """
 class Math:
     @staticmethod
     def multiply(a, b):
@@ -230,7 +230,7 @@ class Math:
 
 m = Math()
 m.multiply(3, 4)
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 12
 
@@ -240,7 +240,7 @@ class TestClassMethod:
 
     def test_classmethod_basic(self):
         """Test basic class method."""
-        code = '''
+        code = """
 class Counter:
     value = 10
 
@@ -249,26 +249,26 @@ class Counter:
         return cls.value
 
 Counter.get_value()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 10
 
     def test_classmethod_with_args(self):
         """Test class method with additional arguments."""
-        code = '''
+        code = """
 class Factory:
     @classmethod
     def create(cls, x):
         return x * 2
 
 Factory.create(5)
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 10
 
     def test_classmethod_on_instance(self):
         """Test class method can be called on instance."""
-        code = '''
+        code = """
 class Counter:
     value = 100
 
@@ -278,7 +278,7 @@ class Counter:
 
 c = Counter()
 c.get_value()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 100
 
@@ -288,7 +288,7 @@ class TestProperty:
 
     def test_property_getter(self):
         """Test basic property getter."""
-        code = '''
+        code = """
 class Person:
     def __init__(self, name):
         self._name = name
@@ -299,13 +299,13 @@ class Person:
 
 p = Person("Alice")
 p.name
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == "Alice"
 
     def test_property_getter_computed(self):
         """Test property getter with computed value."""
-        code = '''
+        code = """
 class Rectangle:
     def __init__(self, width, height):
         self.width = width
@@ -317,13 +317,13 @@ class Rectangle:
 
 r = Rectangle(3, 4)
 r.area
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 12
 
     def test_property_setter(self):
         """Test property with setter."""
-        code = '''
+        code = """
 class Counter:
     def __init__(self):
         self._value = 0
@@ -339,7 +339,7 @@ class Counter:
 c = Counter()
 c.value = 42
 c.value
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 42
 
@@ -349,7 +349,7 @@ class TestClassEdgeCases:
 
     def test_multiple_inheritance_levels(self):
         """Test inheritance chain of 3 classes."""
-        code = '''
+        code = """
 class A:
     def __init__(self):
         self.a = 1
@@ -366,13 +366,13 @@ class C(B):
 
 c = C()
 c.a + c.b + c.c
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 6
 
     def test_super_with_method_args(self):
         """Test super() method call with arguments."""
-        code = '''
+        code = """
 class Base:
     def add(self, x, y):
         return x + y
@@ -384,13 +384,13 @@ class Sub(Base):
 
 s = Sub()
 s.add(3, 4)
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 14
 
     def test_class_attribute_and_instance_attribute(self):
         """Test class vs instance attribute precedence."""
-        code = '''
+        code = """
 class Counter:
     count = 0
 
@@ -399,13 +399,13 @@ class Counter:
 
 c = Counter()
 c.count
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 10
 
     def test_method_returning_self(self):
         """Test method chaining with self return."""
-        code = '''
+        code = """
 class Builder:
     def __init__(self):
         self.value = 0
@@ -416,13 +416,13 @@ class Builder:
 
 b = Builder()
 b.add(1).add(2).add(3).value
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 6
 
     def test_staticmethod_with_class_reference(self):
         """Test static method that references class attributes."""
-        code = '''
+        code = """
 class Config:
     DEFAULT = 100
 
@@ -431,13 +431,13 @@ class Config:
         return Config.DEFAULT
 
 Config.get_default()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 100
 
     def test_classmethod_creating_instance(self):
         """Test class method as factory."""
-        code = '''
+        code = """
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -449,13 +449,13 @@ class Point:
         return p.x + p.y
 
 Point.origin()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 0
 
     def test_property_with_validation(self):
         """Test property setter with validation logic."""
-        code = '''
+        code = """
 class Temperature:
     def __init__(self):
         self._celsius = 0
@@ -474,13 +474,13 @@ class Temperature:
 t = Temperature()
 t.celsius = -300
 t.celsius
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == -273
 
     def test_nested_class_instantiation(self):
         """Test creating class instance inside method."""
-        code = '''
+        code = """
 class Node:
     def __init__(self, value):
         self.value = value
@@ -492,13 +492,13 @@ class Node:
 
 n = Node(1)
 n.append(2)
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 2
 
     def test_class_with_list_attribute(self):
         """Test class with mutable list attribute."""
-        code = '''
+        code = """
 class Stack:
     def __init__(self):
         self.items = []
@@ -514,13 +514,13 @@ s.push(1)
 s.push(2)
 s.push(3)
 s.size()
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 3
 
     def test_inheritance_with_overridden_property(self):
         """Test overriding a property in subclass."""
-        code = '''
+        code = """
 class Base:
     @property
     def value(self):
@@ -533,7 +533,7 @@ class Sub(Base):
 
 s = Sub()
 s.value
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 20
 
@@ -543,7 +543,7 @@ class TestSpecialMethods:
 
     def test_len_method(self):
         """Test __len__ is called by len()."""
-        code = '''
+        code = """
 class MyList:
     def __init__(self):
         self.items = [1, 2, 3, 4, 5]
@@ -553,13 +553,13 @@ class MyList:
 
 ml = MyList()
 len(ml)
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 10
 
     def test_eq_method(self):
         """Test __eq__ is called by == operator."""
-        code = '''
+        code = """
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -577,13 +577,13 @@ if p1 == p2:
 if p1 == p3:
     result.append(2)
 len(result)
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 1
 
     def test_getitem_method(self):
         """Test __getitem__ is called by [] operator."""
-        code = '''
+        code = """
 class MyDict:
     def __init__(self):
         self.data = {'a': 1, 'b': 2, 'c': 3}
@@ -593,13 +593,13 @@ class MyDict:
 
 md = MyDict()
 md['b']
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 20
 
     def test_setitem_method(self):
         """Test __setitem__ is called by []= assignment."""
-        code = '''
+        code = """
 class MyDict:
     def __init__(self):
         self.data = {}
@@ -616,13 +616,13 @@ md = MyDict()
 md['x'] = 5
 md['y'] = 10
 md['x'] + md['y']
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 30  # 5*2 + 10*2 = 30
 
     def test_combined_special_methods(self):
         """Test class with multiple special methods."""
-        code = '''
+        code = """
 class Vector:
     def __init__(self, items):
         self.items = items
@@ -651,26 +651,26 @@ result = v1[0] + len(v1)
 if v1 == v2:
     result = 0
 result
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 13  # 10 + 3 = 13, v1 != v2 now
 
     def test_len_on_regular_objects(self):
         """Test len() still works on lists and strings."""
-        code = '''
+        code = """
 len([1, 2, 3]) + len("hello")
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 8
 
     def test_subscript_on_regular_objects(self):
         """Test subscript still works on lists and dicts."""
-        code = '''
+        code = """
 a = [10, 20, 30]
 d = {"x": 100}
 a[1] = 25
 result = a[0] + a[1] + d["x"]
 result
-'''
+"""
         js = py2js(code)
         assert js_eval(js) == 135  # 10 + 25 + 100
