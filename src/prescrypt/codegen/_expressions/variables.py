@@ -11,6 +11,10 @@ from prescrypt.codegen.main import CodeGen, gen_expr
 def gen_name(node: ast.Name, codegen: CodeGen) -> str:
     name = node.id
 
+    # Convert Python's self to JavaScript's this
+    if name == "self":
+        return "this"
+
     if name in JS_RESERVED_NAMES:
         raise JSError(f"Cannot use reserved name {name} as a variable name!")
 

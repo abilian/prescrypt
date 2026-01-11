@@ -55,7 +55,7 @@ OPS = [
     ("1 < 1 >= 1", "(1 < 1) && (1 >= 1)"),
     ("1 < 1 == 1", "(1 < 1) && _pyfunc_op_equals(1, 1)"),
     # Other ops
-    ("a[1]", "a[1]"),
+    ("a[1]", "_pyfunc_op_getitem(a, 1)"),
     ("a.b", "a.b"),
     # FIXME("a.b.c", "a.b.c"),
     # Misc

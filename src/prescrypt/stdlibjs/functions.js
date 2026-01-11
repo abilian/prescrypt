@@ -45,6 +45,33 @@ export const op_instantiate = function (ob, args) {
 
 // ---
 
+// function: super_proxy
+export const super_proxy = function (self, classProto) {
+  // nargs: 2
+  // Creates a proxy object for super() that accesses parent class methods/attributes
+  // and binds methods to the current instance.
+  // classProto is the prototype of the class where super() is called from (not the instance's class)
+  // This is needed for multi-level inheritance to work correctly.
+  var base = classProto ? classProto._base_class : self._base_class;
+  if (!base) {
+    throw new TypeError("super(): no base class");
+  }
+  return new Proxy({}, {
+    get: function(target, prop) {
+      if (prop in base) {
+        var val = base[prop];
+        if (typeof val === 'function') {
+          return val.bind(self);
+        }
+        return val;
+      }
+      return undefined;
+    }
+  });
+};
+
+// ---
+
 // function: create_dict
 export const create_dict = function () {
   const d = {};
@@ -560,6 +587,58 @@ export const truthy = function (v) {
 
 // ---
 
+// function: op_len
+export const op_len = function op_len(obj) {
+  // nargs: 1
+  // Python len() - checks for __len__ method first, then falls back to .length
+  if (obj == null) {
+    throw new TypeError("object of type 'NoneType' has no len()");
+  }
+  if (typeof obj.__len__ === 'function') {
+    return obj.__len__();
+  }
+  if (obj.length !== undefined) {
+    return obj.length;
+  }
+  if (obj.constructor === Object) {
+    return Object.keys(obj).length;
+  }
+  throw new TypeError("object has no len()");
+};
+
+// ---
+
+// function: op_getitem
+export const op_getitem = function op_getitem(obj, key) {
+  // nargs: 2
+  // Python obj[key] - checks for __getitem__ method first
+  if (obj == null) {
+    throw new TypeError("'NoneType' object is not subscriptable");
+  }
+  if (typeof obj.__getitem__ === 'function') {
+    return obj.__getitem__(key);
+  }
+  return obj[key];
+};
+
+// ---
+
+// function: op_setitem
+export const op_setitem = function op_setitem(obj, key, value) {
+  // nargs: 3
+  // Python obj[key] = value - checks for __setitem__ method first
+  if (obj == null) {
+    throw new TypeError("'NoneType' object does not support item assignment");
+  }
+  if (typeof obj.__setitem__ === 'function') {
+    obj.__setitem__(key, value);
+  } else {
+    obj[key] = value;
+  }
+};
+
+// ---
+
 // function: op_equals
 export const op_equals = function op_equals(a, b) {
   // nargs: 2
@@ -572,6 +651,14 @@ export const op_equals = function op_equals(a, b) {
 
   if (a == null || b == null) {
     return a == b;
+  }
+
+  // Check for __eq__ method on either object
+  if (typeof a.__eq__ === 'function') {
+    return a.__eq__(b);
+  }
+  if (typeof b.__eq__ === 'function') {
+    return b.__eq__(a);
   }
 
   if (Array.isArray(a) && Array.isArray(b)) {

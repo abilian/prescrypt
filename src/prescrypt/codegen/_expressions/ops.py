@@ -4,7 +4,7 @@ from prescrypt.constants import ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP, UNAR
 from prescrypt.front import ast
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.utils import unify
+from prescrypt.codegen.utils import flatten, unify
 
 
 @gen_expr.register
@@ -30,11 +30,19 @@ def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
 
 @gen_expr.register
 def gen_subscript(node: ast.Subscript, codegen: CodeGen):
-    # TODO: handle slice, ctx
-    value, slice = node.value, node.slice
-    js_value = codegen.gen_expr(value)
-    js_slice = codegen.gen_expr(slice)
-    return f"{js_value}[{js_slice}]"
+    # TODO: handle slice
+    value, slice_node = node.value, node.slice
+    js_value = flatten(codegen.gen_expr(value))
+    js_slice = flatten(codegen.gen_expr(slice_node))
+
+    # Check context: Load (reading) vs Store (writing) vs Del (deleting)
+    if isinstance(node.ctx, ast.Store):
+        # For Store context, return the raw subscript expression
+        # The assignment handler will use op_setitem
+        return f"{js_value}[{js_slice}]"
+    else:
+        # For Load (and Del) context, use op_getitem for __getitem__ support
+        return codegen.call_std_function("op_getitem", [js_value, js_slice])
 
 
 @gen_expr.register

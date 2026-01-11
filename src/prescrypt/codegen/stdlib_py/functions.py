@@ -116,8 +116,8 @@ def function_print(codegen: CodeGen, args, kwargs):
 def function_len(codegen: CodeGen, args, kwargs):
     match args:
         case [arg]:
-            js_arg = unify(codegen.gen_expr(arg))
-            return f"{js_arg}.length"
+            # Use op_len runtime function which checks for __len__ method
+            return codegen.call_std_function("op_len", [arg])
         case _:
             raise JSError("len() needs exactly one argument")
 
@@ -201,3 +201,36 @@ def function_sorted(codegen: CodeGen, args, kwargs):
             raise JSError(f"Invalid keyword argument for sorted: {kw.name!r}")
 
     return codegen.call_std_function("sorted", [args[0], key, reverse])
+
+
+def function_super(codegen: CodeGen, args, kwargs):
+    """Handle super() calls.
+
+    super() with no arguments returns a proxy to the parent class
+    that binds methods to the current instance.
+    """
+    if kwargs:
+        raise JSError("super() does not accept keyword arguments")
+
+    match args:
+        case []:
+            # Zero-argument super() - most common form
+            # We need the enclosing class to find the correct parent
+            # This is needed for multi-level inheritance where this._base_class
+            # would always point to the instance's base, not the method's class's base
+            enclosing_class = codegen.get_enclosing_class()
+            if enclosing_class:
+                # Pass the class prototype so super_proxy can find the right parent
+                return codegen.call_std_function(
+                    "super_proxy", ["this", f"{enclosing_class}.prototype"]
+                )
+            else:
+                # Fallback if not in a class (shouldn't happen in valid code)
+                return codegen.call_std_function("super_proxy", ["this", "null"])
+        case [cls_arg, obj_arg]:
+            # Two-argument super(cls, obj) - explicit form
+            js_cls = unify(codegen.gen_expr(cls_arg))
+            js_obj = unify(codegen.gen_expr(obj_arg))
+            return codegen.call_std_function("super_proxy", [js_obj, f"{js_cls}.prototype"])
+        case _:
+            raise JSError("super() takes 0 or 2 arguments")

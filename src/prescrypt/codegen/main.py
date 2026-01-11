@@ -244,7 +244,19 @@ class CodeGen:
         self.ns = new_ns
 
     def pop_ns(self):
-        self.ns = self._stack.pop()
+        self._stack.pop()  # Remove current namespace
+        self.ns = self._stack[-1]  # Set to new top of stack
+
+    def get_enclosing_class(self) -> str | None:
+        """Get the name of the enclosing class, if any.
+
+        Walks up the namespace stack to find the closest class namespace.
+        Returns None if not inside a class.
+        """
+        for ns in reversed(self._stack):
+            if ns.type == "class":
+                return ns.name
+        return None
 
 
 class NameSpace:

@@ -270,6 +270,14 @@ var _pyfunc_op_equals = function op_equals(a, b) {
     return a == b;
   }
 
+  // Check for __eq__ method on either object
+  if (typeof a.__eq__ === 'function') {
+    return a.__eq__(b);
+  }
+  if (typeof b.__eq__ === 'function') {
+    return b.__eq__(a);
+  }
+
   if (Array.isArray(a) && Array.isArray(b)) {
     let i = 0,
       iseq = a.length == b.length;
@@ -303,6 +311,17 @@ var _pyfunc_op_error = function (etype, msg) {
   e.name = etype;
   return e;
 };
+var _pyfunc_op_getitem = function op_getitem(obj, key) {
+  // nargs: 2
+  // Python obj[key] - checks for __getitem__ method first
+  if (obj == null) {
+    throw new TypeError("'NoneType' object is not subscriptable");
+  }
+  if (typeof obj.__getitem__ === 'function') {
+    return obj.__getitem__(key);
+  }
+  return obj[key];
+};
 var _pyfunc_op_instantiate = function (ob, args) {
   // nargs: 2
   if (
@@ -325,6 +344,23 @@ var _pyfunc_op_instantiate = function (ob, args) {
   if (ob.__init__) {
     ob.__init__.apply(ob, args);
   }
+};
+var _pyfunc_op_len = function op_len(obj) {
+  // nargs: 1
+  // Python len() - checks for __len__ method first, then falls back to .length
+  if (obj == null) {
+    throw new TypeError("object of type 'NoneType' has no len()");
+  }
+  if (typeof obj.__len__ === 'function') {
+    return obj.__len__();
+  }
+  if (obj.length !== undefined) {
+    return obj.length;
+  }
+  if (obj.constructor === Object) {
+    return Object.keys(obj).length;
+  }
+  throw new TypeError("object has no len()");
 };
 var _pyfunc_op_mul = function (a, b) {
   // nargs: 2
@@ -365,6 +401,18 @@ var _pyfunc_op_parse_kwargs = function (
     );
   }
   return kwargs;
+};
+var _pyfunc_op_setitem = function op_setitem(obj, key, value) {
+  // nargs: 3
+  // Python obj[key] = value - checks for __setitem__ method first
+  if (obj == null) {
+    throw new TypeError("'NoneType' object does not support item assignment");
+  }
+  if (typeof obj.__setitem__ === 'function') {
+    obj.__setitem__(key, value);
+  } else {
+    obj[key] = value;
+  }
 };
 var _pyfunc_perf_counter = function () {
   // nargs: 0
@@ -468,6 +516,29 @@ var _pyfunc_sum = function (x) {
   return x.reduce(function (a, b) {
     return a + b;
   }, 0);
+};
+var _pyfunc_super_proxy = function (self, classProto) {
+  // nargs: 2
+  // Creates a proxy object for super() that accesses parent class methods/attributes
+  // and binds methods to the current instance.
+  // classProto is the prototype of the class where super() is called from (not the instance's class)
+  // This is needed for multi-level inheritance to work correctly.
+  var base = classProto ? classProto._base_class : self._base_class;
+  if (!base) {
+    throw new TypeError("super(): no base class");
+  }
+  return new Proxy({}, {
+    get: function(target, prop) {
+      if (prop in base) {
+        var val = base[prop];
+        if (typeof val === 'function') {
+          return val.bind(self);
+        }
+        return val;
+      }
+      return undefined;
+    }
+  });
 };
 var _pyfunc_time = function () {
   return Date.now() / 1000;

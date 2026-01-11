@@ -22,7 +22,17 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
 
     match target_node:
         case ast.Name(id):
-            if codegen.ns.is_known(id):
+            if codegen.ns.type == "class":
+                # Class-level attribute - no declaration keyword
+                # Assign to both constructor and prototype so both access patterns work:
+                # ClassName.attr (from static methods) and instance.attr (from instances)
+                codegen.add_var(id)
+                class_name = codegen.ns.name
+                attr_name = id
+                if attr_name.startswith("__") and not attr_name.endswith("__"):
+                    attr_name = "_" + class_name + attr_name  # Double underscore name mangling
+                return f"{class_name}.{attr_name} = {class_name}.prototype.{attr_name} = {js_value};"
+            elif codegen.ns.is_known(id):
                 # Already declared, just assign
                 return f"{codegen.with_prefix(id)} = {js_value};"
             else:
@@ -40,8 +50,10 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
             return f"{js_target} = {js_value};"
 
         case ast.Subscript(value, slice):
-            js_target = flatten(codegen.gen_expr(target_node))
-            return f"{js_target} = {js_value};"
+            # Use op_setitem for __setitem__ support
+            js_obj = flatten(codegen.gen_expr(value))
+            js_key = flatten(codegen.gen_expr(slice))
+            return f"{codegen.call_std_function('op_setitem', [js_obj, js_key, js_value])};"
 
         case _:
             raise NotImplementedError(f"gen_assign not implemented for {node!r}")
