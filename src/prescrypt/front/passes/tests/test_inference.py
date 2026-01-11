@@ -9,7 +9,7 @@ from prescrypt.front.passes.type_inference import TypeInference
 from prescrypt.testing.data import EXPRESSIONS
 
 
-@pytest.mark.skip("TODO")
+# @pytest.mark.skip("TODO")
 @pytest.mark.parametrize("expression", EXPRESSIONS)
 def test_expressions(expression: str):
     tree = ast.parse(expression)
