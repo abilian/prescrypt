@@ -26,13 +26,6 @@ def gen_asyncfunctiondef(node: ast.AsyncFunctionDef, codegen: CodeGen):
     return fun_def.gen()
 
 
-@gen_stmt.register
-def gen_return(node: ast.Return, codegen: CodeGen):
-    if node.value is None:
-        return codegen.lf("return null;")
-    else:
-        js_return_value = flatten(codegen.gen_expr(node.value))
-        return codegen.lf(f"return {js_return_value};")
 
 
 class BaseFunDef:

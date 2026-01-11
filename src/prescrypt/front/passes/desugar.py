@@ -120,13 +120,21 @@ class Desugarer(ast.NodeTransformer):
         """
         Transforms `a += b` in `a = a + b`.
         """
-        copy = node.target
-        if isinstance(copy, ast.Name):
-            copy.ctx = ast.Load()
+        import copy as copy_module
+
+        # Create a deep copy of target for use in the expression (with Load context)
+        expr_target = copy_module.deepcopy(node.target)
+        if isinstance(expr_target, ast.Name):
+            expr_target.ctx = ast.Load()
+
+        # Create a deep copy of target for assignment (with Store context)
+        assign_target = copy_module.deepcopy(node.target)
+        if isinstance(assign_target, ast.Name):
+            assign_target.ctx = ast.Store()
 
         new_node = ast.Assign(
-            [node.target],
-            ast.BinOp(copy, node.op, node.value),
+            [assign_target],
+            ast.BinOp(expr_target, node.op, node.value),
         )
         new_node.lineno = getattr(node, "lineno", 0)
         return new_node

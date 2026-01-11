@@ -137,7 +137,7 @@ result = rank_permutation(2, 3) == [1, 0, 2]
 programs = [f"P{i}" for i in range(1, 9)]
 
 
-@pytest.mark.skip(reason="Known failures - needs code generation fixes")
+# @pytest.mark.skip(reason="Known failures - needs code generation fixes")
 @pytest.mark.parametrize("program", programs)
 def test_programs(program: str):
     code = globals()[program]
@@ -146,7 +146,10 @@ def test_programs(program: str):
     py_result = py_ctx["result"]
 
     js_code = py2js(code)
+    # Append 'result' so js_eval returns its value
+    # (const declarations evaluate to undefined in JS)
+    js_code = js_code + "\nresult;"
     js_result = js_eval(js_code)
 
-    debug(js_code)
-    assert js_eq(js_result, py_result), f"{js_result} != {py_result}"
+    # debug(js_code)
+    assert js_eq(js_result, py_result), f"{js_result} != {py_result} in:\n```\n{code}\n```"

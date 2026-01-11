@@ -17,7 +17,9 @@ def _gen_expr(node: ast.Expr, codegen: CodeGen):
 
 @gen_stmt.register
 def _gen_return(node: ast.Return, codegen: CodeGen):
-    js_value = codegen.gen_expr(node.value)
+    if node.value is None:
+        return "return null;\n"
+    js_value = flatten(codegen.gen_expr(node.value))
     return f"return {js_value};\n"
 
 
