@@ -37,3 +37,21 @@ def _gen_nonlocal(node: ast.Nonlocal, codegen: CodeGen):
     # We emit a comment for clarity.
     names = ", ".join(node.names)
     return f"/* nonlocal {names} */\n"
+
+
+@gen_stmt.register
+def _gen_import_from(node: ast.ImportFrom, codegen: CodeGen):
+    # Silently ignore "from __future__ import annotations" - it's the default behavior
+    if node.module == "__future__":
+        return ""
+
+    # For other imports, emit a comment (imports are not yet supported)
+    names = ", ".join(alias.name for alias in node.names)
+    return f"/* from {node.module} import {names} - not supported */\n"
+
+
+@gen_stmt.register
+def _gen_import(node: ast.Import, codegen: CodeGen):
+    # Emit a comment for imports (not yet supported)
+    names = ", ".join(alias.name for alias in node.names)
+    return f"/* import {names} - not supported */\n"
