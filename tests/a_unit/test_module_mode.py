@@ -143,3 +143,129 @@ class TestModuleModeWithStdlib:
         lines = js.split("\n")
         export_lines = [line for line in lines if line.strip().startswith("export")]
         assert any("x =" in line for line in export_lines)
+
+
+class TestModuleModeImports:
+    """Test that module_mode=True generates ES6 imports."""
+
+    def test_simple_import(self):
+        """import foo -> import * as foo from './foo.js'"""
+        code = "import foo"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as foo from './foo.js'" in js
+
+    def test_import_with_alias(self):
+        """import foo as f -> import * as f from './foo.js'"""
+        code = "import foo as f"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as f from './foo.js'" in js
+
+    def test_import_nested_module(self):
+        """import foo.bar.baz -> import * as foo from './foo/bar/baz.js'"""
+        code = "import foo.bar.baz"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as foo from './foo/bar/baz.js'" in js
+
+    def test_import_nested_with_alias(self):
+        """import foo.bar as fb -> import * as fb from './foo/bar.js'"""
+        code = "import foo.bar as fb"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as fb from './foo/bar.js'" in js
+
+    def test_from_import_single(self):
+        """from foo import bar -> import { bar } from './foo.js'"""
+        code = "from foo import bar"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import { bar } from './foo.js'" in js
+
+    def test_from_import_multiple(self):
+        """from foo import bar, baz -> import { bar, baz } from './foo.js'"""
+        code = "from foo import bar, baz"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import { bar, baz } from './foo.js'" in js
+
+    def test_from_import_with_alias(self):
+        """from foo import bar as b -> import { bar as b } from './foo.js'"""
+        code = "from foo import bar as b"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import { bar as b } from './foo.js'" in js
+
+    def test_from_import_mixed_aliases(self):
+        """from foo import bar, baz as z -> import { bar, baz as z } from './foo.js'"""
+        code = "from foo import bar, baz as z"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import { bar, baz as z } from './foo.js'" in js
+
+    def test_from_import_star(self):
+        """from foo import * -> import * as _foo from './foo.js'; Object.assign(...)"""
+        code = "from foo import *"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as _foo from './foo.js'" in js
+        assert "Object.assign(globalThis, _foo)" in js
+
+    def test_from_import_nested_module(self):
+        """from foo.bar import baz -> import { baz } from './foo/bar.js'"""
+        code = "from foo.bar import baz"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import { baz } from './foo/bar.js'" in js
+
+    def test_relative_import_current_dir(self):
+        """from . import foo -> import * as foo from './foo.js'"""
+        code = "from . import foo"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as foo from './foo.js'" in js
+
+    def test_relative_import_parent_dir(self):
+        """from .. import foo -> import * as foo from '../foo.js'"""
+        code = "from .. import foo"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as foo from '../foo.js'" in js
+
+    def test_relative_import_grandparent_dir(self):
+        """from ... import foo -> import * as foo from '../../foo.js'"""
+        code = "from ... import foo"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as foo from '../../foo.js'" in js
+
+    def test_relative_import_from_submodule(self):
+        """from .bar import baz -> import { baz } from './bar.js'"""
+        code = "from .bar import baz"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import { baz } from './bar.js'" in js
+
+    def test_relative_import_from_parent_submodule(self):
+        """from ..bar import baz -> import { baz } from '../bar.js'"""
+        code = "from ..bar import baz"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import { baz } from '../bar.js'" in js
+
+    def test_future_import_ignored(self):
+        """from __future__ import annotations should be silently ignored."""
+        code = "from __future__ import annotations"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert js.strip() == ""
+
+    def test_multiple_imports(self):
+        """Multiple import statements should all be converted."""
+        code = "import foo\nimport bar"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "import * as foo from './foo.js'" in js
+        assert "import * as bar from './bar.js'" in js
+
+
+class TestModuleModeImportsDisabled:
+    """Test that module_mode=False emits comments for imports."""
+
+    def test_import_comment(self):
+        """import foo should emit a comment when module_mode=False."""
+        code = "import foo"
+        js = py2js(code, include_stdlib=False, module_mode=False)
+        assert "/* import foo */" in js
+        assert "import * as" not in js
+
+    def test_from_import_comment(self):
+        """from foo import bar should emit a comment when module_mode=False."""
+        code = "from foo import bar"
+        js = py2js(code, include_stdlib=False, module_mode=False)
+        assert "/* from foo import bar */" in js
+        assert "import {" not in js
