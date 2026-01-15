@@ -1,12 +1,12 @@
 # Prescrypt TODO
 
-**Current Status:** Stage 6.1 Complete | **Tests:** 2087 passing | **Coverage:** 83%
+**Current Status:** Stage 6 Complete | **Tests:** 2224 passing | **Coverage:** 83%
 
-See `notes/history.md` for completed work (Stages 0-5).
+See `notes/history.md` for completed work (Stages 0-6).
 
 ---
 
-## Stage 6: Developer Experience
+## Stage 6: Developer Experience ✓
 
 **Goal:** Make the transpiler pleasant to use.
 
@@ -14,14 +14,15 @@ See `local-notes/plan-stage6.md` for detailed design.
 
 **Implementation order:**
 - [x] 6.1 Error messages with source locations
-- [ ] 6.2 Export generation for ES6 modules
-- [ ] 6.3 Import code generation (ES6 imports)
-- [ ] 6.4 JS FFI (`import js` for JS globals)
-- [ ] 6.5 Module resolution (file lookup)
-- [ ] 6.6 Multi-file CLI (`--output-dir`, `--module-path`)
-- [ ] 6.7 Source map generation
-- [ ] 6.8 Watch mode
-- [ ] 6.9 Documentation
+- [x] 6.2 Export generation for ES6 modules
+- [x] 6.3 Import code generation (ES6 imports)
+- [x] 6.4 JS FFI (`import js` for JS globals)
+- [x] 6.5 Module resolution (file lookup)
+- [x] 6.6 Multi-file CLI (`--output-dir`, `--module-path`)
+- [x] 6.7 Source map generation
+- [ ] 6.8 Watch mode (deferred)
+- [x] 6.9 Documentation (MkDocs site)
+- [x] 6.10 Strict mode compatibility
 
 ---
 
@@ -73,8 +74,8 @@ See `local-notes/plan-stage6.md` for detailed design.
 | Milestone | Stage | Status |
 |-----------|-------|--------|
 | MVP | Stage 4 | **Complete** |
-| Beta | Stage 6 | Next |
-| Production | Stage 8 | Future |
+| Beta | Stage 6 | **Complete** |
+| Production | Stage 8 | Next |
 
 ---
 

@@ -1,0 +1,4 @@
+authors:
+  default:
+    name: Author
+    description: Project maintainer

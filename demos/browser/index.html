@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Todo App - Prescrypt Demo</title>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                max-width: 500px;
+                margin: 50px auto;
+                padding: 20px;
+                background: #f5f5f5;
+            }
+            h1 {
+                color: #333;
+                margin-bottom: 5px;
+            }
+            .subtitle {
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            .subtitle a {
+                color: #4a90d9;
+            }
+            .card {
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+            }
+            form {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            input[type="text"] {
+                flex: 1;
+                padding: 12px;
+                font-size: 16px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                outline: none;
+                transition: border-color 0.2s;
+            }
+            input[type="text"]:focus {
+                border-color: #4a90d9;
+            }
+            button {
+                padding: 12px 24px;
+                cursor: pointer;
+                background: #4a90d9;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                transition: background 0.2s;
+            }
+            button:hover {
+                background: #357abd;
+            }
+            .todo-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 0;
+                border-bottom: 1px solid #eee;
+            }
+            .todo-item:last-child {
+                border-bottom: none;
+            }
+            .todo-item.completed span {
+                text-decoration: line-through;
+                color: #999;
+            }
+            .todo-item span {
+                flex: 1;
+                font-size: 16px;
+            }
+            .todo-item input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+            }
+            .delete-btn {
+                padding: 6px 12px;
+                font-size: 14px;
+                background: #e74c3c;
+            }
+            .delete-btn:hover {
+                background: #c0392b;
+            }
+            #status {
+                color: #666;
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #eee;
+                font-size: 14px;
+            }
+            #todo-list:empty + #status {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Todo List</h1>
+        <p class="subtitle">
+            Built with
+            <a href="https://git.sr.ht/~sfermigier/prescrypt" target="_blank">Prescrypt</a>
+            - Python compiled to JavaScript
+        </p>
+
+        <div class="card">
+            <form id="todo-form">
+                <input type="text" id="todo-input" placeholder="What needs to be done?" autofocus />
+                <button type="submit">Add</button>
+            </form>
+
+            <div id="todo-list"></div>
+            <div id="status"></div>
+        </div>
+
+        <script type="module" src="dist/app.js"></script>
+    </body>
+</html>

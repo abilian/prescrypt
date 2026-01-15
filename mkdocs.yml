@@ -1,0 +1,114 @@
+site_name: Prescrypt
+site_description: Python-to-JavaScript transpiler for modern web development
+site_url: https://prescrypt.dev
+repo_url: https://git.sr.ht/~sfermigier/prescrypt
+repo_name: prescrypt
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+
+  # PyMdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - attr_list
+  # - pymdownx.emoji:
+  #     emoji_index: !!python/name:material.extensions.emoji.twemoji
+  #     emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+  - User Guide:
+      - Overview: guide/overview.md
+      - CLI Reference: guide/cli.md
+      - Language Support: guide/language-support.md
+      - Module System: guide/modules.md
+      - JavaScript Interop: guide/js-interop.md
+      - Source Maps: guide/source-maps.md
+      - Optimization: guide/optimization.md
+      - Troubleshooting: guide/troubleshooting.md
+  - Examples:
+      - examples/index.md
+      - Browser App: examples/browser-app.md
+      - Node.js CLI: examples/nodejs-cli.md
+      - Multi-file Project: examples/multi-file.md
+  - Reference:
+      - Feature Matrix: reference/features.md
+      - Limitations: reference/limitations.md
+      - Semantic Differences: reference/differences.md
+  - Developer Guide: guide/developers.md
+  - API Reference: api/index.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md

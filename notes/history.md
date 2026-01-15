@@ -1,6 +1,6 @@
-# Prescrypt Development History
+# Prescrypt Development History (since version 0.8.0)
 
-This document records completed work on the Prescrypt Python-to-JavaScript transpiler since late 2025.
+This document records completed work on the Prescrypt Python-to-JavaScript transpiler since 2023.
 
 ---
 
@@ -193,6 +193,144 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 
 ---
 
+## Stage 6: Developer Experience
+
+**Goal:** Transform Prescrypt from a single-file transpiler into a usable development tool.
+
+**Completed:**
+- **Error messages with source locations (6.1):**
+  - Added `SourceLocation` dataclass with file, line, column info
+  - Updated `PrescryptError` and `JSError` with location support
+  - Added `format_with_context()` for displaying source snippets
+  - Errors now show: `file.py:42:5: error: message`
+
+- **Export generation (6.2):**
+  - Added `module_mode` flag to CodeGen
+  - Module-level variables: `export const x = 1` or `export let x = 1`
+  - Functions: `export function greet(name) { ... }`
+  - Classes: `export const Person = function () { ... }`
+  - Nested definitions not exported
+
+- **Import code generation (6.3):**
+  - `import foo` → `import * as foo from './foo.js'`
+  - `from foo import bar` → `import { bar } from './foo.js'`
+  - `from foo import bar as b` → `import { bar as b } from './foo.js'`
+  - `from . import foo` → `import * as foo from './foo.js'`
+  - `from ..bar import baz` → `import { baz } from '../bar.js'`
+  - `from foo import *` → namespace import with `Object.assign`
+
+- **JS FFI (6.4):**
+  - `import js` recognized as FFI module (no output)
+  - `js.console.log(x)` → `console.log(x)` (prefix stripped)
+  - `js.document.getElementById("app")` → raw JS access
+  - Supports aliased imports: `import js as javascript`
+
+- **Module resolution (6.5):**
+  - Created `ModuleResolver` class in `front/passes/resolver.py`
+  - Resolves relative imports (`.`, `..`)
+  - Resolves absolute imports in source_dir and module_paths
+  - Package support: `__init__.py` → `index.js`
+  - Verifies module existence for correct package detection
+
+- **Multi-file CLI (6.6):**
+  - Rewrote CLI with argparse
+  - `py2js input.py -o output.js` (single file)
+  - `py2js src/ -o dist/` (directory compilation)
+  - Options: `-m` (module mode), `-M` (module paths), `--no-stdlib`, `--no-tree-shake`, `--no-optimize`, `-v`, `-q`
+  - Automatic `__init__.py` → `index.js` conversion
+  - Skips `__pycache__` and hidden directories
+
+- **E2E testing:**
+  - 12 tests verifying multi-file compilation runs in Node.js
+  - Tests: simple imports, multiple imports, nested imports, classes, constants, relative imports, chained imports, packages, aliases, mixed content
+
+**Bug fixes during implementation:**
+- Class export syntax: `export Person =` → `export const Person =`
+- Package resolution: enabled `verify_exists` to detect `__init__.py`
+
+**Test Results:** 2188 passing, 36 skipped
+
+---
+
+## Stage 6.7: Source Map Generation
+
+**Goal:** Enable debugging transpiled code using original Python source.
+
+**Completed:**
+- **SourceMapGenerator class** (`src/prescrypt/sourcemap.py`):
+  - VLQ (Variable Length Quantity) encoding/decoding
+  - Source map V3 format generation
+  - Mapping tracking (generated position → source position)
+  - JSON output and file writing
+
+- **CodeGen integration:**
+  - Added `source_map` parameter to CodeGen
+  - Statement-level position tracking
+  - Output line counting for accurate mappings
+  - Preamble offset adjustment when stdlib included
+
+- **CLI support:**
+  - Added `-s` / `--source-maps` flag
+  - Generates `.js.map` files alongside `.js` files
+  - Appends `//# sourceMappingURL=` comment to output
+  - Works with both single file and directory compilation
+
+- **Testing:**
+  - 25 unit tests for VLQ encoding and source map generation
+  - 2 CLI integration tests for source map file output
+
+**Test Results:** 2216 passing, 36 skipped
+
+---
+
+## Stage 6.9: Documentation
+
+**Goal:** Provide user-facing documentation.
+
+**Completed:**
+- Created comprehensive `docs/README.md` covering:
+  - Installation and Quick Start
+  - CLI Reference with all options
+  - Language Support (features, unsupported, semantic differences)
+  - Module System (imports, exports, packages)
+  - JavaScript Interop (`import js` FFI)
+  - Source Maps for debugging
+  - Optimization (tree-shaking, constant folding)
+  - Troubleshooting guide
+  - Practical examples (browser app, Node.js CLI, multi-file project)
+
+---
+
+## Stage 6.10: Strict Mode & MkDocs
+
+**Goal:** ES6 strict mode compatibility and production documentation site.
+
+**Completed:**
+- **Strict mode bug fix:**
+  - Fixed undeclared variable errors in ES6 modules (strict mode)
+  - `_make_iterable()` now declares temp variables with `let`
+  - `gen_while()` else clause declares dummy variable with `let`
+  - Added 8 strict mode tests to prevent regression
+
+- **MkDocs documentation site:**
+  - Configured Material for MkDocs theme with dark mode support
+  - Created modular documentation structure:
+    - Getting Started: installation.md, quickstart.md
+    - User Guide: overview.md, cli.md, language-support.md, modules.md, js-interop.md, source-maps.md, optimization.md, troubleshooting.md
+    - Examples: browser-app.md, nodejs-cli.md, multi-file.md
+    - Reference: features.md, limitations.md, differences.md
+    - Developer Guide: developers.md (architecture, adding features)
+  - Features: search, code highlighting, navigation, tabs
+
+- **Browser demo (`demos/browser/`):**
+  - Todo list application demonstrating browser capabilities
+  - Makefile with build/serve/watch targets
+  - Factory function pattern for event handlers (lambda workaround)
+
+**Test Results:** 2224 passing, 36 skipped
+
+---
+
 ## Summary Statistics
 
 | Stage | Tests Passing | Key Achievement |
@@ -204,9 +342,12 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 | 4 | 1506 | Full class system with inheritance |
 | 4.5 | 1698 | Robust type inference |
 | 5 | 2068 | Optimized stdlib, constant folding |
+| 6 | 2188 | ES6 modules, multi-file CLI |
+| 6.7 | 2216 | Source map generation |
+| 6.10 | 2224 | Strict mode fix, MkDocs docs |
 
 **Total lines cleaned:** 330+
-**Total tests added:** 1400+
+**Total tests added:** 1595+
 **Coverage:** 83%
 
 ## Key Design Decisions
