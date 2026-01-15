@@ -949,7 +949,7 @@ wheels = [
 ]
 
 [[package]]
-name = "prescrypt-ng"
+name = "prescrypt"
 version = "0.8.0"
 source = { editable = "." }
 dependencies = [

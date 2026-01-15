@@ -8,21 +8,21 @@ secrets:
   - b88a4c2c-944c-42a6-9fbb-7483049c458a
 
 sources:
-  - git@git.sr.ht:~sfermigier/prescrypt-ng
+  - git@git.sr.ht:~sfermigier/prescrypt
 
 tasks:
   - install: |
-      cd prescrypt-ng
+      cd prescrypt
       uv sync
   - test: |
-      cd prescrypt-ng
+      cd prescrypt
       uv run pytest -q --tb=short
   - lint: |
-      cd prescrypt-ng
+      cd prescrypt
       uv run ruff check
       uv run ty check src
   - nox: |
-      cd prescrypt-ng
+      cd prescrypt
       uvx nox
 
 triggers:

@@ -7,7 +7,7 @@ dependencies = [
     "buildstr<1.0.0,>=0.1.0",
     "plum-dispatch<3.0.0,>=2.1.1",
 ]
-name = "prescrypt-ng"
+name = "prescrypt"
 version = "0.8.0"
 description = ""
 readme = "README.md"

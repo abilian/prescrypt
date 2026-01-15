@@ -1,88 +1,122 @@
-Prescrypt: "Python" to Javascript transpiler
-============================================
+# Prescrypt
 
-Prescrypt is a transpiler that converts Python code to Javascript code.
+A Python to JavaScript transpiler for a well-defined subset of Python.
 
-It is a fork of [PScript](https://github.com/flexxui/pscript/), with a different architecture and goals.
+## Overview
 
-- Targets modern Python (3.9+) and Javascript (ES6+).
-- Uses the pattern matchin (e.g. `match`) to make compiler code more readable
-- Comes with thousands of tests, small and large.
-- Will use type inference to generate more efficient and/or more readable code.
+Prescrypt converts Python 3.9+ code to ES6+ JavaScript. It prioritizes correctness over completeness, targeting common use cases rather than full Python compatibility.
 
-We will provide more details when the project is more mature.
+**Inspired by** [PScript](https://github.com/flexxui/pscript/), but completely rewritten with a modern architecture.
 
+## Features
 
----
+- **Modern Python support** - Python 3.10+ with pattern matching
+- **Modern JavaScript output** - ES6+ with `const`/`let`, arrow functions, classes
+- **Comprehensive test suite** - 2000+ tests covering expressions, statements, and full programs
+- **Optimized output** - Tree-shaking, constant folding, function inlining
+- **Source locations in errors** - Clear error messages with file:line:column
 
-Original readme (for PScript)
------------------------------
+## Installation
 
-(Please note that much of the readme below is outdated, and will be updated).
-
-
-PScript is a Python to JavaScript compiler, and is also the name of the subset
-of Python that this compiler supports. It was developed as a part of
-[Flexx](https://flexx.app) (as `flexx.pyscript`) and is now represented
-by its own project. Although it is still an important part of Flexx, it can
-also be useful by itself.
-
-
-Installation
-------------
-
-PScript is pure Python and requires Python 2.7 or 3.5+ (including Pypy).
-It has no further dependencies.
-
-* ``pip install pscript``, or
-* ``conda install pscript -c conda-forge``
-
-
-Short example
--------------
-
-```py
-
-   from pscript import py2js
-
-   def foo(a, b=2):
-      print(a - b)
-
-   print(py2js(foo))
+```bash
+pip install prescrypt
+# or
+poetry add prescrypt
 ```
 
-Gives:
+## Quick Start
 
-```js
-   var foo;
-   foo = function flx_foo (a, b) {
-      b = (b === undefined) ? 2: b;
-      console.log((a - b));
-      return null;
-   };
+### As a library
+
+```python
+from prescrypt import py2js
+
+code = """
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("World"))
+"""
+
+js = py2js(code)
+print(js)
 ```
 
+Output:
+```javascript
+function greet(name) {
+    return `Hello, ${name}!`;
+}
+console.log(greet("World"));
+```
 
-Supported browsers
-------------------
+### From the command line
 
-PScript aims to support all modern browsers, including Firefox, Chrome and Edge.
-Internet Explorer is in principal supported from version 9, though some constructs
-(e.g. ``async`` and ``await``) do not work in Internet Explorer.
+```bash
+py2js input.py           # Creates input.js
+py2js input.py output.js # Explicit output path
+```
 
+## Supported Python Features
 
-PScript in the wild
--------------------
+### Fully Supported
 
-To give an idea of what PScript can do, here are some examples in the wild:
+- **Data types**: `int`, `float`, `bool`, `str`, `None`, `list`, `dict`, `tuple`
+- **Control flow**: `if`/`elif`/`else`, `for`, `while`, `break`, `continue`
+- **Exception handling**: `try`/`except`/`finally`, `raise`
+- **Functions**: `def`, `lambda`, `*args`, default arguments, closures
+- **Classes**: `class`, `__init__`, inheritance, `super()`, `@property`
+- **Decorators**: `@staticmethod`, `@classmethod`, `@property`
+- **Comprehensions**: list, dict, generator expressions
+- **Operators**: arithmetic, comparison, logical, membership (`in`)
+- **Builtins**: `print`, `len`, `range`, `enumerate`, `zip`, `min`, `max`, `sorted`, etc.
 
-* Obviously, everything built in Flexx uses PScript, see e.g. [these examples](https://flexx.readthedocs.io/en/stable/examples/)
-* The front-end of [TimeTagger.app](https://timetagger.app) is built in Python using PScript.
+### Partially Supported
 
-*Let us know if you know more!*
+- `**kwargs` - basic support
+- `with` statement - single context manager
+- `async`/`await` - basic support
 
+### Not Supported
 
-License
--------
+- `yield` / generators
+- Metaclasses
+- Multiple inheritance
+- `exec()`, `eval()`
+- Most of the standard library
 
-PScript makes use of the liberal 2-clause BSD license. See LICENSE for details.
+## Architecture
+
+```
+Python Source → Parse → Desugar → Bind → Optimize → CodeGen → JavaScript
+```
+
+- **Parse**: Python's `ast` module with custom extensions
+- **Desugar**: Simplifies syntax (e.g., `a += b` → `a = a + b`)
+- **Bind**: Scope analysis, determines `const` vs `let`
+- **Optimize**: Constant folding, dead code elimination
+- **CodeGen**: Produces JavaScript output
+
+## Development
+
+```bash
+# Install dependencies
+poetry install
+
+# Run tests
+make test
+
+# Run linter
+make lint
+
+# Format code
+make format
+```
+
+## License
+
+BSD 2-Clause License. See [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+Prescrypt was inspired by [PScript](https://github.com/flexxui/pscript/), originally developed as part of [Flexx](https://flexx.app). While the codebase has been completely rewritten, we acknowledge PScript's pioneering work in Python-to-JavaScript transpilation.
