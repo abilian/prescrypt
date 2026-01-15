@@ -2,16 +2,16 @@
 
 A Python to JavaScript transpiler for a well-defined subset of Python.
 
+Status: Alpha. Use at your own risks.
+
 ## Overview
 
 Prescrypt converts Python 3.9+ code to ES6+ JavaScript. It prioritizes correctness over completeness, targeting common use cases rather than full Python compatibility.
 
-**Inspired by** [PScript](https://github.com/flexxui/pscript/), but completely rewritten with a modern architecture.
-
 ## Features
 
 - **Modern Python support** - Python 3.10+ with pattern matching
-- **Modern JavaScript output** - ES6+ with `const`/`let`, arrow functions, classes
+- **Modern JavaScript output** - Targets ES6+ with `const`/`let`, arrow functions, classes
 - **Comprehensive test suite** - 2000+ tests covering expressions, statements, and full programs
 - **Optimized output** - Tree-shaking, constant folding, function inlining
 - **Source locations in errors** - Clear error messages with file:line:column
@@ -101,7 +101,7 @@ Python Source → Parse → Desugar → Bind → Optimize → CodeGen → JavaSc
 
 ```bash
 # Install dependencies
-poetry install
+uv sync
 
 # Run tests
 make test
@@ -119,4 +119,4 @@ BSD 2-Clause License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-Prescrypt was inspired by [PScript](https://github.com/flexxui/pscript/), originally developed as part of [Flexx](https://flexx.app). While the codebase has been completely rewritten, we acknowledge PScript's pioneering work in Python-to-JavaScript transpilation.
+Prescrypt was inspired by [PScript](https://github.com/flexxui/pscript/), originally developed as part of [Flexx](https://flexx.app). While the codebase has been largely rewritten, we acknowledge PScript's pioneering work in Python-to-JavaScript transpilation.
