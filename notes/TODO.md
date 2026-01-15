@@ -61,6 +61,14 @@ See `local-notes/plan-stage6.md` for detailed design.
 
 ---
 
+## Short-term Fixes
+
+- [ ] Lambda with default arguments (e.g., `lambda x=1: x`)
+- [ ] `__all__` to control module exports
+- [ ] Context manager protocol (`__enter__`/`__exit__`)
+
+---
+
 ## Future Enhancements
 
 - [ ] Dataclasses and/or attrs support

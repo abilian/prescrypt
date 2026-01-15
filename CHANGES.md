@@ -69,7 +69,7 @@ Major release with ES6 module support, optimizations, and developer tooling.
 
 ### Statistics
 
-- 2216 tests passing (up from 629)
+- 2224 tests passing (up from 629)
 - 330+ lines of dead code removed
 - 83% code coverage
 

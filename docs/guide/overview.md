@@ -19,7 +19,7 @@ Python Source → Parse → Analyze → Generate → JavaScript Output
 
 ### What Gets Generated
 
-Prescrypt generates clean, readable ES6+ JavaScript:
+Prescrypt generates ES6+ JavaScript:
 
 === "Python Input"
 

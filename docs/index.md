@@ -2,7 +2,7 @@
 
 **Python-to-JavaScript transpiler for modern web development.**
 
-Prescrypt compiles Python 3.9+ code to clean, readable ES6+ JavaScript. Write Python, run it anywhere JavaScript runs—browsers, Node.js, or serverless functions.
+Prescrypt compiles Python 3.9+ code to ES6+ JavaScript. Write Python, run it anywhere JavaScript runs—browsers, Node.js, or serverless functions.
 
 <div class="grid cards" markdown>
 
@@ -18,7 +18,7 @@ Prescrypt compiles Python 3.9+ code to clean, readable ES6+ JavaScript. Write Py
 
     ---
 
-    Use familiar Python syntax—classes, comprehensions, f-strings—and get clean ES6 output.
+    Use familiar Python syntax—classes, comprehensions, f-strings—and get ES6 output.
 
     [:octicons-arrow-right-24: Language Support](guide/language-support.md)
 
@@ -59,9 +59,9 @@ items = [x * 2 for x in range(10) if x % 2 == 0]
 message = f"Generated {len(items)} items"
 ```
 
-### Clean JavaScript Output
+### JavaScript Output
 
-Get readable, maintainable ES6:
+Generated ES6:
 
 ```javascript
 export const Counter = function () {

@@ -55,6 +55,31 @@ exec("x = 42")
 
 **Alternative:** Restructure to avoid dynamic code. If absolutely needed, use `js.eval()` (with all the security concerns that implies).
 
+### Limited Lambda Support
+
+Basic lambdas work, but lambdas with default arguments do not compile.
+
+```python
+# Works
+double = lambda x: x * 2
+items.filter(lambda x: x > 0)
+
+# Does NOT work - default arguments
+f = lambda x=1: x
+callback = lambda e, data=value: handle(e, data)
+```
+
+**Alternative:** Use factory functions:
+
+```python
+def make_handler(data):
+    def handler(e):
+        handle(e, data)
+    return handler
+
+callback = make_handler(value)
+```
+
 ### No Generator Functions
 
 Python generators don't translate to JavaScript generators automatically.
@@ -80,14 +105,14 @@ def process_items(items, callback):
         callback(item)
 ```
 
-### No Context Managers
+### Limited Context Managers
 
-The `with` statement isn't supported.
+The `with` statement syntax compiles, but `__enter__`/`__exit__` methods on custom classes don't work correctly. The context manager protocol is not properly implemented.
 
 ```python
-# Not supported
-with open("file.txt") as f:
-    content = f.read()
+# Syntax compiles but behavior is incorrect
+with MyContextManager() as ctx:
+    do_something()
 ```
 
 **Alternative:** Use try/finally:

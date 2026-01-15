@@ -92,7 +92,7 @@ Complete reference of Python features and their support status in Prescrypt.
 | Keyword arguments | :white_check_mark: | |
 | `*args` | :white_check_mark: | Rest parameters |
 | `**kwargs` | :white_check_mark: | Object parameter |
-| Lambda functions | :white_check_mark: | Arrow functions |
+| Lambda functions | :material-check-circle-outline: | No default args |
 | Closures | :white_check_mark: | |
 | Decorators | :material-check-circle-outline: | Basic support |
 | `@staticmethod` | :material-check-circle-outline: | |
@@ -122,7 +122,7 @@ Complete reference of Python features and their support status in Prescrypt.
 | `__len__` | :material-check-circle-outline: | |
 | `__getitem__`, `__setitem__` | :material-check-circle-outline: | |
 | `__call__` | :x: | |
-| `__enter__`, `__exit__` | :x: | |
+| `__enter__`, `__exit__` | :x: | `with` syntax compiles but protocol broken |
 | Metaclasses | :x: | |
 | `@dataclass` | :x: | |
 | ABC/abstract methods | :x: | |

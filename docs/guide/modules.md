@@ -105,25 +105,23 @@ export const Settings = function() {
 };
 ```
 
-### Controlling Exports
+### Export Behavior
 
-Use `__all__` to control what gets exported:
+In module mode, all top-level definitions are exported. Names starting with `_` are still exported (unlike Python's convention).
 
 ```python
-__all__ = ["public_func", "PublicClass"]
-
 def public_func():
     pass
 
-def _private_func():  # Not exported (leading underscore)
+def _helper():  # Also exported in current version
     pass
 
 class PublicClass:
     pass
 ```
 
-!!! note "Leading Underscore Convention"
-    Names starting with `_` are not exported by default, matching Python convention.
+!!! note "Future: `__all__` Support"
+    Support for `__all__` to control exports is planned but not yet implemented.
 
 ## Module Search Path
 

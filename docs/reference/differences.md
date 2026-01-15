@@ -335,15 +335,21 @@ for i in range(3):
 # Prescrypt: [2, 2, 2] (same behavior)
 ```
 
-**Fix for both:**
+**Fix:** Use a factory function:
 
 ```python
+def make_func(val):
+    return lambda: val
+
 funcs = []
 for i in range(3):
-    funcs.append(lambda i=i: i)  # Capture current value
+    funcs.append(make_func(i))  # Capture current value
 
 [f() for f in funcs]  # [0, 1, 2]
 ```
+
+!!! warning "Lambda Default Args Not Supported"
+    The Python idiom `lambda i=i: i` does NOT work in Prescrypt. Use factory functions instead.
 
 ## See Also
 
