@@ -31,6 +31,7 @@ class Compiler:
         optimize: bool = True,
         function_prefix: str = FUNCTION_PREFIX,
         method_prefix: str = METHOD_PREFIX,
+        module_mode: bool = False,
     ) -> str:
         """Compile Python source to JavaScript.
 
@@ -41,6 +42,7 @@ class Compiler:
             optimize: Whether to apply compile-time optimizations like constant folding (default True)
             function_prefix: Prefix for stdlib functions (default "_pyfunc_")
             method_prefix: Prefix for stdlib methods (default "_pymeth_")
+            module_mode: Whether to emit ES6 module exports (default False)
 
         Returns:
             JavaScript code
@@ -50,7 +52,7 @@ class Compiler:
         if optimize:
             tree = fold_constants(tree)
         Binder().visit(tree)
-        codegen = CodeGen(tree, function_prefix, method_prefix)
+        codegen = CodeGen(tree, function_prefix, method_prefix, module_mode)
         js_code = codegen.gen()
 
         if not include_stdlib:
@@ -105,6 +107,7 @@ def py2js(
     optimize: bool = True,
     function_prefix: str = FUNCTION_PREFIX,
     method_prefix: str = METHOD_PREFIX,
+    module_mode: bool = False,
 ) -> str:
     """Compile Python code to JavaScript.
 
@@ -115,6 +118,7 @@ def py2js(
         optimize: Whether to apply compile-time optimizations
         function_prefix: Prefix for stdlib functions (default "_pyfunc_")
         method_prefix: Prefix for stdlib methods (default "_pymeth_")
+        module_mode: Whether to emit ES6 module exports (default False)
 
     Returns:
         JavaScript code
@@ -127,4 +131,5 @@ def py2js(
         optimize=optimize,
         function_prefix=function_prefix,
         method_prefix=method_prefix,
+        module_mode=module_mode,
     )

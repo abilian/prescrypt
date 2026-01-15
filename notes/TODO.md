@@ -23,6 +23,15 @@ See `local-notes/plan-stage6.md` for detailed design.
 - [ ] 6.8 Watch mode
 - [ ] 6.9 Documentation
 
+---
+
+## Interlude: Cleanup
+
+- [ ] Move all tests to `tests/`.
+
+---
+
+
 ## Stage 7: Async Support
 
 **Goal:** Basic async/await transpilation.

@@ -135,9 +135,10 @@ class BaseFunDef:
         """Generate a module-level function."""
         js_args = self.gen_args()
         js_body = self.gen_body()
+        export_prefix = "export " if self.codegen.should_export() else ""
         return dedent(
             f"""
-            {_async}function {name}({js_args}) {{
+            {export_prefix}{_async}function {name}({js_args}) {{
             {js_body}
             }}
             """

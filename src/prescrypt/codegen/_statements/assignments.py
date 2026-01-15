@@ -40,8 +40,9 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
                 # First assignment - determine declaration keyword
                 codegen.add_var(id)
                 decl = codegen.get_declaration_kind(id)
+                export_prefix = "export " if codegen.should_export() else ""
                 if decl:
-                    return f"{decl} {codegen.with_prefix(id)} = {js_value};"
+                    return f"{export_prefix}{decl} {codegen.with_prefix(id)} = {js_value};"
                 else:
                     # No declaration needed (global/nonlocal)
                     return f"{codegen.with_prefix(id)} = {js_value};"

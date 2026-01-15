@@ -37,7 +37,13 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     code = []
     docstring = ""
     code.append(
-        make_class_definition(node.name, base_class, docstring, codegen.function_prefix)
+        make_class_definition(
+            node.name,
+            base_class,
+            docstring,
+            codegen.function_prefix,
+            export=codegen.should_export(),
+        )
     )
     codegen.call_std_function("op_instantiate", [])
 
@@ -166,14 +172,15 @@ def _gen_property_function_body(node: ast.FunctionDef, codegen) -> str:
 
 
 def make_class_definition(
-    name, base="Object", docstring="", function_prefix="_pyfunc_"
+    name, base="Object", docstring="", function_prefix="_pyfunc_", export=False
 ):
     """Get a list of lines that defines a class in JS.
 
     Used in the parser as well as by flexx.app.Component.
     """
     # Create constructor that works with or without 'new' keyword
-    lines = [f"{name} = function () {{"]
+    export_prefix = "export " if export else ""
+    lines = [f"{export_prefix}{name} = function () {{"]
     # Auto-instantiate if called without 'new'
     lines.append(f"    if (!(this instanceof {name})) {{")
     lines.append(f"        return new {name}(...arguments);")

@@ -31,6 +31,7 @@ class CodeGen:
         module: ast.Module,
         function_prefix: str = FUNCTION_PREFIX,
         method_prefix: str = METHOD_PREFIX,
+        module_mode: bool = False,
     ):
         self.module = module
         self._stack = []
@@ -47,6 +48,9 @@ class CodeGen:
         # Configurable namespace prefixes
         self.function_prefix = function_prefix
         self.method_prefix = method_prefix
+
+        # ES6 module mode - emit exports for module-level definitions
+        self.module_mode = module_mode
 
         # Track used stdlib functions/methods for tree-shaking
         self._used_std_functions: set[str] = set()
@@ -286,6 +290,17 @@ class CodeGen:
             if ns.type == "class":
                 return ns.name
         return None
+
+    def is_module_level(self) -> bool:
+        """Check if we're currently at module level (not inside a function or class)."""
+        return len(self._stack) == 1 and self._stack[0].type == "module"
+
+    def should_export(self) -> bool:
+        """Check if the current definition should be exported.
+
+        Returns True if module_mode is enabled and we're at module level.
+        """
+        return self.module_mode and self.is_module_level()
 
 
 class NameSpace:
