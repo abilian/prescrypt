@@ -19,12 +19,7 @@ build:
 #
 
 ## Install development dependencies and pre-commit hook (env must be already activated)
-develop: install-deps activate-pre-commit configure-git
-
-install-deps:
-	@echo "--> Installing dependencies"
-	pip install -U pip setuptools wheel
-	poetry install
+develop: activate-pre-commit configure-git
 
 activate-pre-commit:
 	@echo "--> Activating pre-commit hook"
@@ -51,9 +46,7 @@ test-randomly:
 
 ## Lint / check typing
 lint:
-	ruff check src tests
-	# adt check src
-	# adt check src tests
+	ruff check
 
 
 #
@@ -63,30 +56,14 @@ lint:
 ## Format / beautify code
 format:
 	ruff format src tests/a_unit tests/b_integration
-	# docformatter -i -r src
-	# black src tests/*.py tests/tryalgo/test_*.py
-	# isort src tests/*.py tests/tryalgo/test_*.py
-
 
 #
 # Everything else
 #
-.PHONY: help install doc doc-html doc-pdf clean clean-test tidy update-deps publish
+.PHONY: help clean clean-test tidy update-deps publish
 
 help:
 	@inv help-make
-
-install:
-	poetry install
-
-doc: doc-html doc-pdf
-
-doc-html:
-	sphinx-build -W -b html docs/ docs/_build/html
-
-doc-pdf:
-	sphinx-build -W -b latex docs/ docs/_build/latex
-	make -C docs/_build/latex all-pdf
 
 ## Cleanup repository
 clean: clean-test
@@ -112,11 +89,10 @@ tidy: clean
 
 ## Update dependencies
 update-deps:
-	pip install -U pip setuptools wheel
-	poetry update
+	uv sync --all-groups -U
 
 ## Publish to PyPI
 publish: clean
 	git push --tags
-	poetry build
+	uv build
 	twine upload dist/*
