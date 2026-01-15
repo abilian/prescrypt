@@ -3,6 +3,7 @@ packages:
   - uv
   - gcc
   - python3-dev
+  - nodejs
   - nodejs-dev
 
 secrets:
