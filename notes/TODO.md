@@ -1,76 +1,78 @@
-TODO
-====
+# Prescrypt TODO
 
-## Short term (Stage 5 - Complete)
+**Current Status:** Stage 6.1 Complete | **Tests:** 2087 passing | **Coverage:** 83%
 
-- [ ] Unify `stdlib_js` and `stdlib_py` into single `stdlib/` directory (optional)
-- [x] **Minimize stdlib code generation (tree-shake unused functions)** - DONE
-  - Track used functions/methods during codegen
-  - Resolve transitive dependencies
-  - 94-99% size reduction (33KB → 177 bytes for simple code)
-- [x] **Configurable namespace prefixes** - DONE
-  - `function_prefix` parameter (default `_pyfunc_`)
-  - `method_prefix` parameter (default `_pymeth_`)
-  - Supports custom prefixes for minification or conflict avoidance
-- [x] **Compile-time optimizations (constant folding)** - DONE
-  - Arithmetic: `1 + 2 * 3` → `7`
-  - Strings: `"a" + "b"` → `"ab"`, `"x" * 3` → `"xxx"`
-  - Booleans: `True and False` → `False`, short-circuit evaluation
-  - Comparisons: `1 < 2` → `True`
-  - Subscripts: `"hello"[0]` → `"h"`, `[1,2,3][1]` → `2`
-  - Conditionals: `x if True else y` → `x`
-- [x] **Function inlining for simple stdlib functions** - DONE
-  - `len([1,2,3])` → `3`, `len("hello")` → `5`
-  - `min(1,2,3)` → `1`, `max(1,2,3)` → `3`
-  - `abs(-5)` → `5`, `sum([1,2,3])` → `6`
-  - `bool(0)` → `False`, `int("123")` → `123`
-  - `chr(65)` → `"A"`, `ord("A")` → `65`
+See `notes/history.md` for completed work (Stages 0-5).
 
-## Medium term (Stage 6)
+---
 
-- [ ] Add support for `async` and `await`
-- [ ] Add support for `yield` and `yield from` (generators)
-- [ ] Add `gen_async_for` and `gen_async_with`
+## Stage 6: Developer Experience
 
-## Long term (Stage 7+)
+**Goal:** Make the transpiler pleasant to use.
 
-- [ ] Add support for dataclasses and/or attrs
-- [ ] Add support for `__slots__`
-- [ ] Error messages with source locations
-- [ ] Source map generation
-- [ ] Watch mode, multi-file support
-- [ ] Documentation
+See `local-notes/plan-stage6.md` for detailed design.
 
-## Done
+**Implementation order:**
+- [x] 6.1 Error messages with source locations
+- [ ] 6.2 Export generation for ES6 modules
+- [ ] 6.3 Import code generation (ES6 imports)
+- [ ] 6.4 JS FFI (`import js` for JS globals)
+- [ ] 6.5 Module resolution (file lookup)
+- [ ] 6.6 Multi-file CLI (`--output-dir`, `--module-path`)
+- [ ] 6.7 Source map generation
+- [ ] 6.8 Watch mode
+- [ ] 6.9 Documentation
 
-### Stage 4.5 (2025-01-11)
-- [x] Type inference pass (handles all expression types)
-- [x] Fixed augmented assignment desugaring bug
-- [x] Fixed return statement code generation
-- [x] Import statement handlers (`from __future__` ignored)
+## Stage 7: Async Support
 
-### Stage 4 (2025-01-10)
-- [x] Full class system with inheritance
-- [x] `super()` support (including multi-level inheritance)
-- [x] `@staticmethod`, `@classmethod`, `@property` decorators
-- [x] Special methods: `__len__`, `__eq__`, `__getitem__`, `__setitem__`
+**Goal:** Basic async/await transpilation.
 
-### Stage 3 (2025-01-10)
-- [x] f-strings, %-formatting, `.format()`
-- [x] Operator precedence verification
-- [x] Comparison chain desugaring
+- [ ] `gen_await` expression handler
+- [ ] `gen_async_for` statement handler
+- [ ] `gen_async_with` statement handler
+- [ ] Test with common patterns:
+  - `await fetch(...)`
+  - `async for x in stream:`
+  - `async with lock:`
 
-### Stage 2 (2025-01-10)
-- [x] `with` statement support
-- [x] `global` and `nonlocal` support
-- [x] For-else and while-else break detection
+**Note:** `gen_asyncfunctiondef` already exists with basic implementation.
 
-### Stage 1 (2025-01-10)
-- [x] Leverage scope info collected during parsing
-- [x] Smart `const`/`let` declaration based on usage
+---
 
-### Earlier
-- [x] List comprehensions
-- [x] Dict comprehensions
-- [x] Set comprehensions
-- [x] Generator expressions
+## Stage 8: Generators
+
+**Goal:** Support `yield` and generator functions.
+
+- [ ] `gen_yield` expression handler
+- [ ] `gen_yield_from` for delegation
+- [ ] Generator expressions (currently converted to arrays)
+
+**Complexity:** High - generators have complex state machine semantics.
+
+---
+
+## Future Enhancements
+
+- [ ] Dataclasses and/or attrs support
+- [ ] `__slots__` support
+- [ ] Unify `stdlib_js` and `stdlib_py` directories (low priority)
+
+---
+
+## Milestones
+
+| Milestone | Stage | Status |
+|-----------|-------|--------|
+| MVP | Stage 4 | **Complete** |
+| Beta | Stage 6 | Next |
+| Production | Stage 8 | Future |
+
+---
+
+## Quick Reference
+
+```bash
+make test                    # Run all tests
+pytest -k "test_name" -v     # Run specific test
+pytest --cov=prescrypt       # Run with coverage
+```
