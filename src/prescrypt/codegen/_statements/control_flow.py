@@ -196,7 +196,7 @@ def _make_iterable(codegen: CodeGen, name1, name2, newlines=True):
         lf = lambda x: x  # noqa
 
     if name1 != name2:
-        code.append(lf(f"{name2} = {name1};"))
+        code.append(lf(f"let {name2} = {name1};"))
     code.append(
         lf('if ((typeof %s === "object") && (!Array.isArray(%s))) {' % (name2, name2))
     )
@@ -223,7 +223,7 @@ def gen_while(node: ast.While, codegen: CodeGen):
     # Prepare variable to detect else
     if orelse_nodes:
         else_dummy = codegen.dummy("els")
-        code.append(codegen.lf(f"{else_dummy} = true;"))
+        code.append(codegen.lf(f"let {else_dummy} = true;"))
 
     # The loop itself
     code.append(codegen.lf("while (%s) {" % js_test))
