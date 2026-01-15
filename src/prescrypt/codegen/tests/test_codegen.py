@@ -36,7 +36,9 @@ def test_assignment():
 def test_assignment_subscript():
     prog = "a = [0]; a[0] = 1"
     # Uses op_setitem for __setitem__ support
-    expected = "const a = [0];\n_pyfunc_op_setitem(a, 0, 1);"  # Single assignment -> const
+    expected = (
+        "const a = [0];\n_pyfunc_op_setitem(a, 0, 1);"  # Single assignment -> const
+    )
     assert _py2js(prog) == expected
 
 

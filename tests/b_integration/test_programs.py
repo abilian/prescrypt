@@ -151,4 +151,6 @@ def test_programs(program: str):
     js_result = js_eval(js_code)
 
     # debug(js_code)
-    assert js_eq(js_result, py_result), f"{js_result} != {py_result} in:\n```\n{code}\n```"
+    assert js_eq(js_result, py_result), (
+        f"{js_result} != {py_result} in:\n```\n{code}\n```"
+    )

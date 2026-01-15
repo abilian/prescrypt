@@ -21,6 +21,7 @@ The codebase has two scope-tracking systems with distinct purposes:
 The Binder's Scope answers "what variables exist and their properties?"
 The NameSpace answers "how should we declare them in JavaScript?"
 """
+
 from __future__ import annotations
 
 LOCAL = 1

@@ -26,8 +26,6 @@ def gen_asyncfunctiondef(node: ast.AsyncFunctionDef, codegen: CodeGen):
     return fun_def.gen()
 
 
-
-
 class BaseFunDef:
     _async = ""
 

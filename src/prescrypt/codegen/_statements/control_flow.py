@@ -198,10 +198,7 @@ def _make_iterable(codegen: CodeGen, name1, name2, newlines=True):
     if name1 != name2:
         code.append(lf(f"{name2} = {name1};"))
     code.append(
-        lf(
-            'if ((typeof %s === "object") && '
-            "(!Array.isArray(%s))) {" % (name2, name2)
-        )
+        lf('if ((typeof %s === "object") && (!Array.isArray(%s))) {' % (name2, name2))
     )
     code.append(f" {name2} = Object.keys({name2});")
     code.append("}")
@@ -288,7 +285,9 @@ def gen_with(node: ast.With, codegen: CodeGen):
     body = node.body
 
     if len(items) > 1:
-        raise JSError("Multiple context managers in a single 'with' statement not yet supported")
+        raise JSError(
+            "Multiple context managers in a single 'with' statement not yet supported"
+        )
 
     item = items[0]
     context_expr = item.context_expr

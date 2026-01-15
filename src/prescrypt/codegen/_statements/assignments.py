@@ -29,7 +29,9 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
                 class_name = codegen.ns.name
                 attr_name = id
                 if attr_name.startswith("__") and not attr_name.endswith("__"):
-                    attr_name = "_" + class_name + attr_name  # Double underscore name mangling
+                    attr_name = (
+                        "_" + class_name + attr_name
+                    )  # Double underscore name mangling
                 return f"{class_name}.{attr_name} = {class_name}.prototype.{attr_name} = {js_value};"
             elif codegen.ns.is_known(id):
                 # Already declared, just assign

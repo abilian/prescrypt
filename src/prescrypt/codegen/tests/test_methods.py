@@ -1,4 +1,5 @@
 """Tests for string and list method code generation."""
+
 from __future__ import annotations
 
 from prescrypt import py2js

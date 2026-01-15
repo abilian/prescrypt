@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from . import (
-               calls,
-               comprehensions,
-               constants,
-               constructors,
-               f_strings,
-               misc,
-               ops,
-               variables,
+    calls,
+    comprehensions,
+    constants,
+    constructors,
+    f_strings,
+    misc,
+    ops,
+    variables,
 )
 
 """

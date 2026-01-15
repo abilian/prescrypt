@@ -177,6 +177,7 @@ def foo():
     x = 2
 """
         from prescrypt import py2js
+
         js = py2js(code)
         # x should be 'let' not 'const' because it's modified via global
         assert "let x = 1;" in js
@@ -193,6 +194,7 @@ def outer():
     return x
 """
         from prescrypt import py2js
+
         js = py2js(code)
         # x should be 'let' not 'const' in outer because it's modified via nonlocal
         assert "let x = 1;" in js
@@ -219,6 +221,7 @@ result
         # Note: This test just verifies code generation works.
         # Full semantics would require __enter__/__exit__ support.
         from prescrypt import py2js
+
         js = py2js(code)
         assert "try {" in js
         assert "finally {" in js
@@ -237,6 +240,7 @@ with lock:
 result
 """
         from prescrypt import py2js
+
         js = py2js(code)
         assert "try {" in js
         assert "finally {" in js

@@ -232,6 +232,8 @@ def function_super(codegen: CodeGen, args, kwargs):
             # Two-argument super(cls, obj) - explicit form
             js_cls = unify(codegen.gen_expr(cls_arg))
             js_obj = unify(codegen.gen_expr(obj_arg))
-            return codegen.call_std_function("super_proxy", [js_obj, f"{js_cls}.prototype"])
+            return codegen.call_std_function(
+                "super_proxy", [js_obj, f"{js_cls}.prototype"]
+            )
         case _:
             raise JSError("super() takes 0 or 2 arguments")

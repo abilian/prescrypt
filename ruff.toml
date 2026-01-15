@@ -1,4 +1,5 @@
 target-version = "py310"
+# preview = true
 
 include = [
     "src/**/*.py",
@@ -23,6 +24,7 @@ lint.extend-ignore = [
     "N",
     "TD",
     "TC",
+    "DOC",
 
     # False positive
     "S101", # Use of `assert` detected
@@ -32,6 +34,8 @@ lint.extend-ignore = [
     "T201", # Print...
     "SIM117", # Nested `with` statements (this is a fundamental pattern in Textual)
     "RUF022", # 	[*] unsorted-dunder-all
+    "FURB110",
+    "PLW1514",
 
     # Fix later (or not)
     "FBT001", # Boolean positional arg - common in widget/Textual APIs

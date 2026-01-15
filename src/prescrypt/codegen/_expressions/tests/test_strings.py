@@ -2,6 +2,7 @@
 
 Tests f-strings, %-formatting, and .format() method.
 """
+
 from __future__ import annotations
 
 from prescrypt import py2js

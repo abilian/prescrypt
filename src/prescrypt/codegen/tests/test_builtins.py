@@ -1,4 +1,5 @@
 """Tests for Python builtin functions."""
+
 from __future__ import annotations
 
 from prescrypt import py2js

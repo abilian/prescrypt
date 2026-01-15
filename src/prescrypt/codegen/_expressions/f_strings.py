@@ -20,7 +20,9 @@ def gen_joinstr(node: ast.JoinedStr, codegen: CodeGen) -> str:
             case ast.Constant(str(s)):
                 parts.append(s)
             case ast.FormattedValue(value, conversion, format_spec):
-                parts.append("{" + _format_spec_to_string(conversion, format_spec) + "}")
+                parts.append(
+                    "{" + _format_spec_to_string(conversion, format_spec) + "}"
+                )
                 value_nodes.append(value)
             case _:
                 raise JSError("Unknown JoinedStr part: " + str(n))

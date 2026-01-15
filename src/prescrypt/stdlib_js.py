@@ -6,6 +6,7 @@
     and then "apply()-ed" to the instance of interest.
     Declaring methods on Object is a bad idea (breaks Bokeh, jquery).
 """
+
 from __future__ import annotations
 
 import re
@@ -65,7 +66,9 @@ class StdlibJs:
 
         return result
 
-    def _parse_all_dependencies(self) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    def _parse_all_dependencies(
+        self,
+    ) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
         """Parse dependencies for all functions and methods."""
         func_deps = {}
         meth_deps = {}

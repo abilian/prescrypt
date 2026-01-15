@@ -1,4 +1,5 @@
 """Tests for f-string code generation."""
+
 from __future__ import annotations
 
 import pytest
@@ -122,7 +123,7 @@ class TestFStringExpressions:
         assert js_eval(py2js(code)) == "length is 3"
 
     def test_conditional_expression(self):
-        code = "x = 5; f'{\"yes\" if x > 0 else \"no\"}'"
+        code = 'x = 5; f\'{"yes" if x > 0 else "no"}\''
         assert js_eval(py2js(code)) == "yes"
 
 

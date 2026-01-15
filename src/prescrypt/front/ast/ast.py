@@ -2,6 +2,7 @@
 
 Custom AST.
 """
+
 from __future__ import annotations
 
 import ast as _ast

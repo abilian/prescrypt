@@ -217,7 +217,9 @@ class FuncCall:
         else:
             # register use of merge_dicts(), but we build the string ourselves
             self.call_std_function("merge_dicts", [])
-            return self.codegen.function_prefix + "merge_dicts(" + ", ".join(kwargs) + ")"
+            return (
+                self.codegen.function_prefix + "merge_dicts(" + ", ".join(kwargs) + ")"
+            )
 
     def gen_expr(self, expr: ast.expr):
         return self.codegen.gen_expr(expr)

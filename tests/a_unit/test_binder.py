@@ -2,6 +2,7 @@
 
 The Binder builds scope hierarchy and validates variable usage.
 """
+
 from __future__ import annotations
 
 import pytest

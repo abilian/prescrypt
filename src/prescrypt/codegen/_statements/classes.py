@@ -36,7 +36,9 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     # Define function that acts as class constructor
     code = []
     docstring = ""
-    code.append(make_class_definition(node.name, base_class, docstring, codegen.function_prefix))
+    code.append(
+        make_class_definition(node.name, base_class, docstring, codegen.function_prefix)
+    )
     codegen.call_std_function("op_instantiate", [])
 
     # Collect property definitions
@@ -55,7 +57,9 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
 
     # Emit property definitions
     for prop_name, prop_info in properties.items():
-        code.append(_make_property_definition(class_name, prop_name, prop_info, codegen))
+        code.append(
+            _make_property_definition(class_name, prop_name, prop_info, codegen)
+        )
 
     code.append("\n")
     codegen.pop_ns()
@@ -103,10 +107,14 @@ def _collect_properties(body_nodes: list) -> dict:
     return properties
 
 
-def _make_property_definition(class_name: str, prop_name: str, prop_info: dict, codegen) -> str:
+def _make_property_definition(
+    class_name: str, prop_name: str, prop_info: dict, codegen
+) -> str:
     """Generate Object.defineProperty() call for a property."""
     parts = []
-    parts.append(f"Object.defineProperty({class_name}.prototype, {js_repr(prop_name)}, {{")
+    parts.append(
+        f"Object.defineProperty({class_name}.prototype, {js_repr(prop_name)}, {{"
+    )
 
     if "getter" in prop_info:
         getter_body = _gen_property_function_body(prop_info["getter"], codegen)
@@ -157,7 +165,9 @@ def _gen_property_function_body(node: ast.FunctionDef, codegen) -> str:
     return " ".join(flatten(body_parts).split())
 
 
-def make_class_definition(name, base="Object", docstring="", function_prefix="_pyfunc_"):
+def make_class_definition(
+    name, base="Object", docstring="", function_prefix="_pyfunc_"
+):
     """Get a list of lines that defines a class in JS.
 
     Used in the parser as well as by flexx.app.Component.

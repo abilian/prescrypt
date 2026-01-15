@@ -59,7 +59,9 @@ def gen_dict(node: ast.Dict, codegen: CodeGen):
     # return code
 
 
-def _gen_dict_fallback(codegen: CodeGen, keys: list[ast.expr], values: list[ast.expr]) -> str:
+def _gen_dict_fallback(
+    codegen: CodeGen, keys: list[ast.expr], values: list[ast.expr]
+) -> str:
     func_args = []
     for key, val in zip(keys, values):
         func_args += [

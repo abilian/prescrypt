@@ -40,6 +40,7 @@ Must support:
 - Match(expr subject, match_case* cases)
 
 """
+
 from __future__ import annotations
 
 from . import (

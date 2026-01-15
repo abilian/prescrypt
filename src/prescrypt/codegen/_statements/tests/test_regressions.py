@@ -3,6 +3,7 @@
 These tests document specific bugs that were found and fixed,
 to prevent them from recurring.
 """
+
 from __future__ import annotations
 
 from prescrypt import py2js
@@ -152,7 +153,7 @@ result
 """
         js = py2js(code)
         # Extract just the user code portion (after the stdlib)
-        user_code = js[js.find("const x = 50;"):]
+        user_code = js[js.find("const x = 50;") :]
         # Count the elif clauses - should have 3 'else if' patterns
         assert user_code.count("else if (") == 3
         # No malformed patterns

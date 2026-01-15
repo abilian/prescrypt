@@ -6,6 +6,7 @@ Date: August 2003
 License: Python-like
 Requires: Python 2.3, dot, standard Unix tools
 """
+
 from __future__ import annotations
 
 import ast
