@@ -179,8 +179,9 @@ def make_class_definition(
     Used in the parser as well as by flexx.app.Component.
     """
     # Create constructor that works with or without 'new' keyword
-    export_prefix = "export " if export else ""
-    lines = [f"{export_prefix}{name} = function () {{"]
+    # ES6 export requires 'const' keyword: export const X = ...
+    decl = "export const " if export else ""
+    lines = [f"{decl}{name} = function () {{"]
     # Auto-instantiate if called without 'new'
     lines.append(f"    if (!(this instanceof {name})) {{")
     lines.append(f"        return new {name}(...arguments);")

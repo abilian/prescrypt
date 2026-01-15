@@ -45,7 +45,7 @@ class TestModuleModeExports:
         """Module-level classes should be exported."""
         code = "class MyClass:\n    pass"
         js = py2js(code, include_stdlib=False, module_mode=True)
-        assert "export MyClass = function" in js
+        assert "export const MyClass = function" in js
 
     def test_nested_function_not_exported(self):
         """Nested functions inside functions should not be exported."""
@@ -72,7 +72,7 @@ class MyClass:
 """
         js = py2js(code, include_stdlib=False, module_mode=True)
         # Only class should be exported
-        assert "export MyClass = function" in js
+        assert "export const MyClass = function" in js
         # Method should not have export
         assert "export" in js
         lines_with_export = [line for line in js.split("\n") if "export" in line]
@@ -86,7 +86,7 @@ class MyClass:
 """
         js = py2js(code, include_stdlib=False, module_mode=True)
         # Only class should be exported
-        assert "export MyClass = function" in js
+        assert "export const MyClass = function" in js
         # Class attribute should not have export
         lines_with_export = [line for line in js.split("\n") if "export" in line]
         assert len(lines_with_export) == 1

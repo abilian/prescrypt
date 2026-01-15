@@ -130,7 +130,7 @@ class CodeGen:
         return ModuleResolver(
             source_dir=self._source_dir,
             module_paths=self._module_paths,
-            verify_exists=False,  # Don't verify by default for faster compilation
+            verify_exists=True,  # Verify module paths to distinguish packages from modules
         )
 
     def resolve_module(self, module: str, level: int = 0) -> str:
