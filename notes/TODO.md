@@ -1,15 +1,30 @@
 TODO
 ====
 
-## Short term (Stage 5 - In Progress)
+## Short term (Stage 5 - Complete)
 
-- [ ] Unify `stdlib_js` and `stdlib_py` into single `stdlib/` directory
+- [ ] Unify `stdlib_js` and `stdlib_py` into single `stdlib/` directory (optional)
 - [x] **Minimize stdlib code generation (tree-shake unused functions)** - DONE
   - Track used functions/methods during codegen
   - Resolve transitive dependencies
   - 94-99% size reduction (33KB → 177 bytes for simple code)
-- [ ] Pre-mangle stdlib names / configurable namespace prefixes
-- [ ] Add more compile-time optimizations (constant folding, inlining)
+- [x] **Configurable namespace prefixes** - DONE
+  - `function_prefix` parameter (default `_pyfunc_`)
+  - `method_prefix` parameter (default `_pymeth_`)
+  - Supports custom prefixes for minification or conflict avoidance
+- [x] **Compile-time optimizations (constant folding)** - DONE
+  - Arithmetic: `1 + 2 * 3` → `7`
+  - Strings: `"a" + "b"` → `"ab"`, `"x" * 3` → `"xxx"`
+  - Booleans: `True and False` → `False`, short-circuit evaluation
+  - Comparisons: `1 < 2` → `True`
+  - Subscripts: `"hello"[0]` → `"h"`, `[1,2,3][1]` → `2`
+  - Conditionals: `x if True else y` → `x`
+- [x] **Function inlining for simple stdlib functions** - DONE
+  - `len([1,2,3])` → `3`, `len("hello")` → `5`
+  - `min(1,2,3)` → `1`, `max(1,2,3)` → `3`
+  - `abs(-5)` → `5`, `sum([1,2,3])` → `6`
+  - `bool(0)` → `False`, `int("123")` → `123`
+  - `chr(65)` → `"A"`, `ord("A")` → `65`
 
 ## Medium term (Stage 6)
 

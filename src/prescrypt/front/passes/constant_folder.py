@@ -303,6 +303,170 @@ class ConstantFolder(ast.NodeTransformer):
         except (IndexError, TypeError):
             return node
 
+    def visit_Call(self, node: ast.Call) -> ast.expr:
+        """Inline simple builtin function calls on constant arguments.
+
+        Examples:
+            len([1, 2, 3]) → 3
+            len("hello") → 5
+            min(1, 2, 3) → 1
+            max(1, 2, 3) → 3
+            abs(-5) → 5
+            sum([1, 2, 3]) → 6
+            bool(0) → False
+            int("123") → 123
+            float("1.5") → 1.5
+            str(123) → "123"
+            round(3.14159, 2) → 3.14
+        """
+        node = self.generic_visit(node)
+
+        # Only handle simple function names (not methods)
+        if not isinstance(node.func, ast.Name):
+            return node
+
+        func_name = node.func.id
+        args = node.args
+
+        # Skip if there are keyword arguments (for simplicity)
+        if node.keywords:
+            return node
+
+        # Try to inline the function call
+        try:
+            result = self._try_inline_call(func_name, args, node)
+            if result is not None:
+                return result
+        except (ValueError, TypeError, OverflowError):
+            # If inlining fails, keep the original call
+            pass
+
+        return node
+
+    def _try_inline_call(
+        self, func_name: str, args: list[ast.expr], node: ast.Call
+    ) -> ast.Constant | None:
+        """Try to inline a function call. Returns None if not possible."""
+
+        # len() on constant sequences
+        if func_name == "len" and len(args) == 1:
+            arg = args[0]
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, (str, bytes)):
+                return self._make_constant(len(arg.value), node)
+            if isinstance(arg, (ast.List, ast.Tuple)):
+                return self._make_constant(len(arg.elts), node)
+            if isinstance(arg, ast.Dict):
+                return self._make_constant(len(arg.keys), node)
+            if isinstance(arg, ast.Set):
+                return self._make_constant(len(arg.elts), node)
+
+        # min/max on constant arguments
+        if func_name in ("min", "max") and args:
+            const_values = self._extract_constant_values(args)
+            if const_values is not None:
+                # Handle single iterable argument
+                if len(const_values) == 1 and isinstance(const_values[0], (list, tuple)):
+                    const_values = list(const_values[0])
+                if const_values:
+                    func = min if func_name == "min" else max
+                    return self._make_constant(func(const_values), node)
+
+        # abs() on constant number
+        if func_name == "abs" and len(args) == 1:
+            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, (int, float)):
+                return self._make_constant(abs(args[0].value), node)
+
+        # sum() on constant list
+        if func_name == "sum" and len(args) in (1, 2):
+            if isinstance(args[0], (ast.List, ast.Tuple)):
+                values = self._extract_list_values(args[0])
+                if values is not None and all(isinstance(v, (int, float)) for v in values):
+                    start = 0
+                    if len(args) == 2 and isinstance(args[1], ast.Constant):
+                        start = args[1].value
+                    return self._make_constant(sum(values, start), node)
+
+        # bool() on constant
+        if func_name == "bool" and len(args) == 1:
+            if isinstance(args[0], ast.Constant):
+                return self._make_constant(bool(args[0].value), node)
+            if isinstance(args[0], (ast.List, ast.Tuple)):
+                # Empty list/tuple is falsy
+                return self._make_constant(len(args[0].elts) > 0, node)
+
+        # int() on constant
+        if func_name == "int" and len(args) in (1, 2):
+            if len(args) == 1 and isinstance(args[0], ast.Constant):
+                val = args[0].value
+                if isinstance(val, (int, float, str)):
+                    return self._make_constant(int(val), node)
+            elif len(args) == 2:
+                if isinstance(args[0], ast.Constant) and isinstance(args[1], ast.Constant):
+                    return self._make_constant(int(args[0].value, args[1].value), node)
+
+        # float() on constant
+        if func_name == "float" and len(args) == 1:
+            if isinstance(args[0], ast.Constant):
+                val = args[0].value
+                if isinstance(val, (int, float, str)):
+                    return self._make_constant(float(val), node)
+
+        # str() on constant (but NOT booleans - JS uses "true"/"false", Python uses "True"/"False")
+        if func_name == "str" and len(args) == 1:
+            if isinstance(args[0], ast.Constant):
+                val = args[0].value
+                # Don't inline booleans - let the JS runtime handle them for JS semantics
+                if not isinstance(val, bool):
+                    return self._make_constant(str(val), node)
+
+        # round() on constant
+        if func_name == "round" and len(args) in (1, 2):
+            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, (int, float)):
+                if len(args) == 1:
+                    return self._make_constant(round(args[0].value), node)
+                elif isinstance(args[1], ast.Constant) and isinstance(args[1].value, int):
+                    return self._make_constant(round(args[0].value, args[1].value), node)
+
+        # chr() on constant int
+        if func_name == "chr" and len(args) == 1:
+            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, int):
+                val = args[0].value
+                if 0 <= val <= 0x10FFFF:
+                    return self._make_constant(chr(val), node)
+
+        # ord() on constant single-char string
+        if func_name == "ord" and len(args) == 1:
+            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, str):
+                if len(args[0].value) == 1:
+                    return self._make_constant(ord(args[0].value), node)
+
+        return None
+
+    def _extract_constant_values(self, args: list[ast.expr]) -> list | None:
+        """Extract constant values from arguments. Returns None if any arg is not constant."""
+        values = []
+        for arg in args:
+            if isinstance(arg, ast.Constant):
+                values.append(arg.value)
+            elif isinstance(arg, (ast.List, ast.Tuple)):
+                inner = self._extract_list_values(arg)
+                if inner is None:
+                    return None
+                values.append(inner)
+            else:
+                return None
+        return values
+
+    def _extract_list_values(self, node: ast.List | ast.Tuple) -> list | None:
+        """Extract constant values from a list/tuple. Returns None if any element is not constant."""
+        values = []
+        for el in node.elts:
+            if isinstance(el, ast.Constant):
+                values.append(el.value)
+            else:
+                return None
+        return values
+
     def _make_constant(self, value: Any, original_node: ast.AST) -> ast.Constant:
         """Create a Constant node preserving source location."""
         new_node = ast.Constant(value=value)

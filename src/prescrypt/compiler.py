@@ -1,24 +1,25 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from .codegen import CodeGen
 from .front import ast
 from .front.passes.binder import Binder
 from .front.passes.constant_folder import fold_constants
 from .front.passes.desugar import desugar
-from .stdlib_js import StdlibJs
+from .stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
 
-# Singleton stdlib instance
-_stdlib_js: StdlibJs | None = None
+# Cache stdlib instances by prefix combination
+_stdlib_cache: dict[tuple[str, str], StdlibJs] = {}
 
 
-def get_stdlib_js() -> StdlibJs:
-    """Get the singleton StdlibJs instance."""
-    global _stdlib_js
-    if _stdlib_js is None:
-        _stdlib_js = StdlibJs()
-    return _stdlib_js
+def get_stdlib_js(
+    function_prefix: str = FUNCTION_PREFIX,
+    method_prefix: str = METHOD_PREFIX,
+) -> StdlibJs:
+    """Get a StdlibJs instance for the given prefixes (cached)."""
+    key = (function_prefix, method_prefix)
+    if key not in _stdlib_cache:
+        _stdlib_cache[key] = StdlibJs(function_prefix, method_prefix)
+    return _stdlib_cache[key]
 
 
 class Compiler:
@@ -28,6 +29,8 @@ class Compiler:
         include_stdlib: bool = True,
         tree_shake: bool = True,
         optimize: bool = True,
+        function_prefix: str = FUNCTION_PREFIX,
+        method_prefix: str = METHOD_PREFIX,
     ) -> str:
         """Compile Python source to JavaScript.
 
@@ -36,6 +39,8 @@ class Compiler:
             include_stdlib: Whether to include the stdlib preamble
             tree_shake: Whether to only include used stdlib functions (default True)
             optimize: Whether to apply compile-time optimizations like constant folding (default True)
+            function_prefix: Prefix for stdlib functions (default "_pyfunc_")
+            method_prefix: Prefix for stdlib methods (default "_pymeth_")
 
         Returns:
             JavaScript code
@@ -45,7 +50,7 @@ class Compiler:
         if optimize:
             tree = fold_constants(tree)
         Binder().visit(tree)
-        codegen = CodeGen(tree)
+        codegen = CodeGen(tree, function_prefix, method_prefix)
         js_code = codegen.gen()
 
         if not include_stdlib:
@@ -56,23 +61,33 @@ class Compiler:
             preamble = self.get_partial_preamble(
                 codegen.used_std_functions,
                 codegen.used_std_methods,
+                function_prefix,
+                method_prefix,
             )
         else:
             # Include the full stdlib
-            preamble = self.get_full_preamble()
+            preamble = self.get_full_preamble(function_prefix, method_prefix)
 
         return preamble + "\n" + js_code
 
-    def get_full_preamble(self) -> str:
+    def get_full_preamble(
+        self,
+        function_prefix: str = FUNCTION_PREFIX,
+        method_prefix: str = METHOD_PREFIX,
+    ) -> str:
         """Get the full stdlib preamble (all functions)."""
-        stdlib_js = Path(__file__).parent / "stdlibjs"
-        return (stdlib_js / "_stdlib.js").read_text()
+        stdlib = get_stdlib_js(function_prefix, method_prefix)
+        return stdlib.get_full_std_lib()
 
     def get_partial_preamble(
-        self, used_functions: set[str], used_methods: set[str]
+        self,
+        used_functions: set[str],
+        used_methods: set[str],
+        function_prefix: str = FUNCTION_PREFIX,
+        method_prefix: str = METHOD_PREFIX,
     ) -> str:
         """Get a partial stdlib preamble with only the used functions and their dependencies."""
-        stdlib = get_stdlib_js()
+        stdlib = get_stdlib_js(function_prefix, method_prefix)
 
         # Resolve all dependencies
         all_funcs, all_methods = stdlib.resolve_dependencies(
@@ -88,6 +103,8 @@ def py2js(
     include_stdlib: bool = True,
     tree_shake: bool = True,
     optimize: bool = True,
+    function_prefix: str = FUNCTION_PREFIX,
+    method_prefix: str = METHOD_PREFIX,
 ) -> str:
     """Compile Python code to JavaScript.
 
@@ -96,6 +113,8 @@ def py2js(
         include_stdlib: Whether to include the stdlib preamble
         tree_shake: Whether to only include used stdlib functions
         optimize: Whether to apply compile-time optimizations
+        function_prefix: Prefix for stdlib functions (default "_pyfunc_")
+        method_prefix: Prefix for stdlib methods (default "_pymeth_")
 
     Returns:
         JavaScript code
@@ -106,4 +125,6 @@ def py2js(
         include_stdlib=include_stdlib,
         tree_shake=tree_shake,
         optimize=optimize,
+        function_prefix=function_prefix,
+        method_prefix=method_prefix,
     )

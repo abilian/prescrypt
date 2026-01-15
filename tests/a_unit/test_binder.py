@@ -2,12 +2,12 @@
 
 The Binder builds scope hierarchy and validates variable usage.
 """
+from __future__ import annotations
 
 import pytest
 
 from prescrypt.front import ast
 from prescrypt.front.passes.binder import Binder
-
 
 # =============================================================================
 # Fixtures

@@ -4,7 +4,6 @@ from prescrypt.codegen.main import CodeGen, gen_stmt
 from prescrypt.codegen.utils import flatten, js_repr
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
-from prescrypt.stdlib_js import FUNCTION_PREFIX
 
 
 @gen_stmt.register
@@ -37,7 +36,7 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     # Define function that acts as class constructor
     code = []
     docstring = ""
-    code.append(make_class_definition(node.name, base_class, docstring))
+    code.append(make_class_definition(node.name, base_class, docstring, codegen.function_prefix))
     codegen.call_std_function("op_instantiate", [])
 
     # Collect property definitions
@@ -158,7 +157,7 @@ def _gen_property_function_body(node: ast.FunctionDef, codegen) -> str:
     return " ".join(flatten(body_parts).split())
 
 
-def make_class_definition(name, base="Object", docstring=""):
+def make_class_definition(name, base="Object", docstring="", function_prefix="_pyfunc_"):
     """Get a list of lines that defines a class in JS.
 
     Used in the parser as well as by flexx.app.Component.
@@ -171,7 +170,7 @@ def make_class_definition(name, base="Object", docstring=""):
     lines.append("    }")
     # for line in docstring.splitlines():
     #     code.append("    // " + line)
-    lines.append(f"    {FUNCTION_PREFIX}op_instantiate(this, arguments);")
+    lines.append(f"    {function_prefix}op_instantiate(this, arguments);")
     lines.append("}")
 
     if base != "Object":

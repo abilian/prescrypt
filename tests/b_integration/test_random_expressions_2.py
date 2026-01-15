@@ -9,7 +9,7 @@ from .util import gen_expr
 
 
 def test_gen():
-    for i in range(0, 100):
+    for i in range(100):
         expr = gen_expr()
 
         try:

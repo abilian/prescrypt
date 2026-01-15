@@ -22,10 +22,13 @@ class StdlibJs:
     function_deps: dict[str, set[str]]  # function -> set of function dependencies
     method_deps: dict[str, set[str]]  # function -> set of method dependencies
 
-    function_prefix: str = FUNCTION_PREFIX
-    method_prefix: str = METHOD_PREFIX
-
-    def __init__(self):
+    def __init__(
+        self,
+        function_prefix: str = FUNCTION_PREFIX,
+        method_prefix: str = METHOD_PREFIX,
+    ):
+        self.function_prefix = function_prefix
+        self.method_prefix = method_prefix
         self.functions = self.get_functions("functions.js")
         self.methods = self.get_functions("methods.js")
         # Parse dependencies

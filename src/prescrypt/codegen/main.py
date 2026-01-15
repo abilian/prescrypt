@@ -26,7 +26,12 @@ class CodeGen:
     module: ast.Module
     ns: NameSpace
 
-    def __init__(self, module: ast.Module):
+    def __init__(
+        self,
+        module: ast.Module,
+        function_prefix: str = FUNCTION_PREFIX,
+        method_prefix: str = METHOD_PREFIX,
+    ):
         self.module = module
         self._stack = []
         self.push_ns("module", "module")
@@ -38,6 +43,10 @@ class CodeGen:
 
         self._methods = {}
         self._functions = {}
+
+        # Configurable namespace prefixes
+        self.function_prefix = function_prefix
+        self.method_prefix = method_prefix
 
         # Track used stdlib functions/methods for tree-shaking
         self._used_std_functions: set[str] = set()
@@ -129,7 +138,7 @@ class CodeGen:
         # Track usage for tree-shaking
         self._used_std_functions.add(name)
 
-        mangled_name = FUNCTION_PREFIX + name
+        mangled_name = self.function_prefix + name
         js_args = list(self.gen_js_args(args))
         return f"{mangled_name}({', '.join(js_args)})"
 
@@ -141,7 +150,7 @@ class CodeGen:
         # Track usage for tree-shaking
         self._used_std_methods.add(name)
 
-        mangled_name = METHOD_PREFIX + name
+        mangled_name = self.method_prefix + name
         js_args = list(self.gen_js_args(args))
         # First argument to .call() is the `this` value (the object to call method on)
         all_args = [base] + js_args
@@ -159,7 +168,7 @@ class CodeGen:
     #
     def gen_truthy(self, node: ast.expr) -> str | list:
         """Wraps an operation in a truthy call, unless it's not necessary."""
-        eq_name = FUNCTION_PREFIX + "op_equals"
+        eq_name = self.function_prefix + "op_equals"
         test = flatten(self.gen_expr(node))
         if (
             test.endswith(".length")

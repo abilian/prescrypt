@@ -5,8 +5,6 @@ to prevent them from recurring.
 """
 from __future__ import annotations
 
-import pytest
-
 from prescrypt import py2js
 
 from .utils import check_gen_exec

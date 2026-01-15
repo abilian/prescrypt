@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ast
 import random
-from typing import Callable
+from collections.abc import Callable
 
 from attr import mutable
 
@@ -89,34 +89,30 @@ class __Generator:
     def gen_tuple(self):
         if self.complexity > self.max_complexity:
             return ast.Tuple([])
-        else:
-            self.complexity += 1
-            return ast.Tuple([self.gen_atom() for _ in range(3)])
+        self.complexity += 1
+        return ast.Tuple([self.gen_atom() for _ in range(3)])
 
     def gen_list(self):
         if self.complexity > self.max_complexity:
             return ast.List([])
-        else:
-            self.complexity += 1
-            return ast.List([self.gen_atom() for _ in range(3)])
+        self.complexity += 1
+        return ast.List([self.gen_atom() for _ in range(3)])
 
     def gen_dict(self):
         # Note: only generate dicts with string keys because JavaScript.
         if self.complexity > self.max_complexity:
             return ast.Dict([], [])
-        else:
-            self.complexity += 1
-            keys = [self.gen_string() for _ in range(3)]
-            values = [self.gen_atom() for _ in range(3)]
-            # keys = [self.gen_atom() for _ in range(3)]
-            return ast.Dict(keys, values)
+        self.complexity += 1
+        keys = [self.gen_string() for _ in range(3)]
+        values = [self.gen_atom() for _ in range(3)]
+        # keys = [self.gen_atom() for _ in range(3)]
+        return ast.Dict(keys, values)
 
     def gen_set(self):
         if self.complexity > self.max_complexity:
             return ast.Set([])
-        else:
-            self.complexity += 1
-            return ast.Set(elts=[self.gen_atom() for _ in range(3)])
+        self.complexity += 1
+        return ast.Set(elts=[self.gen_atom() for _ in range(3)])
 
     def gen_ellipsis(self):
         return ast.Ellipsis()

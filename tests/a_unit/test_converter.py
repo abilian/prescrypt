@@ -4,10 +4,9 @@ import ast as native_ast
 
 import pytest
 
-from prescrypt.testing.data import EXPRESSIONS
-
 from prescrypt.front.ast import ast
 from prescrypt.front.ast.converter import convert
+from prescrypt.testing.data import EXPRESSIONS
 
 
 def test_converter():

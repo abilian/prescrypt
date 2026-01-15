@@ -201,7 +201,7 @@ class Binder(Visitor):
         for name in node.names:
             # Verify the name exists in an enclosing scope
             if self.scope.parent is None:
-                raise SyntaxError(f"nonlocal declaration not allowed at module level")
+                raise SyntaxError("nonlocal declaration not allowed at module level")
             enclosing_var = self.scope.parent.search(name)
             if enclosing_var is None:
                 raise SyntaxError(f"no binding for nonlocal '{name}' found")

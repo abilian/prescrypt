@@ -229,8 +229,10 @@ class TestNoFoldingWhenVariablesPresent:
 class TestPreserveNonConstant:
     """Test that non-constant expressions are preserved."""
 
-    def test_function_call_preserved(self):
-        result = parse_and_fold("x = len([1, 2, 3])")
+    def test_function_call_with_variable_preserved(self):
+        # Function calls on constants ARE now inlined
+        # But calls with variables should be preserved
+        result = parse_and_fold("x = len(my_list)")
         assert "len" in result
 
     def test_method_call_preserved(self):
@@ -278,3 +280,129 @@ class TestIsOperator:
 
     def test_none_is_not_value(self):
         assert parse_and_fold("x = None is not 1") == "x = True"
+
+
+class TestFunctionInlining:
+    """Test inlining of simple builtin function calls."""
+
+    # len() tests
+    def test_len_list(self):
+        assert parse_and_fold("x = len([1, 2, 3])") == "x = 3"
+
+    def test_len_tuple(self):
+        assert parse_and_fold("x = len((1, 2, 3, 4))") == "x = 4"
+
+    def test_len_string(self):
+        assert parse_and_fold('x = len("hello")') == "x = 5"
+
+    def test_len_empty_list(self):
+        assert parse_and_fold("x = len([])") == "x = 0"
+
+    def test_len_dict(self):
+        assert parse_and_fold('x = len({"a": 1, "b": 2})') == "x = 2"
+
+    # min/max tests
+    def test_min_args(self):
+        assert parse_and_fold("x = min(3, 1, 2)") == "x = 1"
+
+    def test_max_args(self):
+        assert parse_and_fold("x = max(3, 1, 2)") == "x = 3"
+
+    def test_min_list(self):
+        assert parse_and_fold("x = min([3, 1, 2])") == "x = 1"
+
+    def test_max_list(self):
+        assert parse_and_fold("x = max([3, 1, 2])") == "x = 3"
+
+    # abs() tests
+    def test_abs_negative(self):
+        result = parse_and_fold("x = abs(-5)")
+        assert "5" in result
+
+    def test_abs_positive(self):
+        assert parse_and_fold("x = abs(5)") == "x = 5"
+
+    def test_abs_float(self):
+        result = parse_and_fold("x = abs(-3.14)")
+        assert "3.14" in result
+
+    # sum() tests
+    def test_sum_list(self):
+        assert parse_and_fold("x = sum([1, 2, 3])") == "x = 6"
+
+    def test_sum_with_start(self):
+        assert parse_and_fold("x = sum([1, 2, 3], 10)") == "x = 16"
+
+    def test_sum_empty(self):
+        assert parse_and_fold("x = sum([])") == "x = 0"
+
+    # bool() tests
+    def test_bool_zero(self):
+        assert parse_and_fold("x = bool(0)") == "x = False"
+
+    def test_bool_nonzero(self):
+        assert parse_and_fold("x = bool(1)") == "x = True"
+
+    def test_bool_empty_string(self):
+        assert parse_and_fold('x = bool("")') == "x = False"
+
+    def test_bool_string(self):
+        assert parse_and_fold('x = bool("hello")') == "x = True"
+
+    def test_bool_empty_list(self):
+        assert parse_and_fold("x = bool([])") == "x = False"
+
+    def test_bool_nonempty_list(self):
+        assert parse_and_fold("x = bool([1])") == "x = True"
+
+    # int() tests
+    def test_int_string(self):
+        assert parse_and_fold('x = int("123")') == "x = 123"
+
+    def test_int_float(self):
+        assert parse_and_fold("x = int(3.7)") == "x = 3"
+
+    def test_int_with_base(self):
+        assert parse_and_fold('x = int("ff", 16)') == "x = 255"
+
+    # float() tests
+    def test_float_string(self):
+        assert parse_and_fold('x = float("3.14")') == "x = 3.14"
+
+    def test_float_int(self):
+        assert parse_and_fold("x = float(5)") == "x = 5.0"
+
+    # str() tests
+    def test_str_int(self):
+        assert parse_and_fold("x = str(123)") == "x = '123'"
+
+    def test_str_float(self):
+        assert parse_and_fold("x = str(3.14)") == "x = '3.14'"
+
+    def test_str_bool_not_inlined(self):
+        # Booleans are NOT inlined because Python uses "True"/"False" but JS uses "true"/"false"
+        result = parse_and_fold("x = str(True)")
+        assert "str(True)" in result
+
+    # round() tests
+    def test_round_no_decimals(self):
+        assert parse_and_fold("x = round(3.7)") == "x = 4"
+
+    def test_round_with_decimals(self):
+        assert parse_and_fold("x = round(3.14159, 2)") == "x = 3.14"
+
+    # chr/ord tests
+    def test_chr(self):
+        assert parse_and_fold("x = chr(65)") == "x = 'A'"
+
+    def test_ord(self):
+        assert parse_and_fold("x = ord('A')") == "x = 65"
+
+    # Non-constant arguments should NOT be inlined
+    def test_len_variable_not_inlined(self):
+        result = parse_and_fold("x = len(y)")
+        assert "len(y)" in result
+
+    def test_max_with_variable_not_inlined(self):
+        result = parse_and_fold("x = max(1, y, 3)")
+        assert "max" in result

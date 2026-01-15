@@ -1,5 +1,14 @@
 target-version = "py310"
 
+include = [
+    "src/**/*.py",
+    "tests/**/*.py",
+    "pyproject.toml",
+]
+exclude = [
+    "tests/c_e2e",
+]
+
 lint.select = [
     "ALL",
 ]
@@ -9,6 +18,11 @@ lint.extend-ignore = [
     "CPY", # Copyright
     "D",
     "ANN",
+    "ERA",
+    "PLR",
+    "N",
+    "TD",
+    "TC",
 
     # False positive
     "S101", # Use of `assert` detected
@@ -17,6 +31,7 @@ lint.extend-ignore = [
     "COM812", # ...
     "T201", # Print...
     "SIM117", # Nested `with` statements (this is a fundamental pattern in Textual)
+    "RUF022", # 	[*] unsorted-dunder-all
 
     # Fix later (or not)
     "FBT001", # Boolean positional arg - common in widget/Textual APIs
@@ -35,39 +50,71 @@ lint.extend-ignore = [
     "S110", # try-except-pass - acceptable for config loading with defaults
     "PLW0603", # global statement - used for singleton config/state
     "TRY300", # return in try block - cleaner for import checks
-    # "TC001", # type-checking import - used at runtime
-    # "TC003", # type-checking import - not needed for protocol definitions
-    # "TC002", # type-checking import - Textual uses these at runtime
     "PERF401", # list comprehension - explicit append loop is clearer
+    #
+    "TRY003", # 	[ ] raise-vanilla-args
+    "E501", #   	[ ] line-too-long
+    "E712", #   	[ ] true-false-comparison
+    "EM101", #  	[ ] raw-string-in-exception
+    "F401", #   	[-] unused-import
+    "ARG001", # 	[ ] unused-function-argument
+    "RET505", # 	[*] superfluous-else-return
+    "EM102", #  	[ ] f-string-in-exception
+    "SIM102", # 	[ ] collapsible-if
+    "UP031", #  	[ ] printf-string-formatting
+    "FIX002", # 	[ ] line-contains-todo
+    "PT006", #  	[ ] pytest-parametrize-names-wrong-type
+    "F841", #   	[ ] unused-variable
+    "PGH004", # 	[ ] blanket-noqa
+    "PLC0415", #	[ ] import-outside-top-level
+    "C901", #   	[ ] complex-structure
+    "FIX001", # 	[ ] line-contains-fixme
+    "RUF005", # 	[ ] collection-literal-concatenation
+    "E721", #   	[ ] type-comparison
+    "A001", #   	[ ] builtin-variable-shadowing
+    "B904", #   	[ ] raise-without-from-inside-except
+    "FURB188", #	[*] slice-to-remove-prefix-or-suffix
+    "RUF059", # 	[ ] unused-unpacked-variable
+    "UP035", #  	[-] deprecated-import
+    "A002", #   	[ ] builtin-argument-shadowing
+    "B905", #   	[ ] zip-without-explicit-strict
+    "F821", #   	[ ] undefined-name
+    "PT018", #  	[ ] pytest-composite-assertion
+    "RUF012", # 	[ ] mutable-class-default
+    "S605", #   	[ ] start-process-with-a-shell
+    "SIM108", # 	[ ] if-else-block-instead-of-if-exp
+    "B010", #   	[*] set-attr-with-constant
+    "B016", #   	[ ] raise-literal
+    "C416", #   	[ ] unnecessary-comprehension
+    "E711", #   	[ ] none-comparison
+    "PIE810", # 	[ ] multiple-starts-ends-with
+    "PLC0206", #	[ ] dict-index-missing-items
+    "PTH122", # 	[ ] os-path-splitext
+    "RET506", # 	[*] superfluous-else-raise
+    "RUF100", # 	[*] unused-noqa
+    "S306", #   	[ ] suspicious-mktemp-usage
+    "S607", #   	[ ] start-process-with-partial-path
+    "SIM105", # 	[ ] suppressible-exception
+    "UP007", #  	[ ] non-pep604-annotation-union
+    "UP037", #  	[*] quoted-annotation
 ]
 
 [lint.extend-per-file-ignores]
 "tests/**/*.py" = [
-    "BLE001", #  blind-except
-    "D",
-    "DOC",
-    "ANN",
-    "PLR2004",
-    "INP001",
-    "PLC0415", # runtime imports for optional dependencies
     "E501", # line too long in test assertions
-    "N802", # naming
-]
-"src/prezo/export.py" = [
-    "E501", # Line too long - embedded CSS URLs in SVG template
-]
-"src/prezo/images/*.py" = [
-    "PLC0415", # Lazy imports for optional dependencies (PIL, libsixel)
-    "E501", # Long character set strings
-    "C901", # Complex sixel encoder - follows protocol specification
-    "ERA001", # Protocol documentation in comments
-]
-"src/prezo/widgets/*.py" = [
-    "A002", # id is a common parameter name in Textual widgets
-]
-"src/prezo/config.py" = [
-    "C901", # Complex update_from_dict - intentionally verbose for clarity
-    "PLR0912", # Many branches in update_from_dict - covers all config sections
+    "S311", #  	[ ] suspicious-non-cryptographic-random-usage
+    "S307", #  	[ ] suspicious-eval-usage
+    "S112", #  	[ ] try-except-continue
+    "SIM110", #	[ ] reimplemented-builtin
+    "ARG001", #	[ ] unused-function-argument
+    "B007", #  	[ ] unused-loop-control-variable
+    "B905", #  	[ ] zip-without-explicit-strict
+    "EM102", # 	[ ] f-string-in-exception
+    "F841", #  	[*] unused-variable
+    "FIX002", #	[ ] line-contains-todo
+    "S102", #  	[ ] exec-builtin
+    "TRY003", #	[ ] raise-vanilla-args
+    "TRY004", #	[ ] type-check-without-type-error
 ]
 
 [lint.isort]

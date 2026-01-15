@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Union
 
 import quickjs
 
-JSON = Union[str, int, float, bool, None, List[Any], Dict[str, Any]]
+JSON = Union[str, int, float, bool, None, list[Any], dict[str, Any]]
 
 
 #
