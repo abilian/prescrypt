@@ -16,18 +16,18 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
 
     # Checks
     if len(base_nodes) > 1:
-        raise JSError("Multiple inheritance not (yet) supported.")
+        raise JSError("Multiple inheritance not (yet) supported", node)
     if keyword_nodes:
-        raise JSError("Metaclasses not supported.")
+        raise JSError("Metaclasses not supported", node)
     if decorator_nodes:
-        raise JSError("Class decorators not supported.")
+        raise JSError("Class decorators not supported", decorator_nodes[0])
 
     # Get base class (not the constructor)
     base_class = "Object"
     if base_nodes:
         base_class = flatten(codegen.gen_expr(base_nodes[0]))
     if not base_class.replace(".", "_").isalnum():
-        raise JSError("Base classes must be simple names")
+        raise JSError("Base classes must be simple names", base_nodes[0])
     elif base_class.lower() == "object":  # maybe Python "object"
         base_class = "Object"
     else:

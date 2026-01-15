@@ -15,7 +15,7 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
     js_value = flatten(codegen.gen_expr(value_node))
 
     if len(target_nodes) > 1:
-        raise JSError("Multiple assignment not (yet) supported.")
+        raise JSError("Multiple assignment not (yet) supported", node)
 
     target_node = target_nodes[0]
 

@@ -127,7 +127,7 @@ def gen_for(node: ast.For, codegen: CodeGen):
     elif isinstance(target, ast.Tuple):
         target_names = [flatten(codegen.gen_expr(t)) for t in target.elts]
     else:
-        raise JSError("Invalid iterator target in for-loop")
+        raise JSError("Invalid iterator target in for-loop", target)
 
     # Generate the iterable expression
     js_iter = flatten(codegen.gen_expr(iter_node))
@@ -286,7 +286,8 @@ def gen_with(node: ast.With, codegen: CodeGen):
 
     if len(items) > 1:
         raise JSError(
-            "Multiple context managers in a single 'with' statement not yet supported"
+            "Multiple context managers in a single 'with' statement not yet supported",
+            node,
         )
 
     item = items[0]
@@ -309,7 +310,7 @@ def gen_with(node: ast.With, codegen: CodeGen):
             else:
                 code.append(codegen.lf(f"{var_name} = {js_context};"))
         else:
-            raise JSError("Complex 'with' variable binding not supported")
+            raise JSError("Complex 'with' variable binding not supported", optional_vars)
         cleanup_var = var_name
     else:
         # No binding, create a dummy variable for cleanup

@@ -1,45 +1,78 @@
+"""Errors raised during frontend passes (binding, type checking)."""
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
-class BindError(Exception):
-    pass
+from prescrypt.exceptions import PrescryptError, SemanticError, SourceLocation
+
+if TYPE_CHECKING:
+    from prescrypt.front import ast
 
 
-class TypeCheckError(Exception):
-    pass
+class BindError(SemanticError):
+    """Error during binding/scope analysis."""
+
+
+
+class TypeCheckError(PrescryptError):
+    """Error during type checking."""
+
 
 
 class UnknownSymbolError(BindError):
-    def __init__(self, sym, message=None):
-        self.sym = sym
-        if message is None:
-            self.message = f"Unknown symbol: {self.sym}"
-        else:
-            self.message = message
+    """Reference to an undefined symbol."""
+
+    def __init__(
+        self,
+        symbol: str,
+        node: ast.AST | None = None,
+        message: str | None = None,
+    ):
+        self.symbol = symbol
+        msg = message or f"Unknown symbol: {symbol}"
+        super().__init__(msg, node=node)
 
 
 class StatementOutOfLoopError(BindError):
-    def __init__(self, stmt="", message=None):
-        if message is None:
-            self.message = f"Statement {stmt} is out of a loop"
-        else:
-            self.message = message
+    """Break/continue statement outside of a loop."""
+
+    def __init__(
+        self,
+        statement: str = "",
+        node: ast.AST | None = None,
+        message: str | None = None,
+    ):
+        self.statement = statement
+        msg = message or f"'{statement}' not allowed outside of a loop"
+        super().__init__(msg, node=node)
 
 
 class UnknownTypeError(TypeCheckError):
-    def __init__(self, typ, message=None):
-        self.typ = typ
-        if message is None:
-            self.message = f"Unknown type: {self.typ}"
-        else:
-            self.message = message
+    """Reference to an undefined type."""
+
+    def __init__(
+        self,
+        type_name: str,
+        node: ast.AST | None = None,
+        message: str | None = None,
+    ):
+        self.type_name = type_name
+        msg = message or f"Unknown type: {type_name}"
+        super().__init__(msg, node=node)
 
 
 class IncompatibleTypeError(TypeCheckError):
-    def __init__(self, t1, t2, message=None):
-        self.t1 = t1
-        self.t2 = t2
-        if message is None:
-            self.message = f"Operation between incompatile types: {t1} and {t2}"
-        else:
-            self.message = message
+    """Type mismatch in an operation."""
+
+    def __init__(
+        self,
+        type1: str,
+        type2: str,
+        node: ast.AST | None = None,
+        message: str | None = None,
+    ):
+        self.type1 = type1
+        self.type2 = type2
+        msg = message or f"Incompatible types: {type1} and {type2}"
+        super().__init__(msg, node=node)

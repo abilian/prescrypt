@@ -15,7 +15,7 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
         return "this"
 
     if name in JS_RESERVED_NAMES:
-        raise JSError(f"Cannot use reserved name {name} as a variable name!")
+        raise JSError(f"Cannot use reserved name '{name}' as a variable name", node)
 
     # TODO:
     if codegen.ns.is_known(name):
