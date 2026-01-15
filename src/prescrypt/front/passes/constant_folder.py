@@ -14,16 +14,69 @@ This pass should run AFTER desugaring, since desugar transforms:
 - -X → (0 - X)
 - +X → X
 - x += 1 → x = x + 1
+
+Architecture: Hybrid DSL approach
+- Declarative tables for simple, regular rules
+- Pattern matching for complex cases with multiple variations
 """
 
 from __future__ import annotations
 
 import ast as _ast
 import operator
-from typing import Any
+from typing import Any, Callable
 
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
+
+# =============================================================================
+# Type Aliases
+# =============================================================================
+Number = (int, float)
+Text = (str, bytes)
+
+# =============================================================================
+# Declarative Rule Tables
+# =============================================================================
+
+# Binary operations on numbers: (op_type) -> operator_func
+NUMERIC_BINARY_OPS: dict[type, Callable] = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.FloorDiv: operator.floordiv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+}
+
+# Comparison operations: (op_type) -> operator_func
+COMPARE_OPS: dict[type, Callable] = {
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+    ast.Lt: operator.lt,
+    ast.LtE: operator.le,
+    ast.Gt: operator.gt,
+    ast.GtE: operator.ge,
+}
+
+# Simple single-arg functions: (name, allowed_types, compute_func, guard)
+# guard: optional predicate on the value, returns True if folding is allowed
+SIMPLE_FUNCTIONS: list[tuple[str, type | tuple, Callable, Callable | None]] = [
+    ("abs", Number, abs, None),
+    ("bool", object, bool, None),
+    ("chr", int, chr, lambda v: 0 <= v <= 0x10FFFF),
+    ("ord", str, ord, lambda s: len(s) == 1),
+    ("float", (int, float, str), float, None),
+    ("int", (int, float, str), int, None),
+    # Don't inline str(bool) - JS uses "true"/"false", Python uses "True"/"False"
+    ("str", (int, float, str), str, lambda v: not isinstance(v, bool)),
+]
+
+
+# =============================================================================
+# Public API
+# =============================================================================
 
 
 def fold_constants(tree: ast.Module) -> ast.Module:
@@ -38,97 +91,51 @@ def fold_constants(tree: ast.Module) -> ast.Module:
     return _ast.fix_missing_locations(ConstantFolder().visit(tree))
 
 
+# =============================================================================
+# Constant Folder Implementation
+# =============================================================================
+
+
 class ConstantFolder(ast.NodeTransformer):
     """Fold constant expressions at compile time.
 
-    This transformer visits the AST and replaces operations on
-    constant values with their computed results.
+    Uses a hybrid approach:
+    - Declarative tables for regular patterns
+    - Pattern matching for complex/irregular cases
     """
 
-    # Mapping from AST operator types to Python operator functions
-    BINARY_OPS: dict[type, Any] = {
-        ast.Add: operator.add,
-        ast.Sub: operator.sub,
-        ast.Mult: operator.mul,
-        ast.Div: operator.truediv,
-        ast.FloorDiv: operator.floordiv,
-        ast.Mod: operator.mod,
-        ast.Pow: operator.pow,
-    }
-
-    COMPARE_OPS: dict[type, Any] = {
-        ast.Eq: operator.eq,
-        ast.NotEq: operator.ne,
-        ast.Lt: operator.lt,
-        ast.LtE: operator.le,
-        ast.Gt: operator.gt,
-        ast.GtE: operator.ge,
-    }
-
     def visit_BinOp(self, node: ast.BinOp) -> ast.expr:
-        """Fold binary operations on constants.
-
-        Examples:
-            1 + 2 → 3
-            "a" + "b" → "ab"
-            "x" * 3 → "xxx"
-            0 - 5 → -5 (from desugared -5)
-        """
-        # First, recursively fold children
+        """Fold binary operations on constants."""
         node = self.generic_visit(node)
 
-        # Check if both operands are constants
-        if not (isinstance(node.left, ast.Constant) and isinstance(node.right, ast.Constant)):
+        if not (
+            isinstance(node.left, ast.Constant) and isinstance(node.right, ast.Constant)
+        ):
             return node
 
-        left_val = node.left.value
-        right_val = node.right.value
+        left, right = node.left.value, node.right.value
         op_type = type(node.op)
 
-        # Handle numeric operations
-        if op_type in self.BINARY_OPS:
-            # Only fold if both are numbers (int or float)
-            if isinstance(left_val, (int, float)) and isinstance(right_val, (int, float)):
-                try:
-                    result = self.BINARY_OPS[op_type](left_val, right_val)
-                    return self._make_constant(result, node)
-                except ZeroDivisionError:
-                    line = getattr(node, "lineno", "?")
-                    raise JSError(f"Division by zero at line {line}: {left_val} / {right_val}")
-                except OverflowError:
-                    line = getattr(node, "lineno", "?")
-                    raise JSError(f"Numeric overflow at line {line}: {left_val} {op_type.__name__} {right_val}")
-                except ValueError as e:
-                    line = getattr(node, "lineno", "?")
-                    raise JSError(f"Invalid operation at line {line}: {e}")
+        # Table-driven: numeric operations
+        if op_type in NUMERIC_BINARY_OPS:
+            if isinstance(left, Number) and isinstance(right, Number):
+                return self._compute_binary(
+                    NUMERIC_BINARY_OPS[op_type], left, right, node
+                )
 
-        # Handle string concatenation: "a" + "b" → "ab"
-        if op_type == ast.Add:
-            if isinstance(left_val, str) and isinstance(right_val, str):
-                return self._make_constant(left_val + right_val, node)
-
-        # Handle string/list repetition: "x" * 3 → "xxx"
-        if op_type == ast.Mult:
-            if isinstance(left_val, str) and isinstance(right_val, int):
-                if right_val >= 0:
-                    return self._make_constant(left_val * right_val, node)
-            if isinstance(left_val, int) and isinstance(right_val, str):
-                if left_val >= 0:
-                    return self._make_constant(left_val * right_val, node)
+        # Pattern matching: string operations
+        match (op_type, left, right):
+            case (ast.Add, str(), str()):
+                return self._make_constant(left + right, node)
+            case (ast.Mult, str(), int()) if right >= 0:
+                return self._make_constant(left * right, node)
+            case (ast.Mult, int(), str()) if left >= 0:
+                return self._make_constant(left * right, node)
 
         return node
 
     def visit_UnaryOp(self, node: ast.UnaryOp) -> ast.expr:
-        """Fold unary operations on constants.
-
-        Examples:
-            not True → False
-            not False → True
-            ~5 → -6 (bitwise invert)
-
-        Note: UAdd (+x) and USub (-x) are handled by desugarer,
-        which transforms them to x and (0 - x) respectively.
-        """
+        """Fold unary operations on constants."""
         node = self.generic_visit(node)
 
         if not isinstance(node.operand, ast.Constant):
@@ -136,338 +143,241 @@ class ConstantFolder(ast.NodeTransformer):
 
         value = node.operand.value
 
-        if isinstance(node.op, ast.Not):
-            return self._make_constant(not value, node)
-
-        if isinstance(node.op, ast.Invert) and isinstance(value, int):
-            return self._make_constant(~value, node)
+        match node.op:
+            case ast.Not():
+                return self._make_constant(not value, node)
+            case ast.Invert() if isinstance(value, int):
+                return self._make_constant(~value, node)
 
         return node
 
     def visit_BoolOp(self, node: ast.BoolOp) -> ast.expr:
-        """Fold boolean operations on constants.
-
-        Examples:
-            True and False → False
-            True or False → True
-            True and True → True
-
-        Note: After desugaring, BoolOp always has exactly 2 values.
-        """
+        """Fold boolean operations on constants."""
         node = self.generic_visit(node)
 
-        # After desugaring, BoolOp should have exactly 2 values
         if len(node.values) != 2:
             return node
 
         left, right = node.values
+        is_and = isinstance(node.op, ast.And)
 
-        # Both must be constants for folding
-        if not (isinstance(left, ast.Constant) and isinstance(right, ast.Constant)):
-            # Partial evaluation: if left is constant, we might be able to simplify
-            if isinstance(left, ast.Constant):
-                if isinstance(node.op, ast.And):
-                    # False and x → False
-                    if not left.value:
-                        return left
-                    # True and x → x
-                    return right
-                else:  # ast.Or
-                    # True or x → True
-                    if left.value:
-                        return left
-                    # False or x → x
-                    return right
-            return node
+        # Both constants: compute result
+        if isinstance(left, ast.Constant) and isinstance(right, ast.Constant):
+            if is_and:
+                return self._make_constant(left.value and right.value, node)
+            return self._make_constant(left.value or right.value, node)
 
-        # Both are constants - compute result
-        if isinstance(node.op, ast.And):
-            result = left.value and right.value
-        else:  # ast.Or
-            result = left.value or right.value
+        # Partial evaluation: left is constant
+        if isinstance(left, ast.Constant):
+            if is_and:
+                return left if not left.value else right  # False and x → False
+            return left if left.value else right  # True or x → True
 
-        return self._make_constant(result, node)
+        return node
 
     def visit_Compare(self, node: ast.Compare) -> ast.expr:
-        """Fold comparison operations on constants.
-
-        Examples:
-            1 < 2 → True
-            "a" == "b" → False
-
-        Note: After desugaring, Compare always has exactly 1 op and 1 comparator.
-        """
+        """Fold comparison operations on constants."""
         node = self.generic_visit(node)
 
-        # After desugaring, should have exactly one comparison
         if len(node.ops) != 1 or len(node.comparators) != 1:
             return node
 
-        left = node.left
-        right = node.comparators[0]
-        op_type = type(node.ops[0])
-
-        # Both must be constants
-        if not (isinstance(left, ast.Constant) and isinstance(right, ast.Constant)):
+        if not (
+            isinstance(node.left, ast.Constant)
+            and isinstance(node.comparators[0], ast.Constant)
+        ):
             return node
 
-        left_val = left.value
-        right_val = right.value
+        left, right = node.left.value, node.comparators[0].value
+        op = node.ops[0]
+        op_type = type(op)
 
-        # Handle 'in' and 'not in' for strings
-        if isinstance(node.ops[0], ast.In):
-            if isinstance(left_val, str) and isinstance(right_val, str):
-                return self._make_constant(left_val in right_val, node)
-            return node
-
-        if isinstance(node.ops[0], ast.NotIn):
-            if isinstance(left_val, str) and isinstance(right_val, str):
-                return self._make_constant(left_val not in right_val, node)
-            return node
-
-        # Handle 'is' and 'is not' for None
-        if isinstance(node.ops[0], ast.Is):
-            if left_val is None or right_val is None:
-                return self._make_constant(left_val is right_val, node)
-            return node
-
-        if isinstance(node.ops[0], ast.IsNot):
-            if left_val is None or right_val is None:
-                return self._make_constant(left_val is not right_val, node)
-            return node
-
-        # Standard comparisons
-        if op_type in self.COMPARE_OPS:
+        # Table-driven: standard comparisons
+        if op_type in COMPARE_OPS:
             try:
-                result = self.COMPARE_OPS[op_type](left_val, right_val)
-                return self._make_constant(result, node)
+                return self._make_constant(COMPARE_OPS[op_type](left, right), node)
             except TypeError:
-                # Incompatible types
                 return node
+
+        # Pattern matching: special comparisons
+        match op:
+            case ast.In() if isinstance(left, str) and isinstance(right, str):
+                return self._make_constant(left in right, node)
+            case ast.NotIn() if isinstance(left, str) and isinstance(right, str):
+                return self._make_constant(left not in right, node)
+            case ast.Is() if left is None or right is None:
+                return self._make_constant(left is right, node)
+            case ast.IsNot() if left is None or right is None:
+                return self._make_constant(left is not right, node)
 
         return node
 
     def visit_IfExp(self, node: ast.IfExp) -> ast.expr:
-        """Fold conditional expressions with constant conditions.
-
-        Examples:
-            1 if True else 2 → 1
-            1 if False else 2 → 2
-        """
+        """Fold conditional expressions with constant conditions."""
         node = self.generic_visit(node)
 
         if isinstance(node.test, ast.Constant):
-            if node.test.value:
-                return node.body
-            else:
-                return node.orelse
+            return node.body if node.test.value else node.orelse
 
         return node
 
     def visit_Subscript(self, node: ast.Subscript) -> ast.expr:
-        """Fold subscript operations on constant sequences.
-
-        Examples:
-            "hello"[0] → "h"
-            [1, 2, 3][1] → 2
-            (1, 2, 3)[-1] → 3
-        """
+        """Fold subscript operations on constant sequences."""
         node = self.generic_visit(node)
 
-        # Value must be a constant or a constant list/tuple
-        if isinstance(node.value, ast.Constant):
-            value = node.value.value
-        elif isinstance(node.value, (ast.List, ast.Tuple)):
-            # Check if all elements are constants
-            if not all(isinstance(el, ast.Constant) for el in node.value.elts):
-                return node
-            value = [el.value for el in node.value.elts]
-            if isinstance(node.value, ast.Tuple):
-                value = tuple(value)
-        else:
-            return node
-
-        # Index must be a constant integer
         if not isinstance(node.slice, ast.Constant):
             return node
 
         index = node.slice.value
-
         if not isinstance(index, int):
             return node
 
-        # Perform the subscript operation
+        # Extract sequence value
+        match node.value:
+            case ast.Constant(value=v):
+                seq = v
+            case ast.List(elts=elts) | ast.Tuple(elts=elts):
+                if not all(isinstance(el, ast.Constant) for el in elts):
+                    return node
+                seq = [el.value for el in elts]
+            case _:
+                return node
+
         try:
-            result = value[index]
-            return self._make_constant(result, node)
+            return self._make_constant(seq[index], node)
         except (IndexError, TypeError):
             return node
 
     def visit_Call(self, node: ast.Call) -> ast.expr:
-        """Inline simple builtin function calls on constant arguments.
-
-        Examples:
-            len([1, 2, 3]) → 3
-            len("hello") → 5
-            min(1, 2, 3) → 1
-            max(1, 2, 3) → 3
-            abs(-5) → 5
-            sum([1, 2, 3]) → 6
-            bool(0) → False
-            int("123") → 123
-            float("1.5") → 1.5
-            str(123) → "123"
-            round(3.14159, 2) → 3.14
-        """
+        """Inline simple builtin function calls on constant arguments."""
         node = self.generic_visit(node)
 
-        # Only handle simple function names (not methods)
-        if not isinstance(node.func, ast.Name):
+        if not isinstance(node.func, ast.Name) or node.keywords:
             return node
 
-        func_name = node.func.id
-        args = node.args
+        name, args = node.func.id, node.args
 
-        # Skip if there are keyword arguments (for simplicity)
-        if node.keywords:
-            return node
-
-        # Try to inline the function call
-        try:
-            result = self._try_inline_call(func_name, args, node)
+        # Try table-driven simple functions first
+        if len(args) == 1 and isinstance(args[0], ast.Constant):
+            result = self._try_simple_function(name, args[0].value)
             if result is not None:
-                return result
+                return self._make_constant(result, node)
+
+        # Pattern matching for complex cases
+        try:
+            match (name, args):
+                # len() on various types
+                case ("len", [ast.Constant(value=v)]) if isinstance(v, Text):
+                    return self._make_constant(len(v), node)
+                case ("len", [ast.List(elts=e) | ast.Tuple(elts=e) | ast.Set(elts=e)]):
+                    return self._make_constant(len(e), node)
+                case ("len", [ast.Dict(keys=k)]):
+                    return self._make_constant(len(k), node)
+
+                # min/max with variadic args
+                case (("min" | "max") as fn, args) if args:
+                    if values := self._extract_numbers(args):
+                        func = min if fn == "min" else max
+                        return self._make_constant(func(values), node)
+
+                # sum() with optional start
+                case ("sum", [ast.List(elts=e) | ast.Tuple(elts=e)]):
+                    values = self._const_list(e, Number)
+                    if values is not None:
+                        return self._make_constant(sum(values), node)
+                case (
+                    "sum",
+                    [ast.List(elts=e) | ast.Tuple(elts=e), ast.Constant(value=start)],
+                ):
+                    values = self._const_list(e, Number)
+                    if values is not None:
+                        return self._make_constant(sum(values, start), node)
+
+                # bool() on collections
+                case ("bool", [ast.List(elts=e) | ast.Tuple(elts=e)]):
+                    return self._make_constant(len(e) > 0, node)
+
+                # round() with optional ndigits
+                case ("round", [ast.Constant(value=v)]) if isinstance(v, Number):
+                    return self._make_constant(round(v), node)
+                case (
+                    "round",
+                    [ast.Constant(value=v), ast.Constant(value=n)],
+                ) if isinstance(v, Number) and isinstance(n, int):
+                    return self._make_constant(round(v, n), node)
+
+                # int() with base
+                case (
+                    "int",
+                    [ast.Constant(value=s), ast.Constant(value=base)],
+                ) if isinstance(s, str) and isinstance(base, int):
+                    return self._make_constant(int(s, base), node)
+
         except (ValueError, TypeError, OverflowError):
-            # If inlining fails, keep the original call
             pass
 
         return node
 
-    def _try_inline_call(
-        self, func_name: str, args: list[ast.expr], node: ast.Call
-    ) -> ast.Constant | None:
-        """Try to inline a function call. Returns None if not possible."""
+    # =========================================================================
+    # Helper Methods
+    # =========================================================================
 
-        # len() on constant sequences
-        if func_name == "len" and len(args) == 1:
-            arg = args[0]
-            if isinstance(arg, ast.Constant) and isinstance(arg.value, (str, bytes)):
-                return self._make_constant(len(arg.value), node)
-            if isinstance(arg, (ast.List, ast.Tuple)):
-                return self._make_constant(len(arg.elts), node)
-            if isinstance(arg, ast.Dict):
-                return self._make_constant(len(arg.keys), node)
-            if isinstance(arg, ast.Set):
-                return self._make_constant(len(arg.elts), node)
-
-        # min/max on constant arguments
-        if func_name in ("min", "max") and args:
-            const_values = self._extract_constant_values(args)
-            if const_values is not None:
-                # Handle single iterable argument
-                if len(const_values) == 1 and isinstance(const_values[0], (list, tuple)):
-                    const_values = list(const_values[0])
-                if const_values:
-                    func = min if func_name == "min" else max
-                    return self._make_constant(func(const_values), node)
-
-        # abs() on constant number
-        if func_name == "abs" and len(args) == 1:
-            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, (int, float)):
-                return self._make_constant(abs(args[0].value), node)
-
-        # sum() on constant list
-        if func_name == "sum" and len(args) in (1, 2):
-            if isinstance(args[0], (ast.List, ast.Tuple)):
-                values = self._extract_list_values(args[0])
-                if values is not None and all(isinstance(v, (int, float)) for v in values):
-                    start = 0
-                    if len(args) == 2 and isinstance(args[1], ast.Constant):
-                        start = args[1].value
-                    return self._make_constant(sum(values, start), node)
-
-        # bool() on constant
-        if func_name == "bool" and len(args) == 1:
-            if isinstance(args[0], ast.Constant):
-                return self._make_constant(bool(args[0].value), node)
-            if isinstance(args[0], (ast.List, ast.Tuple)):
-                # Empty list/tuple is falsy
-                return self._make_constant(len(args[0].elts) > 0, node)
-
-        # int() on constant
-        if func_name == "int" and len(args) in (1, 2):
-            if len(args) == 1 and isinstance(args[0], ast.Constant):
-                val = args[0].value
-                if isinstance(val, (int, float, str)):
-                    return self._make_constant(int(val), node)
-            elif len(args) == 2:
-                if isinstance(args[0], ast.Constant) and isinstance(args[1], ast.Constant):
-                    return self._make_constant(int(args[0].value, args[1].value), node)
-
-        # float() on constant
-        if func_name == "float" and len(args) == 1:
-            if isinstance(args[0], ast.Constant):
-                val = args[0].value
-                if isinstance(val, (int, float, str)):
-                    return self._make_constant(float(val), node)
-
-        # str() on constant (but NOT booleans - JS uses "true"/"false", Python uses "True"/"False")
-        if func_name == "str" and len(args) == 1:
-            if isinstance(args[0], ast.Constant):
-                val = args[0].value
-                # Don't inline booleans - let the JS runtime handle them for JS semantics
-                if not isinstance(val, bool):
-                    return self._make_constant(str(val), node)
-
-        # round() on constant
-        if func_name == "round" and len(args) in (1, 2):
-            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, (int, float)):
-                if len(args) == 1:
-                    return self._make_constant(round(args[0].value), node)
-                elif isinstance(args[1], ast.Constant) and isinstance(args[1].value, int):
-                    return self._make_constant(round(args[0].value, args[1].value), node)
-
-        # chr() on constant int
-        if func_name == "chr" and len(args) == 1:
-            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, int):
-                val = args[0].value
-                if 0 <= val <= 0x10FFFF:
-                    return self._make_constant(chr(val), node)
-
-        # ord() on constant single-char string
-        if func_name == "ord" and len(args) == 1:
-            if isinstance(args[0], ast.Constant) and isinstance(args[0].value, str):
-                if len(args[0].value) == 1:
-                    return self._make_constant(ord(args[0].value), node)
-
+    def _try_simple_function(self, name: str, value: Any) -> Any | None:
+        """Try to apply a simple function rule from the table."""
+        for func_name, types, compute, guard in SIMPLE_FUNCTIONS:
+            if name == func_name and isinstance(value, types):
+                if guard is None or guard(value):
+                    try:
+                        return compute(value)
+                    except (ValueError, TypeError, OverflowError):
+                        pass
         return None
 
-    def _extract_constant_values(self, args: list[ast.expr]) -> list | None:
-        """Extract constant values from arguments. Returns None if any arg is not constant."""
+    def _compute_binary(
+        self, op_func: Callable, left: Any, right: Any, node: ast.BinOp
+    ) -> ast.expr:
+        """Compute a binary operation, raising compile-time errors."""
+        try:
+            return self._make_constant(op_func(left, right), node)
+        except ZeroDivisionError:
+            line = getattr(node, "lineno", "?")
+            raise JSError(f"Division by zero at line {line}: {left} / {right}")
+        except OverflowError:
+            line = getattr(node, "lineno", "?")
+            op_name = type(node.op).__name__
+            raise JSError(f"Numeric overflow at line {line}: {left} {op_name} {right}")
+        except ValueError as e:
+            line = getattr(node, "lineno", "?")
+            raise JSError(f"Invalid operation at line {line}: {e}")
+
+    def _extract_numbers(self, args: list[ast.expr]) -> list | None:
+        """Extract numeric values from args. Handles variadic and single-list."""
         values = []
         for arg in args:
-            if isinstance(arg, ast.Constant):
+            if isinstance(arg, ast.Constant) and isinstance(arg.value, Number):
                 values.append(arg.value)
             elif isinstance(arg, (ast.List, ast.Tuple)):
-                inner = self._extract_list_values(arg)
+                inner = self._const_list(arg.elts, Number)
                 if inner is None:
                     return None
+                # Single list arg: return its contents
+                if len(args) == 1:
+                    return inner
                 values.append(inner)
             else:
                 return None
-        return values
+        return values if values else None
 
-    def _extract_list_values(self, node: ast.List | ast.Tuple) -> list | None:
-        """Extract constant values from a list/tuple. Returns None if any element is not constant."""
+    def _const_list(self, elts: list[ast.expr], types: type | tuple) -> list | None:
+        """Extract constant values from a list of elements matching types."""
         values = []
-        for el in node.elts:
-            if isinstance(el, ast.Constant):
+        for el in elts:
+            if isinstance(el, ast.Constant) and isinstance(el.value, types):
                 values.append(el.value)
             else:
                 return None
         return values
 
-    def _make_constant(self, value: Any, original_node: ast.AST) -> ast.Constant:
+    def _make_constant(self, value: Any, original: ast.AST) -> ast.Constant:
         """Create a Constant node preserving source location."""
-        new_node = ast.Constant(value=value)
-        return _ast.copy_location(new_node, original_node)
+        return _ast.copy_location(ast.Constant(value=value), original)
