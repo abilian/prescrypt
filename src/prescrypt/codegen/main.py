@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from functools import singledispatch
 from pathlib import Path
-from typing import Iterator
+from typing import TYPE_CHECKING, Iterator
 
 from prescrypt.constants import RETURNING_BOOL
 from prescrypt.exceptions import JSError
@@ -12,6 +12,9 @@ from prescrypt.front.passes.resolver import ModuleResolver
 from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX
 
 from .utils import flatten, unify
+
+if TYPE_CHECKING:
+    from prescrypt.sourcemap import SourceMapGenerator
 
 
 @singledispatch
@@ -36,6 +39,7 @@ class CodeGen:
         module_mode: bool = False,
         source_dir: Path | None = None,
         module_paths: list[Path] | None = None,
+        source_map: SourceMapGenerator | None = None,
     ):
         self.module = module
         self._stack = []
@@ -72,6 +76,10 @@ class CodeGen:
 
         # Track JS FFI module names (e.g., 'js' or aliases like 'import js as javascript')
         self._js_ffi_names: set[str] = set()
+
+        # Source map generation
+        self._source_map = source_map
+        self._output_line = 0  # Current line in generated output (0-indexed)
 
         self._init_dispatch()
 
@@ -174,9 +182,40 @@ class CodeGen:
         statements = self.module.body
         code = []
         for statement in statements:
-            code += [self.gen_stmt(statement)]
+            # Add source map mapping before generating statement
+            self._add_statement_mapping(statement)
+            stmt_code = self.gen_stmt(statement)
+            code += [stmt_code]
+            # Update output line count
+            self._update_output_line(stmt_code)
 
         return flatten(code, sep="\n")
+
+    def _add_statement_mapping(self, node: ast.stmt) -> None:
+        """Add a source map mapping for a statement."""
+        if self._source_map is None:
+            return
+        if not hasattr(node, "lineno"):
+            return
+
+        # Map current output line to source line (both 0-indexed in source map)
+        self._source_map.add_mapping(
+            gen_line=self._output_line,
+            gen_column=0,
+            src_line=node.lineno - 1,  # AST uses 1-indexed lines
+            src_column=getattr(node, "col_offset", 0),
+        )
+
+    def _update_output_line(self, code) -> None:
+        """Update output line counter based on generated code."""
+        if self._source_map is None:
+            return
+        # Count newlines in the generated code
+        if isinstance(code, str):
+            self._output_line += code.count("\n")
+        elif isinstance(code, list):
+            for item in code:
+                self._update_output_line(item)
 
     def gen_expr(self, node: ast.expr):
         return gen_expr(node, self)

@@ -73,6 +73,15 @@ class TestArgumentParser:
         args = parser.parse_args(["input.py", "-q"])
         assert args.quiet is True
 
+    def test_parser_source_maps(self):
+        """Parse source-maps flag."""
+        parser = create_parser()
+        args = parser.parse_args(["input.py", "-s"])
+        assert args.source_maps is True
+
+        args = parser.parse_args(["input.py", "--source-maps"])
+        assert args.source_maps is True
+
 
 class TestCompileFile:
     """Test single file compilation."""
@@ -155,6 +164,54 @@ class TestCompileFile:
 
             assert success is True
             assert dst_file.exists()
+
+    def test_compile_with_source_maps(self):
+        """Compile with source map generation."""
+        with TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            src_file = tmppath / "test.py"
+            dst_file = tmppath / "test.js"
+            map_file = tmppath / "test.js.map"
+
+            src_file.write_text("x = 1\ny = 2\nprint(x + y)")
+
+            success = compile_file(
+                src_file, dst_file, include_stdlib=False, source_maps=True, quiet=True
+            )
+
+            assert success is True
+            assert dst_file.exists()
+            assert map_file.exists()
+
+            # Check JS has sourceMappingURL comment
+            js_content = dst_file.read_text()
+            assert "//# sourceMappingURL=test.js.map" in js_content
+
+    def test_source_map_content(self):
+        """Verify source map JSON content."""
+        import json
+
+        with TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            src_file = tmppath / "test.py"
+            dst_file = tmppath / "test.js"
+            map_file = tmppath / "test.js.map"
+
+            src_file.write_text("x = 1\ny = 2")
+
+            success = compile_file(
+                src_file, dst_file, include_stdlib=False, source_maps=True, quiet=True
+            )
+
+            assert success is True
+
+            # Parse and verify source map
+            map_content = json.loads(map_file.read_text())
+            assert map_content["version"] == 3
+            assert map_content["file"] == "test.js"
+            assert "test.py" in map_content["sources"][0]
+            assert "mappings" in map_content
+            assert "sourcesContent" in map_content
 
 
 class TestCompileDirectory:

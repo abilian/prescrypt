@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .compiler import py2js
 from .exceptions import PrescryptError
+from .sourcemap import SourceMapGenerator, get_sourcemap_comment
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -80,6 +81,14 @@ Examples:
     )
 
     parser.add_argument(
+        "-s",
+        "--source-maps",
+        action="store_true",
+        default=False,
+        help="Generate source map files (.js.map) for debugging",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -107,6 +116,7 @@ def compile_file(
     include_stdlib: bool = True,
     tree_shake: bool = True,
     optimize: bool = True,
+    source_maps: bool = False,
     verbose: bool = False,
     quiet: bool = False,
 ) -> bool:
@@ -121,6 +131,18 @@ def compile_file(
         print(f"Error reading {src_path}: {e}", file=sys.stderr)
         return False
 
+    # Create source map generator if enabled
+    source_map = None
+    if source_maps:
+        source_map = SourceMapGenerator(file=dst_path.name)
+        # Add the source file (use relative path from output dir)
+        try:
+            rel_src = src_path.relative_to(dst_path.parent)
+        except ValueError:
+            # Source not under output dir, use absolute path
+            rel_src = src_path
+        source_map.add_source(str(rel_src), src)
+
     # Compile
     try:
         dst = py2js(
@@ -131,6 +153,7 @@ def compile_file(
             module_mode=module_mode,
             source_dir=src_path.parent,
             module_paths=module_paths,
+            source_map=source_map,
         ).strip()
     except PrescryptError as e:
         # Update error location with filename
@@ -146,6 +169,11 @@ def compile_file(
     # Ensure output directory exists
     dst_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Append source map comment if enabled
+    if source_maps and source_map is not None:
+        map_filename = dst_path.name + ".map"
+        dst = dst + "\n" + get_sourcemap_comment(map_filename)
+
     # Write output
     try:
         dst_path.write_text(dst + "\n")
@@ -153,8 +181,20 @@ def compile_file(
         print(f"Error writing {dst_path}: {e}", file=sys.stderr)
         return False
 
+    # Write source map
+    if source_maps and source_map is not None:
+        map_path = dst_path.with_suffix(".js.map")
+        try:
+            source_map.write(map_path)
+        except OSError as e:
+            print(f"Error writing {map_path}: {e}", file=sys.stderr)
+            return False
+
     if verbose:
-        print(f"Compiled {src_path} -> {dst_path}")
+        if source_maps:
+            print(f"Compiled {src_path} -> {dst_path} + {dst_path.name}.map")
+        else:
+            print(f"Compiled {src_path} -> {dst_path}")
     elif not quiet:
         print(f"{src_path} -> {dst_path}")
 
@@ -170,6 +210,7 @@ def compile_directory(
     include_stdlib: bool = True,
     tree_shake: bool = True,
     optimize: bool = True,
+    source_maps: bool = False,
     verbose: bool = False,
     quiet: bool = False,
 ) -> tuple[int, int]:
@@ -218,6 +259,7 @@ def compile_directory(
             include_stdlib=include_stdlib,
             tree_shake=tree_shake,
             optimize=optimize,
+            source_maps=source_maps,
             verbose=verbose,
             quiet=quiet,
         )
@@ -249,6 +291,7 @@ def main():
     include_stdlib = not args.no_stdlib
     tree_shake = not args.no_tree_shake
     optimize = not args.no_optimize
+    source_maps = args.source_maps
     verbose = args.verbose
     quiet = args.quiet
 
@@ -268,6 +311,7 @@ def main():
             include_stdlib=include_stdlib,
             tree_shake=tree_shake,
             optimize=optimize,
+            source_maps=source_maps,
             verbose=verbose,
             quiet=quiet,
         )
@@ -295,6 +339,7 @@ def main():
             include_stdlib=include_stdlib,
             tree_shake=tree_shake,
             optimize=optimize,
+            source_maps=source_maps,
             verbose=verbose,
             quiet=quiet,
         )

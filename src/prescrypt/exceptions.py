@@ -110,10 +110,8 @@ class UnsupportedFeatureError(PrescryptError):
     """Python feature not supported by Prescrypt."""
 
 
-
 class ImportError(PrescryptError):
     """Module import error."""
-
 
 
 class SemanticError(PrescryptError):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .codegen import CodeGen
 from .front import ast
@@ -8,6 +9,9 @@ from .front.passes.binder import Binder
 from .front.passes.constant_folder import fold_constants
 from .front.passes.desugar import desugar
 from .stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
+
+if TYPE_CHECKING:
+    from .sourcemap import SourceMapGenerator
 
 # Cache stdlib instances by prefix combination
 _stdlib_cache: dict[tuple[str, str], StdlibJs] = {}
@@ -36,6 +40,7 @@ class Compiler:
         module_mode: bool = False,
         source_dir: Path | None = None,
         module_paths: list[Path] | None = None,
+        source_map: SourceMapGenerator | None = None,
     ) -> str:
         """Compile Python source to JavaScript.
 
@@ -49,6 +54,7 @@ class Compiler:
             module_mode: Whether to emit ES6 module exports (default False)
             source_dir: Directory of the source file (for module resolution)
             module_paths: Additional directories to search for modules
+            source_map: Optional SourceMapGenerator to populate with mappings
 
         Returns:
             JavaScript code
@@ -65,6 +71,7 @@ class Compiler:
             module_mode,
             source_dir,
             module_paths,
+            source_map,
         )
         js_code = codegen.gen()
 
@@ -83,7 +90,20 @@ class Compiler:
             # Include the full stdlib
             preamble = self.get_full_preamble(function_prefix, method_prefix)
 
+        # If source map is being generated, account for preamble lines
+        if source_map is not None:
+            preamble_lines = preamble.count("\n") + 1
+            self._offset_source_map(source_map, preamble_lines)
+
         return preamble + "\n" + js_code
+
+    def _offset_source_map(self, source_map: SourceMapGenerator, offset: int) -> None:
+        """Offset all source map mappings by the given number of lines.
+
+        This is needed when a preamble is prepended to the generated code.
+        """
+        for mapping in source_map.mappings:
+            mapping.gen_line += offset
 
     def get_full_preamble(
         self,
@@ -123,6 +143,7 @@ def py2js(
     module_mode: bool = False,
     source_dir: Path | None = None,
     module_paths: list[Path] | None = None,
+    source_map: SourceMapGenerator | None = None,
 ) -> str:
     """Compile Python code to JavaScript.
 
@@ -136,6 +157,7 @@ def py2js(
         module_mode: Whether to emit ES6 module exports (default False)
         source_dir: Directory of the source file (for module resolution)
         module_paths: Additional directories to search for modules
+        source_map: Optional SourceMapGenerator to populate with mappings
 
     Returns:
         JavaScript code
@@ -151,4 +173,5 @@ def py2js(
         module_mode=module_mode,
         source_dir=source_dir,
         module_paths=module_paths,
+        source_map=source_map,
     )

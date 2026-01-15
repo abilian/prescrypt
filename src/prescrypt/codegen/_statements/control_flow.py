@@ -310,7 +310,9 @@ def gen_with(node: ast.With, codegen: CodeGen):
             else:
                 code.append(codegen.lf(f"{var_name} = {js_context};"))
         else:
-            raise JSError("Complex 'with' variable binding not supported", optional_vars)
+            raise JSError(
+                "Complex 'with' variable binding not supported", optional_vars
+            )
         cleanup_var = var_name
     else:
         # No binding, create a dummy variable for cleanup

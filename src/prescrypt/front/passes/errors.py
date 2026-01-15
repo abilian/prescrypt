@@ -14,10 +14,8 @@ class BindError(SemanticError):
     """Error during binding/scope analysis."""
 
 
-
 class TypeCheckError(PrescryptError):
     """Error during type checking."""
-
 
 
 class UnknownSymbolError(BindError):
