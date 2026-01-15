@@ -269,3 +269,105 @@ class TestModuleModeImportsDisabled:
         js = py2js(code, include_stdlib=False, module_mode=False)
         assert "/* from foo import bar */" in js
         assert "import {" not in js
+
+
+class TestJsFFI:
+    """Test JS FFI (Foreign Function Interface) via 'import js'."""
+
+    def test_import_js_suppressed(self):
+        """import js should produce no output."""
+        code = "import js"
+        js = py2js(code, include_stdlib=False)
+        assert js.strip() == ""
+
+    def test_import_js_suppressed_module_mode(self):
+        """import js should produce no output in module mode."""
+        code = "import js"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert js.strip() == ""
+
+    def test_js_console_log(self):
+        """js.console.log() should become console.log()."""
+        code = "import js\njs.console.log('hello')"
+        js = py2js(code, include_stdlib=False)
+        assert "console.log('hello')" in js
+        assert "js.console" not in js
+
+    def test_js_simple_attribute(self):
+        """js.document should become document."""
+        code = "import js\nx = js.document"
+        js = py2js(code, include_stdlib=False)
+        assert "= document" in js
+        assert "js.document" not in js
+
+    def test_js_chained_attribute(self):
+        """js.document.body should become document.body."""
+        code = "import js\nx = js.document.body"
+        js = py2js(code, include_stdlib=False)
+        assert "document.body" in js
+        assert "js.document" not in js
+
+    def test_js_method_call(self):
+        """js.document.getElementById('x') should become document.getElementById('x')."""
+        code = "import js\nelem = js.document.getElementById('app')"
+        js = py2js(code, include_stdlib=False)
+        assert "document.getElementById('app')" in js
+        assert "js.document" not in js
+
+    def test_js_fetch(self):
+        """js.fetch('/api') should become fetch('/api')."""
+        code = "import js\nresult = js.fetch('/api')"
+        js = py2js(code, include_stdlib=False)
+        assert "fetch('/api')" in js
+        assert "js.fetch" not in js
+
+    def test_js_set_timeout(self):
+        """js.setTimeout(fn, 1000) should become setTimeout(fn, 1000)."""
+        code = "import js\ndef cb(): pass\njs.setTimeout(cb, 1000)"
+        js = py2js(code, include_stdlib=False)
+        assert "setTimeout(cb, 1000)" in js
+        assert "js.setTimeout" not in js
+
+    def test_js_window_global(self):
+        """js.window should become window."""
+        code = "import js\nw = js.window"
+        js = py2js(code, include_stdlib=False)
+        assert "= window" in js
+        assert "js.window" not in js
+
+    def test_js_with_alias(self):
+        """import js as javascript should also work."""
+        code = "import js as javascript\njavascript.console.log('hi')"
+        js = py2js(code, include_stdlib=False)
+        assert "console.log('hi')" in js
+        assert "javascript.console" not in js
+
+    def test_js_assignment_to_property(self):
+        """js.document.title = 'x' should become document.title = 'x'."""
+        code = "import js\njs.document.title = 'Hello'"
+        js = py2js(code, include_stdlib=False)
+        assert "document.title = 'Hello'" in js
+        assert "js.document" not in js
+
+    def test_js_deep_chain(self):
+        """Deep attribute chains should work."""
+        code = "import js\nx = js.window.location.href"
+        js = py2js(code, include_stdlib=False)
+        assert "window.location.href" in js
+        assert "js.window" not in js
+
+    def test_js_mixed_with_regular_import(self):
+        """import js alongside regular imports."""
+        code = "import js\nimport foo\njs.console.log('test')"
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "console.log('test')" in js
+        assert "import * as foo from './foo.js'" in js
+        # Should not have 'import js' or 'js.console' in output
+        assert "import * as js" not in js
+        assert "js.console" not in js
+
+    def test_non_js_module_unaffected(self):
+        """Regular module attribute access should work normally."""
+        code = "import foo\nx = foo.bar"
+        js = py2js(code, include_stdlib=False)
+        assert "foo.bar" in js

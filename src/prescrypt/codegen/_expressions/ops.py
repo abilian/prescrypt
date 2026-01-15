@@ -10,6 +10,16 @@ from prescrypt.front import ast
 def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
     value_node, attr = node.value, node.attr
 
+    # Check for JS FFI access: js.X -> X (strip the 'js.' prefix)
+    if isinstance(value_node, ast.Name) and codegen.is_js_ffi_name(value_node.id):
+        # Direct access: js.console -> console
+        return attr
+
+    # Check for chained JS FFI access: js.console.log -> console.log
+    if _is_js_ffi_chain(value_node, codegen):
+        base_name = _strip_js_ffi_prefix(value_node, codegen)
+        return f"{base_name}.{attr}"
+
     # Generate the base expression
     base_name = unify(codegen.gen_expr(value_node))
 
@@ -25,6 +35,29 @@ def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
         return ATTRIBUTE_MAP[attr].format(base_name)
     else:
         return f"{base_name}.{attr}"
+
+
+def _is_js_ffi_chain(node: ast.AST, codegen: CodeGen) -> bool:
+    """Check if an AST node is part of a js.X.Y.Z chain."""
+    if isinstance(node, ast.Name):
+        return codegen.is_js_ffi_name(node.id)
+    if isinstance(node, ast.Attribute):
+        return _is_js_ffi_chain(node.value, codegen)
+    return False
+
+
+def _strip_js_ffi_prefix(node: ast.AST, codegen: CodeGen) -> str:
+    """Convert js.X.Y to X.Y (strip the FFI module prefix)."""
+    if isinstance(node, ast.Name):
+        # This is the 'js' name itself - don't include it
+        return ""
+    if isinstance(node, ast.Attribute):
+        base = _strip_js_ffi_prefix(node.value, codegen)
+        if base:
+            return f"{base}.{node.attr}"
+        else:
+            return node.attr
+    return ""
 
 
 @gen_expr.register

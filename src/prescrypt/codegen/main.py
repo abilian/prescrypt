@@ -62,6 +62,9 @@ class CodeGen:
         # Track binding scope from Binder (if available)
         self._binding_scope: Scope | None = getattr(module, "_scope", None)
 
+        # Track JS FFI module names (e.g., 'js' or aliases like 'import js as javascript')
+        self._js_ffi_names: set[str] = set()
+
         self._init_dispatch()
 
     @property
@@ -95,6 +98,21 @@ class CodeGen:
 
         kind = var.declaration_kind
         return kind if kind != "none" else ""
+
+    #
+    # JS FFI (Foreign Function Interface)
+    #
+    def add_js_ffi_name(self, name: str) -> None:
+        """Register a name as a JS FFI module reference.
+
+        This is called when processing 'import js' or 'import js as name'.
+        Access to attributes of these names will emit raw JS without the prefix.
+        """
+        self._js_ffi_names.add(name)
+
+    def is_js_ffi_name(self, name: str) -> bool:
+        """Check if a name is a JS FFI module reference."""
+        return name in self._js_ffi_names
 
     #
     # Deferred initialization of dispatched functions

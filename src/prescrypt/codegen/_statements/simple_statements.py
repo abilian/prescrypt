@@ -120,10 +120,26 @@ def _gen_import_from(node: ast.ImportFrom, codegen: CodeGen):
 
 @gen_stmt.register
 def _gen_import(node: ast.Import, codegen: CodeGen):
-    # In module mode, generate ES6 imports
+    # Handle "import js" - the JS FFI module
+    # This is a magic import that allows access to JavaScript globals
+    # We suppress output and mark the module as FFI
+    js_imports = [alias for alias in node.names if alias.name == "js"]
+    other_imports = [alias for alias in node.names if alias.name != "js"]
+
+    if js_imports:
+        # Mark 'js' (or its alias) as an FFI module
+        for alias in js_imports:
+            local_name = alias.asname or "js"
+            codegen.add_js_ffi_name(local_name)
+
+    # If only js imports, return empty
+    if not other_imports:
+        return ""
+
+    # In module mode, generate ES6 imports for non-js imports
     if codegen.module_mode:
         result = []
-        for alias in node.names:
+        for alias in other_imports:
             module_name = alias.name
             # Use asname if provided, otherwise use the first part of the module name
             # e.g., "import foo.bar" -> local name is "foo"
@@ -136,5 +152,5 @@ def _gen_import(node: ast.Import, codegen: CodeGen):
         return "".join(result)
 
     # Non-module mode: emit a comment
-    names = ", ".join(alias.name for alias in node.names)
+    names = ", ".join(alias.name for alias in other_imports)
     return f"/* import {names} */\n"
