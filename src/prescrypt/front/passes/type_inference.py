@@ -1,3 +1,9 @@
+"""Type inference pass.
+
+Adds a `_type` attribute to AST nodes, using annotations and inference.
+This is a best-effort pass - when types cannot be determined, it assigns Unknown.
+"""
+
 from __future__ import annotations
 
 from prescrypt.front import ast
@@ -18,150 +24,110 @@ TYPE_MAP = {
 
 
 class TypeInference(Visitor):
-    """
-    Visitor that adds a `_type` attribute into nodes, holding the type.
+    """Visitor that infers and attaches types to AST nodes."""
 
-    This is a best-effort type inference pass. When types cannot be
-    determined, it assigns Unknown instead of failing.
-    """
-
-    def visit_list(self, li):
-        for node in li:
+    def visit_list(self, nodes):
+        for node in nodes:
             self.visit(node)
 
-    def update_node(self, node, typ):
-        type_cls = TYPE_MAP.get(typ, Unknown)
-        setattr(node, "_type", type_cls)
+    def _type_from_annotation(self, annotation) -> type:
+        """Extract type from an annotation node."""
+        match annotation:
+            case ast.Name(id=type_name):
+                return TYPE_MAP.get(type_name, Unknown)
+            case _:
+                return Unknown
+
+    def _type_from_definition(self, node) -> type:
+        """Get type from a node's definition, if available."""
+        match getattr(node, "_definition", None):
+            case None:
+                return Unknown
+            case defn if hasattr(defn, "_type"):
+                return defn._type
+            case _:
+                return Unknown
+
+    # =========================================================================
+    # Definitions
+    # =========================================================================
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        """
-        Adds the `typ` attribute to the node, using annotation.
-        """
-        if node.returns and hasattr(node.returns, "id"):
-            self.update_node(node, node.returns.id)
-        else:
-            node._type = Unknown
-
+        """Infer function return type from annotation."""
+        node._type = self._type_from_annotation(node.returns)
         self.visit(node.args)
         self.visit_list(node.body)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
-        """
-        Adds the `typ` attribute to async functions.
-        """
-        if node.returns and hasattr(node.returns, "id"):
-            self.update_node(node, node.returns.id)
-        else:
-            node._type = Unknown
-
+        """Infer async function return type from annotation."""
+        node._type = self._type_from_annotation(node.returns)
         self.visit(node.args)
         self.visit_list(node.body)
 
     def visit_arg(self, node: ast.arg):
-        """
-        Sets the node's typ to its annotation.
-        """
-        if node.annotation and hasattr(node.annotation, "id"):
-            typ = node.annotation.id
-            node._type = TYPE_MAP.get(typ, Unknown)
-        else:
-            node._type = Unknown
+        """Infer argument type from annotation."""
+        node._type = self._type_from_annotation(node.annotation)
 
-    def visit_Call(self, node: ast.Call):
-        """
-        Sets the node's type to its definition's type, if available.
-        For built-in functions without definitions, type is Unknown.
-        """
-        # Visit the function being called
-        self.visit(node.func)
-        # Visit arguments
-        self.visit_list(node.args)
-        for kw in node.keywords:
-            self.visit(kw.value)
-
-        # Try to get type from definition
-        if hasattr(node, "_definition") and node._definition is not None:
-            if hasattr(node._definition, "_type"):
-                node._type = node._definition._type
-                return
-
-        # Fallback: Unknown type for built-ins or undefined functions
+    def visit_Lambda(self, node: ast.Lambda):
+        """Lambda expression - type unknown without annotation."""
+        self.visit(node.args)
+        self.visit(node.body)
         node._type = Unknown
 
+    # =========================================================================
+    # Assignments
+    # =========================================================================
+
     def visit_AnnAssign(self, node: ast.AnnAssign):
-        """
-        Sets the node's type to its annotation.
-        """
+        """Annotated assignment - use the annotation."""
         if node.value:
             self.visit(node.value)
-
-        if node.annotation and hasattr(node.annotation, "id"):
-            typ = node.annotation.id
-            node.target._type = TYPE_MAP.get(typ, Unknown)
-        else:
-            node.target._type = Unknown
+        node.target._type = self._type_from_annotation(node.annotation)
 
     def visit_Assign(self, node: ast.Assign):
-        """
-        Sets the targets's `typ` to the value's.
-        """
+        """Assignment - propagate type from value to targets."""
         self.visit(node.value)
-        typ = getattr(node.value, "_type", Unknown)
+        value_type = getattr(node.value, "_type", Unknown)
+        for target in node.targets:
+            target._type = value_type
 
-        for t in node.targets:
-            t._type = typ
+    def visit_NamedExpr(self, node: ast.NamedExpr):
+        """Walrus operator := - type is the value's type."""
+        self.visit(node.value)
+        self.visit(node.target)
+        node._type = getattr(node.value, "_type", Unknown)
+
+    # =========================================================================
+    # Names and Calls
+    # =========================================================================
 
     def visit_Name(self, node: ast.Name):
-        """
-        If the context is ast.Load, sets the node's typ to its definition's.
-        If the context is an ast.Store, pass, as the type will be set somewhere else.
-        """
+        """Name reference - get type from definition if loading."""
         match node.ctx:
             case ast.Load():
-                if hasattr(node, "_definition") and node._definition is not None:
-                    if hasattr(node._definition, "_type"):
-                        node._type = node._definition._type
-                        return
-                node._type = Unknown
+                node._type = self._type_from_definition(node)
             case ast.Store():
-                pass  # Means we're in left side of an assign, will be set by caller
+                pass  # Type set by assignment
             case _:
-                node._type = Unknown  # Del context
+                node._type = Unknown
 
-    def visit_Constant(self, node):
-        """
-        Sets the constant's type to the type of its value.
-        """
+    def visit_Call(self, node: ast.Call):
+        """Function call - get type from function definition."""
+        self.visit(node.func)
+        self.visit_list(node.args)
+        for keyword in node.keywords:
+            self.visit(keyword.value)
+        node._type = self._type_from_definition(node)
+
+    # =========================================================================
+    # Literals
+    # =========================================================================
+
+    def visit_Constant(self, node: ast.Constant):
+        """Constant literal - type from Python value type."""
         type_name = type(node.value).__name__
         node._type = TYPE_MAP.get(type_name, Unknown)
 
-    def visit_BinOp(self, node: ast.BinOp):
-        """
-        Sets the BinOp's type to the one of its left value (arbitrary).
-        """
-        self.visit(node.left)
-        self.visit(node.right)
-
-        match node.op:
-            case ast.FloorDiv():
-                node._type = Float
-            case _:
-                node._type = getattr(node.left, "_type", Unknown)
-
-    def visit_UnaryOp(self, node: ast.UnaryOp):
-        self.visit(node.operand)
-        node._type = getattr(node.operand, "_type", Unknown)
-
-    def visit_BoolOp(self, node: ast.BoolOp):
-        node._type = Bool
-        self.visit_list(node.values)
-
-    def visit_Compare(self, node: ast.Compare):
-        node._type = Bool
-        self.visit(node.left)
-        self.visit_list(node.comparators)
-
-    # Container literals
     def visit_List(self, node: ast.List):
         """List literal."""
         self.visit_list(node.elts)
@@ -183,21 +149,79 @@ class TypeInference(Visitor):
     def visit_Set(self, node: ast.Set):
         """Set literal."""
         self.visit_list(node.elts)
-        node._type = Unknown  # Could add a Set type
+        node._type = Unknown
 
-    # Subscript and Attribute access
+    # =========================================================================
+    # Operations
+    # =========================================================================
+
+    def visit_BinOp(self, node: ast.BinOp):
+        """Binary operation - infer from operands."""
+        self.visit(node.left)
+        self.visit(node.right)
+        match node.op:
+            case ast.FloorDiv():
+                node._type = Float
+            case _:
+                node._type = getattr(node.left, "_type", Unknown)
+
+    def visit_UnaryOp(self, node: ast.UnaryOp):
+        """Unary operation - same type as operand."""
+        self.visit(node.operand)
+        node._type = getattr(node.operand, "_type", Unknown)
+
+    def visit_BoolOp(self, node: ast.BoolOp):
+        """Boolean operation - always bool."""
+        self.visit_list(node.values)
+        node._type = Bool
+
+    def visit_Compare(self, node: ast.Compare):
+        """Comparison - always bool."""
+        self.visit(node.left)
+        self.visit_list(node.comparators)
+        node._type = Bool
+
+    def visit_IfExp(self, node: ast.IfExp):
+        """Ternary expression - type of body branch."""
+        self.visit(node.test)
+        self.visit(node.body)
+        self.visit(node.orelse)
+        node._type = getattr(node.body, "_type", Unknown)
+
+    # =========================================================================
+    # Subscript and Attribute
+    # =========================================================================
+
     def visit_Subscript(self, node: ast.Subscript):
-        """Subscript access like a[0] or d['key']."""
+        """Subscript access - would need element type tracking."""
         self.visit(node.value)
         self.visit(node.slice)
-        node._type = Unknown  # Would need element type tracking
+        node._type = Unknown
 
     def visit_Attribute(self, node: ast.Attribute):
-        """Attribute access like obj.attr."""
+        """Attribute access - would need object type tracking."""
         self.visit(node.value)
-        node._type = Unknown  # Would need object type tracking
+        node._type = Unknown
 
+    def visit_Slice(self, node: ast.Slice):
+        """Slice object."""
+        if node.lower:
+            self.visit(node.lower)
+        if node.upper:
+            self.visit(node.upper)
+        if node.step:
+            self.visit(node.step)
+        node._type = Unknown
+
+    def visit_Starred(self, node: ast.Starred):
+        """Starred expression *args."""
+        self.visit(node.value)
+        node._type = Unknown
+
+    # =========================================================================
     # Comprehensions
+    # =========================================================================
+
     def visit_ListComp(self, node: ast.ListComp):
         """List comprehension."""
         self.visit_list(node.generators)
@@ -208,7 +232,7 @@ class TypeInference(Visitor):
         """Set comprehension."""
         self.visit_list(node.generators)
         self.visit(node.elt)
-        node._type = Unknown  # Could add Set type
+        node._type = Unknown
 
     def visit_DictComp(self, node: ast.DictComp):
         """Dict comprehension."""
@@ -221,7 +245,7 @@ class TypeInference(Visitor):
         """Generator expression."""
         self.visit_list(node.generators)
         self.visit(node.elt)
-        node._type = Unknown  # Could add Generator type
+        node._type = Unknown
 
     def visit_comprehension(self, node: ast.comprehension):
         """Generator in a comprehension."""
@@ -230,40 +254,10 @@ class TypeInference(Visitor):
         for if_clause in node.ifs:
             self.visit(if_clause)
 
-    # Conditional expression
-    def visit_IfExp(self, node: ast.IfExp):
-        """Ternary expression: x if cond else y."""
-        self.visit(node.test)
-        self.visit(node.body)
-        self.visit(node.orelse)
-        # Type is the type of the body (could be union of body/orelse)
-        node._type = getattr(node.body, "_type", Unknown)
+    # =========================================================================
+    # F-strings
+    # =========================================================================
 
-    # Slices
-    def visit_Slice(self, node: ast.Slice):
-        """Slice object."""
-        if node.lower:
-            self.visit(node.lower)
-        if node.upper:
-            self.visit(node.upper)
-        if node.step:
-            self.visit(node.step)
-        node._type = Unknown
-
-    # Starred expression
-    def visit_Starred(self, node: ast.Starred):
-        """Starred expression *args."""
-        self.visit(node.value)
-        node._type = Unknown
-
-    # Lambda
-    def visit_Lambda(self, node: ast.Lambda):
-        """Lambda expression."""
-        self.visit(node.args)
-        self.visit(node.body)
-        node._type = Unknown  # Could add Function type
-
-    # Formatted value (f-string component)
     def visit_FormattedValue(self, node: ast.FormattedValue):
         """Formatted value in f-string."""
         self.visit(node.value)
@@ -272,13 +266,6 @@ class TypeInference(Visitor):
         node._type = String
 
     def visit_JoinedStr(self, node: ast.JoinedStr):
-        """f-string."""
+        """F-string."""
         self.visit_list(node.values)
         node._type = String
-
-    # Named expression (walrus operator)
-    def visit_NamedExpr(self, node: ast.NamedExpr):
-        """Walrus operator :=."""
-        self.visit(node.value)
-        self.visit(node.target)
-        node._type = getattr(node.value, "_type", Unknown)
