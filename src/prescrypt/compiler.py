@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from .codegen import CodeGen
 from .front import ast
 from .front.passes.binder import Binder
@@ -32,6 +34,8 @@ class Compiler:
         function_prefix: str = FUNCTION_PREFIX,
         method_prefix: str = METHOD_PREFIX,
         module_mode: bool = False,
+        source_dir: Path | None = None,
+        module_paths: list[Path] | None = None,
     ) -> str:
         """Compile Python source to JavaScript.
 
@@ -43,6 +47,8 @@ class Compiler:
             function_prefix: Prefix for stdlib functions (default "_pyfunc_")
             method_prefix: Prefix for stdlib methods (default "_pymeth_")
             module_mode: Whether to emit ES6 module exports (default False)
+            source_dir: Directory of the source file (for module resolution)
+            module_paths: Additional directories to search for modules
 
         Returns:
             JavaScript code
@@ -52,7 +58,14 @@ class Compiler:
         if optimize:
             tree = fold_constants(tree)
         Binder().visit(tree)
-        codegen = CodeGen(tree, function_prefix, method_prefix, module_mode)
+        codegen = CodeGen(
+            tree,
+            function_prefix,
+            method_prefix,
+            module_mode,
+            source_dir,
+            module_paths,
+        )
         js_code = codegen.gen()
 
         if not include_stdlib:
@@ -108,6 +121,8 @@ def py2js(
     function_prefix: str = FUNCTION_PREFIX,
     method_prefix: str = METHOD_PREFIX,
     module_mode: bool = False,
+    source_dir: Path | None = None,
+    module_paths: list[Path] | None = None,
 ) -> str:
     """Compile Python code to JavaScript.
 
@@ -119,6 +134,8 @@ def py2js(
         function_prefix: Prefix for stdlib functions (default "_pyfunc_")
         method_prefix: Prefix for stdlib methods (default "_pymeth_")
         module_mode: Whether to emit ES6 module exports (default False)
+        source_dir: Directory of the source file (for module resolution)
+        module_paths: Additional directories to search for modules
 
     Returns:
         JavaScript code
@@ -132,4 +149,6 @@ def py2js(
         function_prefix=function_prefix,
         method_prefix=method_prefix,
         module_mode=module_mode,
+        source_dir=source_dir,
+        module_paths=module_paths,
     )

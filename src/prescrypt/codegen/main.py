@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import re
 from functools import singledispatch
+from pathlib import Path
 from typing import Iterator
 
 from prescrypt.constants import RETURNING_BOOL
 from prescrypt.exceptions import JSError
 from prescrypt.front import Scope, ast
+from prescrypt.front.passes.resolver import ModuleResolver
 from prescrypt.stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX
 
 from .utils import flatten, unify
@@ -32,6 +34,8 @@ class CodeGen:
         function_prefix: str = FUNCTION_PREFIX,
         method_prefix: str = METHOD_PREFIX,
         module_mode: bool = False,
+        source_dir: Path | None = None,
+        module_paths: list[Path] | None = None,
     ):
         self.module = module
         self._stack = []
@@ -51,6 +55,10 @@ class CodeGen:
 
         # ES6 module mode - emit exports for module-level definitions
         self.module_mode = module_mode
+
+        # Module resolution settings
+        self._source_dir = source_dir or Path.cwd()
+        self._module_paths = module_paths or []
 
         # Track used stdlib functions/methods for tree-shaking
         self._used_std_functions: set[str] = set()
@@ -113,6 +121,45 @@ class CodeGen:
     def is_js_ffi_name(self, name: str) -> bool:
         """Check if a name is a JS FFI module reference."""
         return name in self._js_ffi_names
+
+    #
+    # Module Resolution
+    #
+    def get_resolver(self) -> ModuleResolver:
+        """Get a module resolver for this compilation context."""
+        return ModuleResolver(
+            source_dir=self._source_dir,
+            module_paths=self._module_paths,
+            verify_exists=False,  # Don't verify by default for faster compilation
+        )
+
+    def resolve_module(self, module: str, level: int = 0) -> str:
+        """Resolve a Python module name to a JavaScript import path.
+
+        Args:
+            module: Python module name (e.g., 'foo.bar.baz')
+            level: Number of dots for relative import (0=absolute, 1=current, 2=parent)
+
+        Returns:
+            JavaScript import path (e.g., './foo/bar/baz.js')
+        """
+        resolver = self.get_resolver()
+        result = resolver.resolve(module, level)
+        return result.js_path
+
+    def resolve_import_name(self, name: str, level: int = 0) -> str:
+        """Resolve a single import name (for 'from . import name').
+
+        Args:
+            name: The name being imported
+            level: Number of dots for relative import
+
+        Returns:
+            JavaScript import path
+        """
+        resolver = self.get_resolver()
+        result = resolver.resolve_import_name(name, level)
+        return result.js_path
 
     #
     # Deferred initialization of dispatched functions

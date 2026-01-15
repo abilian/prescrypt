@@ -39,34 +39,6 @@ def _gen_nonlocal(node: ast.Nonlocal, codegen: CodeGen):
     return f"/* nonlocal {names} */\n"
 
 
-def _module_to_js_path(module: str, level: int = 0) -> str:
-    """Convert a Python module path to a JavaScript file path.
-
-    Args:
-        module: Python module name (e.g., 'foo.bar.baz')
-        level: Number of dots for relative imports (0=absolute, 1=current dir, 2=parent, etc.)
-
-    Returns:
-        JavaScript module path (e.g., './foo/bar/baz.js' or '../foo.js')
-    """
-    # Handle relative imports
-    if level > 0:
-        # level=1 means "from . import" -> "./"
-        # level=2 means "from .. import" -> "../"
-        prefix = "../" * (level - 1) if level > 1 else "./"
-    else:
-        # Absolute import - use relative path from current directory
-        prefix = "./"
-
-    # Convert module path (foo.bar) to file path (foo/bar.js)
-    if module:
-        path_parts = module.split(".")
-        return prefix + "/".join(path_parts) + ".js"
-    else:
-        # Just relative import with no module (from . import foo)
-        return prefix
-
-
 @gen_stmt.register
 def _gen_import_from(node: ast.ImportFrom, codegen: CodeGen):
     # Silently ignore "from __future__ import annotations" - it's the default behavior
@@ -82,16 +54,15 @@ def _gen_import_from(node: ast.ImportFrom, codegen: CodeGen):
         if not module and level > 0:
             # Each name becomes a separate import
             result = []
-            prefix = "../" * (level - 1) if level > 1 else "./"
             for alias in node.names:
                 name = alias.name
                 local_name = alias.asname or name
-                js_path = prefix + name + ".js"
+                js_path = codegen.resolve_import_name(name, level)
                 result.append(f"import * as {local_name} from '{js_path}';\n")
             return "".join(result)
 
-        # Calculate JS path
-        js_path = _module_to_js_path(module, level)
+        # Calculate JS path using resolver
+        js_path = codegen.resolve_module(module, level)
 
         # Build import statement
         names = []
@@ -145,8 +116,8 @@ def _gen_import(node: ast.Import, codegen: CodeGen):
             # e.g., "import foo.bar" -> local name is "foo"
             local_name = alias.asname or module_name.split(".")[0]
 
-            # Convert module path to JS file path
-            js_path = _module_to_js_path(module_name)
+            # Resolve module path to JS file path
+            js_path = codegen.resolve_module(module_name)
 
             result.append(f"import * as {local_name} from '{js_path}';\n")
         return "".join(result)
