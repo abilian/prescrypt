@@ -5,6 +5,7 @@ from pathlib import Path
 from .codegen import CodeGen
 from .front import ast
 from .front.passes.binder import Binder
+from .front.passes.constant_folder import fold_constants
 from .front.passes.desugar import desugar
 from .stdlib_js import StdlibJs
 
@@ -26,6 +27,7 @@ class Compiler:
         source: str,
         include_stdlib: bool = True,
         tree_shake: bool = True,
+        optimize: bool = True,
     ) -> str:
         """Compile Python source to JavaScript.
 
@@ -33,12 +35,15 @@ class Compiler:
             source: Python source code
             include_stdlib: Whether to include the stdlib preamble
             tree_shake: Whether to only include used stdlib functions (default True)
+            optimize: Whether to apply compile-time optimizations like constant folding (default True)
 
         Returns:
             JavaScript code
         """
         tree = ast.parse(source)
         tree = desugar(tree)
+        if optimize:
+            tree = fold_constants(tree)
         Binder().visit(tree)
         codegen = CodeGen(tree)
         js_code = codegen.gen()
@@ -78,16 +83,27 @@ class Compiler:
         return stdlib.get_partial_std_lib(all_funcs, all_methods)
 
 
-def py2js(code: str, include_stdlib: bool = True, tree_shake: bool = True) -> str:
+def py2js(
+    code: str,
+    include_stdlib: bool = True,
+    tree_shake: bool = True,
+    optimize: bool = True,
+) -> str:
     """Compile Python code to JavaScript.
 
     Args:
         code: Python source code
         include_stdlib: Whether to include the stdlib preamble
         tree_shake: Whether to only include used stdlib functions
+        optimize: Whether to apply compile-time optimizations
 
     Returns:
         JavaScript code
     """
     compiler = Compiler()
-    return compiler.compile(code, include_stdlib=include_stdlib, tree_shake=tree_shake)
+    return compiler.compile(
+        code,
+        include_stdlib=include_stdlib,
+        tree_shake=tree_shake,
+        optimize=optimize,
+    )
