@@ -16,7 +16,7 @@ EXAMPLES = [
 
 
 @skip
-@pytest.mark.parametrize("str_expr, value", EXAMPLES)
+@pytest.mark.parametrize(("str_expr", "value"), EXAMPLES)
 def test_arithm_expr_eval(str_expr, value):
     cell = {"ZZ22": 3, "A47": 8}
     expr = f"arithm_expr_parse({str_expr.split()})"

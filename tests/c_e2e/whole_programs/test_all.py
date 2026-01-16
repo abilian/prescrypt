@@ -28,7 +28,7 @@ def test_module(source_file):
 
     # NB: we assume the python script is always correct
     p1 = subprocess.run(["python", str(src)], stdout=subprocess.PIPE, check=True)
-    p2 = subprocess.run(["node", str(dst)], stdout=subprocess.PIPE)
+    p2 = subprocess.run(["node", str(dst)], stdout=subprocess.PIPE, check=False)
 
     stdout1 = p1.stdout.decode("utf-8")
     stdout2 = p2.stdout.decode("utf-8")

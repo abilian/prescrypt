@@ -13,9 +13,7 @@ def unorder(L):
 
 EXAMPLES = [
     (
-        "le chien marche vers sa niche et trouve une "
-        "limace de chine nue pleine de malice "
-        "qui lui fait du charme".split(),
+        ["le", "chien", "marche", "vers", "sa", "niche", "et", "trouve", "une", "limace", "de", "chine", "nue", "pleine", "de", "malice", "qui", "lui", "fait", "du", "charme"],
         [
             ["nue", "une"],
             ["limace", "malice"],
@@ -30,7 +28,7 @@ EXAMPLES = [
 
 
 @skip
-@pytest.mark.parametrize("words, res", EXAMPLES)
+@pytest.mark.parametrize(("words", "res"), EXAMPLES)
 def test_anagrams(words, res):
     words = list(words)
     check("anagrams", f"anagrams({words})", unorder(res))

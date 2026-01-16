@@ -13,7 +13,7 @@ def check(name, expr, expected):
 
     py_code += dedent(f"""
         result = {expr}
-        check = (result == {repr(expected)})
+        check = (result == {expected!r})
     """)
 
     py_ctx = {}

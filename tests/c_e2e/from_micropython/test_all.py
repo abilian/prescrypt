@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -183,7 +184,7 @@ def test_module(source_file):
 
     js_code = py2js(src.read_text())
 
-    dst = (Path("/tmp") / src.name).with_suffix(".js")
+    dst = (Path(tempfile.gettempdir()) / src.name).with_suffix(".js")
     dst.write_text(js_code)
 
     try:

@@ -31,6 +31,7 @@ def run_node_module(dist_dir: Path, entry_point: str = "main.js") -> str:
         capture_output=True,
         text=True,
         cwd=str(dist_dir),
+        check=False,
     )
 
     if result.returncode != 0:
