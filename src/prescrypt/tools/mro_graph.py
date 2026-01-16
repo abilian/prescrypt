@@ -46,7 +46,7 @@ class MROgraph:
     def __init__(self, *classes, **options):
         """Generates the MRO graph of a set of given classes."""
         if not classes:
-            raise "Missing class argument!"
+            raise ValueError("Missing class argument!")
 
         filename = options.get("filename", f"MRO_of_{classes[0].__name__}.ps")
         self.labels = options.get("labels", 2)
