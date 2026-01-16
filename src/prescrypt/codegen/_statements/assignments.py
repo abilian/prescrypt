@@ -40,11 +40,15 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
 
     js_value = flatten(codegen.gen_expr(value_node))
 
+    # Multiple targets: a = b = c = 3
     if len(target_nodes) > 1:
-        msg = "Multiple assignment not (yet) supported"
-        raise JSError(msg, node)
+        return gen_multi_target_assign(target_nodes, js_value, codegen)
 
     target_node = target_nodes[0]
+
+    # Tuple/List unpacking: a, b = 1, 2
+    if isinstance(target_node, (ast.Tuple, ast.List)):
+        return gen_unpack_assign(target_node.elts, js_value, codegen)
 
     match target_node:
         case ast.Name(id):
@@ -94,6 +98,180 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
         case _:
             msg = f"gen_assign not implemented for {node!r}"
             raise NotImplementedError(msg)
+
+
+def gen_multi_target_assign(
+    targets: list[ast.expr], js_value: str, codegen: CodeGen
+) -> str:
+    """Handle multiple assignment: a = b = c = 3"""
+    lines = []
+
+    # Process targets right-to-left
+    # a = b = c = 3 -> let c = 3; let b = c; let a = b;
+    prev_name = None
+    for target in reversed(targets):
+        if not isinstance(target, ast.Name):
+            msg = "Multiple assignment only supports simple names"
+            raise JSError(msg)
+
+        name = target.id
+
+        # Check if already known BEFORE adding
+        is_known = codegen.ns.is_known(name)
+        codegen.add_var(name)
+
+        export_prefix = "export " if codegen.should_export() else ""
+
+        if is_known:
+            # Already declared - just reassign
+            if prev_name is None:
+                lines.append(f"{name} = {js_value};")
+            else:
+                lines.append(f"{name} = {prev_name};")
+        else:
+            # New variable - declare it
+            decl = codegen.get_declaration_kind(name)
+            if prev_name is None:
+                # First (rightmost) target gets the value
+                if decl:
+                    lines.append(f"{export_prefix}{decl} {name} = {js_value};")
+                else:
+                    lines.append(f"{name} = {js_value};")
+            else:
+                # Subsequent targets get the previous variable
+                if decl:
+                    lines.append(f"{export_prefix}{decl} {name} = {prev_name};")
+                else:
+                    lines.append(f"{name} = {prev_name};")
+
+        prev_name = name
+
+    return "\n".join(lines)
+
+
+def gen_unpack_assign(targets: list[ast.expr], js_value: str, codegen: CodeGen) -> str:
+    """Handle tuple/list unpacking: a, b = 1, 2"""
+    # Check if all targets are simple names (no nested unpacking or starred)
+    all_simple = all(isinstance(t, ast.Name) for t in targets)
+
+    if all_simple:
+        # Simple destructuring: let [a, b] = value;
+        names = [t.id for t in targets]  # type: ignore
+
+        # Check if any are already known BEFORE adding (for reassignment detection)
+        any_known = any(codegen.ns.is_known(name) for name in names)
+
+        # Now register them
+        for name in names:
+            codegen.add_var(name)
+
+        pattern = "[" + ", ".join(names) + "]"
+        if any_known:
+            # Reassignment - no declaration keyword
+            return f"{pattern} = {js_value};"
+        else:
+            # New variables - use let for flexibility
+            return f"let {pattern} = {js_value};"
+
+    # Handle nested unpacking and starred expressions
+    return gen_complex_unpack(targets, js_value, codegen)
+
+
+def gen_complex_unpack(
+    targets: list[ast.expr], js_value: str, codegen: CodeGen
+) -> str:
+    """Handle complex unpacking with nesting or starred expressions."""
+    # Check for starred element
+    starred_idx = None
+    for i, t in enumerate(targets):
+        if isinstance(t, ast.Starred):
+            if starred_idx is not None:
+                msg = "Multiple starred expressions in assignment"
+                raise JSError(msg)
+            starred_idx = i
+
+    if starred_idx is not None:
+        return gen_starred_unpack(targets, starred_idx, js_value, codegen)
+
+    # Nested unpacking without starred
+    pattern = gen_destructure_pattern(targets, codegen)
+    return f"let {pattern} = {js_value};"
+
+
+def gen_destructure_pattern(targets: list[ast.expr], codegen: CodeGen) -> str:
+    """Generate JS destructuring pattern: [a, b, [c, d]]"""
+    parts = []
+    for t in targets:
+        match t:
+            case ast.Name(id=name):
+                codegen.add_var(name)
+                parts.append(name)
+            case ast.Tuple(elts=elts) | ast.List(elts=elts):
+                parts.append(gen_destructure_pattern(elts, codegen))
+            case ast.Starred(value=ast.Name(id=name)):
+                codegen.add_var(name)
+                parts.append(f"...{name}")
+            case _:
+                msg = f"Cannot destructure into {t}"
+                raise JSError(msg)
+    return "[" + ", ".join(parts) + "]"
+
+
+def gen_starred_unpack(
+    targets: list[ast.expr], starred_idx: int, js_value: str, codegen: CodeGen
+) -> str:
+    """Handle starred unpacking: first, *rest, last = items"""
+    n = len(targets)
+
+    if starred_idx == n - 1:
+        # Starred at end: [first, ...rest] works directly in JS
+        pattern = gen_destructure_pattern(targets, codegen)
+        return f"let {pattern} = {js_value};"
+
+    # Starred not at end: need to split manually
+    lines = []
+    tmp = codegen.dummy("unpack")
+    lines.append(f"let {tmp} = [...{js_value}];")
+
+    # Elements after starred (pop from end)
+    after_starred = targets[starred_idx + 1 :]
+    for t in reversed(after_starred):
+        if isinstance(t, ast.Name):
+            name = t.id
+            codegen.add_var(name)
+            lines.append(f"let {name} = {tmp}.pop();")
+        else:
+            msg = "Complex unpacking after starred not supported"
+            raise JSError(msg)
+
+    # Get starred variable name
+    starred_target = targets[starred_idx]
+    if isinstance(starred_target, ast.Starred) and isinstance(
+        starred_target.value, ast.Name
+    ):
+        starred_name = starred_target.value.id
+        codegen.add_var(starred_name)
+    else:
+        msg = "Starred expression must be a simple name"
+        raise JSError(msg)
+
+    # Elements before starred
+    before_starred = targets[:starred_idx]
+    if before_starred:
+        before_names = []
+        for t in before_starred:
+            if isinstance(t, ast.Name):
+                codegen.add_var(t.id)
+                before_names.append(t.id)
+            else:
+                msg = "Complex unpacking before starred not supported"
+                raise JSError(msg)
+        pattern = ", ".join(before_names)
+        lines.append(f"let [{pattern}, ...{starred_name}] = {tmp};")
+    else:
+        lines.append(f"let {starred_name} = {tmp};")
+
+    return "\n".join(lines)
 
     #
     # code = [codegen.lf()]
