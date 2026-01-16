@@ -7,7 +7,6 @@ import pytest
 from prescrypt.exceptions import JSError, PrescryptError, SourceLocation
 from prescrypt.front import ast
 from prescrypt.front.passes.errors import (
-    BindError,
     IncompatibleTypeError,
     StatementOutOfLoopError,
     UnknownSymbolError,

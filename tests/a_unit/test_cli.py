@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import pytest
-
 from prescrypt.main import compile_directory, compile_file, create_parser
 
 
