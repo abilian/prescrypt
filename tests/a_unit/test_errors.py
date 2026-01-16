@@ -1,4 +1,5 @@
 """Tests for error messages with source locations."""
+
 from __future__ import annotations
 
 import pytest

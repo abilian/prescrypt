@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen
+from prescrypt.codegen.type_utils import get_type, is_numeric, is_primitive
 from prescrypt.codegen.utils import unify
 from prescrypt.exceptions import JSError
+from prescrypt.front.passes.types import Bool, String
 
 
 #
@@ -12,14 +14,21 @@ def function_str(codegen: CodeGen, args, _kwargs):
     match args:
         case []:
             return '""'
-        case [_arg]:
-            return codegen.call_std_function("str", args)
+        case [arg]:
+            arg_type = get_type(arg)
+            js_arg = unify(codegen.gen_expr(arg))
+
+            if arg_type is String:
+                # Already a string, return as-is
+                return js_arg
+            elif is_numeric(arg_type) or arg_type is Bool:
+                # Numeric or bool: use String() for clean conversion
+                return f"String({js_arg})"
+            else:
+                # Unknown or complex type: use _pyfunc_str for Python-style output
+                return codegen.call_std_function("str", args)
         case _:
             raise JSError("str() at most one argument")
-        #     js_arg = unify(codegen.gen_expr(arg))
-        #     return f"({js_arg}).toString()"
-        # case [*_]:
-        #     return codegen.call_std_function("str", args)
 
 
 def function_bool(codegen: CodeGen, args, _kwargs):

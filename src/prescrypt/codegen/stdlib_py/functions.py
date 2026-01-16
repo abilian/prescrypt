@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen
+from prescrypt.codegen.type_utils import get_type, is_primitive
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
+from prescrypt.front.passes.types import String
 
 from .constructors import function_str
 
@@ -100,11 +102,19 @@ def function_print(codegen: CodeGen, args, kwargs):
         else:
             raise JSError(f"Invalid argument for print(): {kw.arg!r}")
 
-    # Combine args
+    # Combine args - optimize for primitive types
     js_args = []
     for arg in args:
-        js_arg = function_str(codegen, [arg], [])
+        arg_type = get_type(arg)
+        if is_primitive(arg_type):
+            # Primitive types: console.log handles them natively
+            # For strings, use directly; for numbers/bools, JS converts automatically
+            js_arg = unify(codegen.gen_expr(arg))
+        else:
+            # Unknown or complex types: use _pyfunc_str for Python-style output
+            js_arg = function_str(codegen, [arg], [])
         js_args.append(js_arg)
+
     if js_args and end and end != "\n":
         end = f" + {end}"
     else:

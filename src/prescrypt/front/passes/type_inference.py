@@ -182,6 +182,8 @@ class TypeInference(Visitor):
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """Infer function return type from annotation."""
         node._type = self._type_from_annotation(node.returns)
+        # Register function's return type in current scope so calls can use it
+        self._set_var_type(node.name, node._type)
         self._push_scope()
         self.visit(node.args)
         self.visit_list(node.body)
@@ -190,6 +192,8 @@ class TypeInference(Visitor):
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
         """Infer async function return type from annotation."""
         node._type = self._type_from_annotation(node.returns)
+        # Register function's return type in current scope so calls can use it
+        self._set_var_type(node.name, node._type)
         self._push_scope()
         self.visit(node.args)
         self.visit_list(node.body)
@@ -270,6 +274,12 @@ class TypeInference(Visitor):
             builtin_type = BUILTIN_RETURN_TYPES.get(func.id)
             if builtin_type is not None:
                 return builtin_type
+
+            # Check for user-defined function with return type annotation
+            # The function's type was set from its return annotation in visit_FunctionDef
+            func_type = getattr(func, "_type", Unknown)
+            if func_type is not Unknown:
+                return func_type
 
         # Check for method call: expr.method(...)
         if isinstance(func, ast.Attribute):
@@ -355,9 +365,13 @@ class TypeInference(Visitor):
                     node._type = Float
                 elif left_type == Int and right_type == Int:
                     node._type = Int
-                elif (left_type == String and right_type == Int) or (left_type == Int and right_type == String):
+                elif (left_type == String and right_type == Int) or (
+                    left_type == Int and right_type == String
+                ):
                     node._type = String
-                elif (left_type == List and right_type == Int) or (left_type == Int and right_type == List):
+                elif (left_type == List and right_type == Int) or (
+                    left_type == Int and right_type == List
+                ):
                     node._type = List
                 else:
                     node._type = Unknown
@@ -387,7 +401,9 @@ class TypeInference(Visitor):
                 if left_type == Float or right_type == Float:
                     node._type = Float
                 elif left_type == Int and right_type == Int:
-                    node._type = Int  # May actually overflow to float, but Int is reasonable
+                    node._type = (
+                        Int  # May actually overflow to float, but Int is reasonable
+                    )
                 else:
                     node._type = Unknown
 

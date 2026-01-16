@@ -264,7 +264,9 @@ print(x + y)
         # Simulate: "const result = x + y;"
         #            ^0    ^6     ^15 ^17
         gen.add_mapping(gen_line=0, gen_column=0, src_line=0, src_column=0)
-        gen.add_mapping(gen_line=0, gen_column=6, src_line=0, src_column=0, name="result")
+        gen.add_mapping(
+            gen_line=0, gen_column=6, src_line=0, src_column=0, name="result"
+        )
         gen.add_mapping(gen_line=0, gen_column=15, src_line=0, src_column=9, name="x")
         gen.add_mapping(gen_line=0, gen_column=19, src_line=0, src_column=13, name="y")
 

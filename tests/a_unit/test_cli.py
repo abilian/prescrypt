@@ -127,9 +127,7 @@ class TestCompileFile:
 
             src_file.write_text("x = 1")
 
-            success = compile_file(
-                src_file, dst_file, include_stdlib=False, quiet=True
-            )
+            success = compile_file(src_file, dst_file, include_stdlib=False, quiet=True)
 
             assert success is True
             js_content = dst_file.read_text()
