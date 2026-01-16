@@ -26,6 +26,31 @@ TYPE_MAP = {
 class TypeInference(Visitor):
     """Visitor that infers and attaches types to AST nodes."""
 
+    def __init__(self):
+        # Track variable types by name in current scope
+        # Stack of dicts for nested scopes
+        self._var_types: list[dict[str, type]] = [{}]
+
+    def _push_scope(self):
+        """Push a new scope for variable tracking."""
+        self._var_types.append({})
+
+    def _pop_scope(self):
+        """Pop the current scope."""
+        if len(self._var_types) > 1:
+            self._var_types.pop()
+
+    def _set_var_type(self, name: str, var_type: type):
+        """Set the type of a variable in the current scope."""
+        self._var_types[-1][name] = var_type
+
+    def _get_var_type(self, name: str) -> type:
+        """Get the type of a variable, searching from innermost to outermost scope."""
+        for scope in reversed(self._var_types):
+            if name in scope:
+                return scope[name]
+        return Unknown
+
     def visit_list(self, nodes):
         for node in nodes:
             self.visit(node)
@@ -55,23 +80,32 @@ class TypeInference(Visitor):
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """Infer function return type from annotation."""
         node._type = self._type_from_annotation(node.returns)
+        self._push_scope()
         self.visit(node.args)
         self.visit_list(node.body)
+        self._pop_scope()
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
         """Infer async function return type from annotation."""
         node._type = self._type_from_annotation(node.returns)
+        self._push_scope()
         self.visit(node.args)
         self.visit_list(node.body)
+        self._pop_scope()
 
     def visit_arg(self, node: ast.arg):
         """Infer argument type from annotation."""
-        node._type = self._type_from_annotation(node.annotation)
+        arg_type = self._type_from_annotation(node.annotation)
+        node._type = arg_type
+        # Register argument type in scope
+        self._set_var_type(node.arg, arg_type)
 
     def visit_Lambda(self, node: ast.Lambda):
         """Lambda expression - type unknown without annotation."""
+        self._push_scope()
         self.visit(node.args)
         self.visit(node.body)
+        self._pop_scope()
         node._type = Unknown
 
     # =========================================================================
@@ -90,6 +124,9 @@ class TypeInference(Visitor):
         value_type = getattr(node.value, "_type", Unknown)
         for target in node.targets:
             target._type = value_type
+            # Register variable type in scope for simple Name targets
+            if isinstance(target, ast.Name):
+                self._set_var_type(target.id, value_type)
 
     def visit_NamedExpr(self, node: ast.NamedExpr):
         """Walrus operator := - type is the value's type."""
@@ -102,10 +139,11 @@ class TypeInference(Visitor):
     # =========================================================================
 
     def visit_Name(self, node: ast.Name):
-        """Name reference - get type from definition if loading."""
+        """Name reference - get type from scope if loading."""
         match node.ctx:
             case ast.Load():
-                node._type = self._type_from_definition(node)
+                # Look up variable type in scope
+                node._type = self._get_var_type(node.id)
             case ast.Store():
                 pass  # Type set by assignment
             case _:

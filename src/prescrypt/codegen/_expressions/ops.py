@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
+from prescrypt.codegen.type_utils import get_type, is_numeric, is_string
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.constants import ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.front import ast
@@ -117,17 +118,40 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
             # Modulo on a string is string formatting in Python
             return codegen._format_string(left_node, right_node)
 
+    # Get types for optimization decisions
+    left_type = get_type(left_node)
+    right_type = get_type(right_node)
+
     js_left = unify(codegen.gen_expr(left_node))
     js_right = unify(codegen.gen_expr(right_node))
 
     match op:
         case ast.Add():
-            # TODO: type inference
-            return codegen.call_std_function("op_add", [js_left, js_right])
+            # Optimize when both types are known and compatible
+            if is_numeric(left_type) and is_numeric(right_type):
+                # Both numeric: safe to use native +
+                return f"({js_left} + {js_right})"
+            elif is_string(left_type) and is_string(right_type):
+                # Both strings: safe to use native +
+                return f"({js_left} + {js_right})"
+            else:
+                # Unknown or mixed types: use helper for Python semantics
+                return codegen.call_std_function("op_add", [js_left, js_right])
 
         case ast.Mult():
-            # TODO: type inference
-            return codegen.call_std_function("op_mul", [js_left, js_right])
+            # Optimize when both types are known
+            if is_numeric(left_type) and is_numeric(right_type):
+                # Both numeric: safe to use native *
+                return f"({js_left} * {js_right})"
+            elif is_string(left_type) and is_numeric(right_type):
+                # String repeat: "x" * 3 -> "x".repeat(3)
+                return f"{js_left}.repeat({js_right})"
+            elif is_numeric(left_type) and is_string(right_type):
+                # String repeat: 3 * "x" -> "x".repeat(3)
+                return f"{js_right}.repeat({js_left})"
+            else:
+                # Unknown or mixed types: use helper
+                return codegen.call_std_function("op_mul", [js_left, js_right])
 
         case ast.Pow():
             return ["Math.pow(", js_left, ", ", js_right, ")"]

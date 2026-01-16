@@ -8,6 +8,7 @@ from .front import ast
 from .front.passes.binder import Binder
 from .front.passes.constant_folder import fold_constants
 from .front.passes.desugar import desugar
+from .front.passes.type_inference import TypeInference
 from .stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
 
 if TYPE_CHECKING:
@@ -64,6 +65,7 @@ class Compiler:
         if optimize:
             tree = fold_constants(tree)
         Binder().visit(tree)
+        TypeInference().visit(tree)
         codegen = CodeGen(
             tree,
             function_prefix,
