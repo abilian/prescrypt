@@ -23,7 +23,9 @@ def gen_slice_assign(
     js_start = flatten(codegen.gen_expr(lower)) if lower else "0"
     if upper is None:
         # a[1:] = [...] -> splice from start to end
-        return f"{js_obj}.splice({js_start}, {js_obj}.length - {js_start}, ...{js_value});"
+        return (
+            f"{js_obj}.splice({js_start}, {js_obj}.length - {js_start}, ...{js_value});"
+        )
     else:
         js_end = flatten(codegen.gen_expr(upper))
         # a[1:3] = [...] -> splice(1, 2, ...items)
@@ -177,7 +179,9 @@ def gen_annassign(node: ast.AnnAssign, codegen: CodeGen) -> str:
             decl = codegen.get_declaration_kind(name)
             export_prefix = "export " if codegen.should_export() else ""
             if decl:
-                return f"{export_prefix}{decl} {codegen.with_prefix(name)} = {js_value};"
+                return (
+                    f"{export_prefix}{decl} {codegen.with_prefix(name)} = {js_value};"
+                )
             else:
                 return f"{codegen.with_prefix(name)} = {js_value};"
     else:
