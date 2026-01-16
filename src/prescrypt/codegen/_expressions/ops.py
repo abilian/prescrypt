@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.type_utils import get_type, is_numeric, is_string
+from prescrypt.codegen.type_utils import get_type, is_numeric, is_primitive, is_string
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.constants import ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.front import ast
@@ -169,6 +169,10 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
 def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
     left_node, ops, comparator_nodes = node.left, node.ops, node.comparators
 
+    # Get types for optimization decisions
+    left_type = get_type(left_node)
+    right_type = get_type(comparator_nodes[0])
+
     js_left = unify(codegen.gen_expr(left_node))
     js_right = unify(codegen.gen_expr(comparator_nodes[0]))
 
@@ -177,16 +181,18 @@ def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
     op = ops[0]
 
     if type(op) in (ast.Eq, ast.NotEq) and not js_left.endswith(".length"):
-        code = codegen.call_std_function("op_equals", [js_left, js_right])
-        if type(op) == ast.NotEq:
-            code = "!" + code
-
-        # TODO: type inference
-        # if type(op) == ast.NotEq:
-        #     code = [js_left, "!=", js_right]
-        # else:
-        #     code = [js_left, "==", js_right]
-        return code
+        # Optimize when both types are primitives: use === instead of helper
+        if is_primitive(left_type) and is_primitive(right_type):
+            if type(op) == ast.NotEq:
+                return f"({js_left} !== {js_right})"
+            else:
+                return f"({js_left} === {js_right})"
+        else:
+            # Unknown or non-primitive types: use helper for deep comparison
+            code = codegen.call_std_function("op_equals", [js_left, js_right])
+            if type(op) == ast.NotEq:
+                code = "!" + code
+            return code
 
     elif type(op) in (ast.In, ast.NotIn):
         codegen.call_std_function("op_equals", [])  # trigger use of equals
