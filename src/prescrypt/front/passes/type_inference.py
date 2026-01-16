@@ -22,6 +22,108 @@ TYPE_MAP = {
     "tuple": Tuple,
 }
 
+# Return types for built-in functions
+BUILTIN_RETURN_TYPES = {
+    # Type constructors
+    "int": Int,
+    "float": Float,
+    "str": String,
+    "bool": Bool,
+    "list": List,
+    "dict": Dict,
+    "tuple": Tuple,
+    # Numeric functions
+    "len": Int,
+    "abs": Float,  # Could be Int but Float is safe
+    "round": Int,
+    "sum": Float,  # Could be Int but Float is safe
+    "ord": Int,
+    "chr": String,
+    "hex": String,
+    "oct": String,
+    "bin": String,
+    # Sequence functions
+    "range": List,
+    "enumerate": List,
+    "zip": List,
+    "map": List,
+    "filter": List,
+    "sorted": List,
+    "reversed": List,
+    # I/O
+    "input": String,
+    "repr": String,
+    "format": String,
+    # Type checking
+    "isinstance": Bool,
+    "issubclass": Bool,
+    "callable": Bool,
+    "hasattr": Bool,
+    # Other
+    "hash": Int,
+    "id": Int,
+}
+
+# Return types for methods based on receiver type
+# Key is (receiver_type, method_name)
+METHOD_RETURN_TYPES = {
+    # String methods
+    (String, "upper"): String,
+    (String, "lower"): String,
+    (String, "capitalize"): String,
+    (String, "title"): String,
+    (String, "strip"): String,
+    (String, "lstrip"): String,
+    (String, "rstrip"): String,
+    (String, "split"): List,
+    (String, "rsplit"): List,
+    (String, "splitlines"): List,
+    (String, "join"): String,
+    (String, "replace"): String,
+    (String, "format"): String,
+    (String, "find"): Int,
+    (String, "rfind"): Int,
+    (String, "index"): Int,
+    (String, "rindex"): Int,
+    (String, "count"): Int,
+    (String, "startswith"): Bool,
+    (String, "endswith"): Bool,
+    (String, "isdigit"): Bool,
+    (String, "isalpha"): Bool,
+    (String, "isalnum"): Bool,
+    (String, "isspace"): Bool,
+    (String, "isupper"): Bool,
+    (String, "islower"): Bool,
+    (String, "istitle"): Bool,
+    (String, "isnumeric"): Bool,
+    (String, "isdecimal"): Bool,
+    (String, "isidentifier"): Bool,
+    (String, "isprintable"): Bool,
+    (String, "isascii"): Bool,
+    (String, "encode"): Unknown,  # bytes
+    (String, "zfill"): String,
+    (String, "center"): String,
+    (String, "ljust"): String,
+    (String, "rjust"): String,
+    (String, "expandtabs"): String,
+    (String, "partition"): Tuple,
+    (String, "rpartition"): Tuple,
+    (String, "swapcase"): String,
+    (String, "casefold"): String,
+    # List methods
+    (List, "copy"): List,
+    (List, "index"): Int,
+    (List, "count"): Int,
+    # Dict methods
+    (Dict, "keys"): List,
+    (Dict, "values"): List,
+    (Dict, "items"): List,
+    (Dict, "copy"): Dict,
+    (Dict, "get"): Unknown,  # value type unknown
+    (Dict, "pop"): Unknown,
+    (Dict, "setdefault"): Unknown,
+}
+
 
 class TypeInference(Visitor):
     """Visitor that infers and attaches types to AST nodes."""
@@ -150,12 +252,35 @@ class TypeInference(Visitor):
                 node._type = Unknown
 
     def visit_Call(self, node: ast.Call):
-        """Function call - get type from function definition."""
+        """Function call - infer type from builtins, methods, or definition."""
         self.visit(node.func)
         self.visit_list(node.args)
         for keyword in node.keywords:
             self.visit(keyword.value)
-        node._type = self._type_from_definition(node)
+
+        # Try to infer type from the call
+        node._type = self._infer_call_type(node)
+
+    def _infer_call_type(self, node: ast.Call) -> type:
+        """Infer the return type of a function call."""
+        func = node.func
+
+        # Check for builtin function: name(...)
+        if isinstance(func, ast.Name):
+            builtin_type = BUILTIN_RETURN_TYPES.get(func.id)
+            if builtin_type is not None:
+                return builtin_type
+
+        # Check for method call: expr.method(...)
+        if isinstance(func, ast.Attribute):
+            receiver_type = getattr(func.value, "_type", Unknown)
+            method_name = func.attr
+            method_type = METHOD_RETURN_TYPES.get((receiver_type, method_name))
+            if method_type is not None:
+                return method_type
+
+        # Fall back to definition-based inference
+        return self._type_from_definition(node)
 
     # =========================================================================
     # Literals
@@ -194,14 +319,100 @@ class TypeInference(Visitor):
     # =========================================================================
 
     def visit_BinOp(self, node: ast.BinOp):
-        """Binary operation - infer from operands."""
+        """Binary operation - infer from operands with proper type rules."""
         self.visit(node.left)
         self.visit(node.right)
+
+        left_type = getattr(node.left, "_type", Unknown)
+        right_type = getattr(node.right, "_type", Unknown)
+
         match node.op:
-            case ast.FloorDiv():
+            case ast.Add():
+                # Numeric promotion or string/list concatenation
+                if left_type == Float or right_type == Float:
+                    node._type = Float
+                elif left_type == Int and right_type == Int:
+                    node._type = Int
+                elif left_type == String and right_type == String:
+                    node._type = String
+                elif left_type == List and right_type == List:
+                    node._type = List
+                else:
+                    node._type = Unknown
+
+            case ast.Sub():
+                # Numeric only
+                if left_type == Float or right_type == Float:
+                    node._type = Float
+                elif left_type == Int and right_type == Int:
+                    node._type = Int
+                else:
+                    node._type = Unknown
+
+            case ast.Mult():
+                # Numeric or string/list repeat
+                if left_type == Float or right_type == Float:
+                    node._type = Float
+                elif left_type == Int and right_type == Int:
+                    node._type = Int
+                elif (left_type == String and right_type == Int) or (left_type == Int and right_type == String):
+                    node._type = String
+                elif (left_type == List and right_type == Int) or (left_type == Int and right_type == List):
+                    node._type = List
+                else:
+                    node._type = Unknown
+
+            case ast.Div():
+                # Division always produces float in Python 3
                 node._type = Float
+
+            case ast.FloorDiv():
+                # Floor division preserves int if both int
+                if left_type == Int and right_type == Int:
+                    node._type = Int
+                else:
+                    node._type = Float
+
+            case ast.Mod():
+                # Modulo preserves int if both int, or string for formatting
+                if left_type == String:
+                    node._type = String  # String % tuple formatting
+                elif left_type == Int and right_type == Int:
+                    node._type = Int
+                else:
+                    node._type = Float
+
+            case ast.Pow():
+                # Power with float or negative exponent yields float
+                if left_type == Float or right_type == Float:
+                    node._type = Float
+                elif left_type == Int and right_type == Int:
+                    node._type = Int  # May actually overflow to float, but Int is reasonable
+                else:
+                    node._type = Unknown
+
+            case ast.BitOr() | ast.BitXor() | ast.BitAnd():
+                # Bitwise ops yield int
+                if left_type == Int and right_type == Int:
+                    node._type = Int
+                elif left_type == Bool and right_type == Bool:
+                    node._type = Bool
+                else:
+                    node._type = Unknown
+
+            case ast.LShift() | ast.RShift():
+                # Shift ops yield int
+                if left_type == Int and right_type == Int:
+                    node._type = Int
+                else:
+                    node._type = Unknown
+
+            case ast.MatMult():
+                # Matrix multiplication - type unknown without numpy support
+                node._type = Unknown
+
             case _:
-                node._type = getattr(node.left, "_type", Unknown)
+                node._type = Unknown
 
     def visit_UnaryOp(self, node: ast.UnaryOp):
         """Unary operation - same type as operand."""
