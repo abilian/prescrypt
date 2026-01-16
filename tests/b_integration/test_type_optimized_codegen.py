@@ -49,10 +49,10 @@ y = x + 5
 
     def test_string_variable_plus_literal_uses_native(self):
         """String variable + string literal should use native +"""
-        code = '''
+        code = """
 x = "hello"
 y = x + " world"
-'''
+"""
         js = py2js(code, include_stdlib=False)
         assert "_pyfunc_op_add" not in js
         assert "+" in js
@@ -70,11 +70,11 @@ z = x + y
 
     def test_two_string_variables_use_native(self):
         """Two string variables should use native +"""
-        code = '''
+        code = """
 x = "hello"
 y = "world"
 z = x + y
-'''
+"""
         js = py2js(code, include_stdlib=False)
         assert "_pyfunc_op_add" not in js
         assert "+" in js
@@ -109,11 +109,11 @@ result = x + y
 
     def test_string_add_produces_correct_result(self):
         """Verify string concatenation works correctly"""
-        code = '''
+        code = """
 x = "hello"
 y = "world"
 result = x + y
-'''
+"""
         js = py2js(code)
         assert js_eval(js + "\nresult;") == "helloworld"
 
@@ -163,22 +163,22 @@ z = x * y
 
     def test_string_variable_times_int_uses_repeat(self):
         """String variable * int should use .repeat()"""
-        code = '''
+        code = """
 s = "ab"
 n = 3
 result = s * n
-'''
+"""
         js = py2js(code, include_stdlib=False)
         assert "_pyfunc_op_mul" not in js
         assert ".repeat(" in js
 
     def test_int_times_string_uses_repeat(self):
         """Int * String should use .repeat()"""
-        code = '''
+        code = """
 n = 3
 s = "ab"
 result = n * s
-'''
+"""
         js = py2js(code, include_stdlib=False)
         assert "_pyfunc_op_mul" not in js
         assert ".repeat(" in js
@@ -204,21 +204,21 @@ result = x * y
 
     def test_string_repeat_produces_correct_result(self):
         """Verify string repeat works correctly"""
-        code = '''
+        code = """
 s = "ab"
 n = 3
 result = s * n
-'''
+"""
         js = py2js(code)
         assert js_eval(js + "\nresult;") == "ababab"
 
     def test_int_times_string_produces_correct_result(self):
         """Verify int * string repeat works correctly"""
-        code = '''
+        code = """
 n = 3
 s = "ab"
 result = n * s
-'''
+"""
         js = py2js(code)
         assert js_eval(js + "\nresult;") == "ababab"
 
@@ -251,12 +251,12 @@ result = a + b + c
 
     def test_chained_string_operations_use_native(self):
         """Chained operations with string variables should use native ops"""
-        code = '''
+        code = """
 a = "x"
 b = "y"
 c = "z"
 result = a + b + c
-'''
+"""
         js = py2js(code, include_stdlib=False)
         assert "_pyfunc_op_add" not in js
 
