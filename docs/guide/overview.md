@@ -30,21 +30,22 @@ Prescrypt generates ES6+ JavaScript:
         return n * factorial(n - 1)
 
     result = factorial(5)
-    print(f"5! = {result}")
+    print("5! = " + str(result))
     ```
 
 === "JavaScript Output"
 
     ```javascript
+    // Stdlib helper definitions omitted
     function factorial(n) {
         if (n <= 1) {
             return 1;
         }
-        return n * factorial(n - 1);
+        return (n * factorial((n - 1)));
     }
 
     let result = factorial(5);
-    console.log("5! = " + result);
+    _pyfunc_print(_pyfunc_op_add("5! = ", result));
     ```
 
 ## Core Concepts

@@ -77,11 +77,15 @@ greeting = f"Hello, {name}!"
 formatted = f"Value: {x:.2f}"
 ```
 
-**Compiles to:**
+**Compiles to** (using stdlib helpers):
 ```javascript
-let greeting = "Hello, " + name + "!";
-let formatted = "Value: " + x.toFixed(2);
+// Simplified - actual output uses _pymeth_format helper
+let greeting = _pymeth_format.call("Hello, {}!", name);
+let formatted = _pyfunc_format(x, ".2f");
 ```
+
+!!! note "F-string implementation"
+    F-strings use stdlib helpers (`_pymeth_format`, `_pyfunc_format`) for Python-compatible formatting. For simple cases, consider using string concatenation directly for smaller output.
 
 ### String Methods
 
@@ -102,23 +106,26 @@ let formatted = "Value: " + x.toFixed(2);
 
 ```python
 def greet(name):
-    return f"Hello, {name}!"
+    return "Hello, " + name + "!"
 
 def add(a, b=0):
     return a + b
 ```
 
-**Compiles to:**
+**Compiles to** (stdlib definitions omitted):
 ```javascript
 function greet(name) {
-    return "Hello, " + name + "!";
+    return _pyfunc_op_add(_pyfunc_op_add("Hello, ", name), "!");
 }
 
 function add(a, b) {
     b = b ?? 0;  // default value
-    return a + b;
+    return _pyfunc_op_add(a, b);
 }
 ```
+
+!!! note "Why `_pyfunc_op_add`?"
+    Python's `+` is polymorphic—it concatenates strings/lists and adds numbers. Without type information, Prescrypt uses a runtime helper to preserve this behavior.
 
 ### Lambda Functions
 

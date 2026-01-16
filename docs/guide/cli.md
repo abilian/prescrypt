@@ -77,13 +77,13 @@ py2js app.py -m -o app.mjs
 # Module mode generates ES6 exports
 ```
 
-**Without `-m`:**
+**Without `-m`** (core logic, stdlib omitted):
 ```javascript
 function greet(name) { ... }
 let message = greet("World");
 ```
 
-**With `-m`:**
+**With `-m`** (core logic, stdlib omitted):
 ```javascript
 export function greet(name) { ... }
 export let message = greet("World");

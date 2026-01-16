@@ -10,7 +10,7 @@ Create `hello.py`:
 
 ```python
 def greet(name):
-    return f"Hello, {name}!"
+    return "Hello, " + name + "!"
 
 message = greet("World")
 print(message)
@@ -40,14 +40,15 @@ Congratulations! You've just compiled and run your first Prescrypt program.
 
 ## Understanding the Output
 
-Let's look at what Prescrypt generated:
+Let's look at what Prescrypt generated (helper definitions omitted):
 
 ```javascript
 // hello.js
-var _pyfunc_print = function (/* ... */) { /* stdlib */ };
+var _pyfunc_op_add = function (a, b) { /* handles + for any type */ };
+var _pyfunc_print = function (/* ... */) { /* Python-compatible print */ };
 
 function greet(name) {
-    return "Hello, " + name + "!";
+    return _pyfunc_op_add(_pyfunc_op_add("Hello, ", name), "!");
 }
 
 let message = greet("World");
@@ -57,9 +58,12 @@ _pyfunc_print(message);
 Notice:
 
 - **Functions** become JavaScript functions
-- **F-strings** become string concatenation
-- **print()** uses a stdlib helper for consistent behavior
+- **Operators** use stdlib helpers for Python semantics (`+` works on strings, lists, numbers)
+- **print()** uses a stdlib helper for Python-compatible behavior
 - Variables use `let` or `const` appropriately
+
+!!! note "About the stdlib"
+    Prescrypt includes runtime helpers (`_pyfunc_*`, `_pymeth_*`) for Python features that don't map directly to JavaScript. The `+` operator uses `_pyfunc_op_add` because Python's `+` is polymorphic. Tree-shaking removes unused helpers.
 
 ## Module Mode
 
@@ -72,13 +76,13 @@ py2js hello.py -m
 Now the output has exports:
 
 ```javascript
-// hello.js
+// hello.js (stdlib definitions omitted)
 export function greet(name) {
-    return "Hello, " + name + "!";
+    return _pyfunc_op_add(_pyfunc_op_add("Hello, ", name), "!");
 }
 
 export let message = greet("World");
-console.log(message);
+_pyfunc_print(message);
 ```
 
 ## Compile a Project

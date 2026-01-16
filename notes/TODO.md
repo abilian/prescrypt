@@ -66,6 +66,7 @@ See `local-notes/plan-stage6.md` for detailed design.
 - [ ] Lambda with default arguments (e.g., `lambda x=1: x`)
 - [ ] `__all__` to control module exports
 - [ ] Context manager protocol (`__enter__`/`__exit__`)
+- [ ] Type-informed operator codegen (emit `a + b` instead of `_pyfunc_op_add(a, b)` when types are known)
 
 ---
 

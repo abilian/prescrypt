@@ -61,7 +61,7 @@ message = f"Generated {len(items)} items"
 
 ### JavaScript Output
 
-Generated ES6:
+Generated ES6 (core logic shown, stdlib helpers omitted):
 
 ```javascript
 export const Counter = function () {
@@ -75,6 +75,7 @@ Counter.prototype.increment = function () {
     return this.value;
 };
 
+// Constant folding: computed at compile time!
 export const items = [0, 4, 8, 12, 16];
 export const message = "Generated 5 items";
 ```
@@ -113,7 +114,7 @@ js.document.getElementById("app").innerHTML = "Hello!"
     import js
 
     def greet(name):
-        return f"Hello, {name}!"
+        return "Hello, " + name + "!"
 
     message = greet("World")
     js.console.log(message)
@@ -122,9 +123,9 @@ js.document.getElementById("app").innerHTML = "Hello!"
 === "Generated JavaScript"
 
     ```javascript
-    // app.js
+    // app.js (stdlib helper definitions omitted)
     export function greet(name) {
-        return "Hello, " + name + "!";
+        return _pyfunc_op_add(_pyfunc_op_add("Hello, ", name), "!");
     }
 
     export const message = greet("World");
@@ -140,6 +141,9 @@ js.document.getElementById("app").innerHTML = "Hello!"
     $ node app.js
     Hello, World!
     ```
+
+!!! note "Generated output includes stdlib helpers"
+    The actual output includes `_pyfunc_*` and `_pymeth_*` helpers for Python-compatible behavior. Tree-shaking ensures only what you use is included.
 
 ## Installation
 
