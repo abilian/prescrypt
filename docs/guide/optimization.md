@@ -10,6 +10,7 @@ Prescrypt optimizes at compile time:
 |-------------|---------|-----------------|
 | Constant folding | On | `--no-optimize` |
 | Dead code elimination | On | `--no-optimize` |
+| Type-informed codegen | On | `--no-optimize` |
 | Tree-shaking (stdlib) | On | `--no-tree-shake` |
 
 ## Constant Folding
@@ -88,6 +89,133 @@ function log(msg) {
 - `if False:` blocks
 - `if True: ... else:` → just the `if` body
 - Unreachable code after `return`, `raise`, `break`, `continue`
+
+## Type-Informed Code Generation
+
+When Prescrypt knows the types of values (from literals, type annotations, or inference), it generates more efficient code using native JavaScript operators instead of runtime helpers.
+
+### How It Works
+
+Prescrypt infers types from:
+
+- **Literals**: `x = 42` → `x` is `Int`
+- **Type annotations**: `def greet(name: str)` → `name` is `String`
+- **Function return types**: `def get_name() -> str` → calls return `String`
+- **Built-in functions**: `len(items)` returns `Int`
+- **Method calls**: `s.upper()` on a `String` returns `String`
+- **Arithmetic**: `Int + Int` → `Int`, `Int / Int` → `Float`
+
+### Optimized Operations
+
+#### Arithmetic (`+`, `*`)
+
+```python
+# Without type info - uses helper for Python semantics
+def add(a, b):
+    return a + b
+# → return _pyfunc_op_add(a, b);
+
+# With type info - uses native operator
+def add(a: int, b: int) -> int:
+    return a + b
+# → return (a + b);
+
+# Or inferred from literals
+x = 10
+y = 20
+z = x + y
+# → const z = (x + y);
+```
+
+#### String Operations
+
+```python
+# String + String uses native +
+name = "World"
+greeting = "Hello, " + name
+# → const greeting = ('Hello, ' + name);
+
+# String * Int uses .repeat()
+s = "ab"
+n = 3
+result = s * n
+# → const result = s.repeat(n);
+```
+
+#### Equality (`==`, `!=`)
+
+```python
+# Primitive types use === for direct comparison
+x = 10
+y = 20
+if x == y:  # → if ((x === y))
+    pass
+
+# Lists/dicts still use helper for deep comparison
+a = [1, 2]
+b = [1, 2]
+if a == b:  # → if (_pyfunc_op_equals(a, b))
+    pass
+```
+
+#### F-Strings
+
+```python
+# With known types - uses concatenation
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+# → return ('Hello, ' + name + '!');
+
+# With format specs - uses _pymeth_format
+value = 3.14
+result = f"Pi: {value:.2f}"
+# → _pymeth_format.call("Pi: {:.2f}", value);
+```
+
+#### print() and str()
+
+```python
+# With known types - direct console.log, no wrapper
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+
+print(greet("World"))
+# → console.log(greet('World'));
+
+# str() of primitives uses native String()
+def get_count() -> int:
+    return 42
+
+x = str(get_count())
+# → const x = String(get_count());
+
+# Unknown types still use runtime helpers for Python semantics
+def get_data():
+    return [1, 2, 3]
+
+print(get_data())
+# → console.log(_pyfunc_str(get_data()));
+```
+
+### Best Practices
+
+!!! tip "Add Type Annotations for Cleaner Output"
+    ```python
+    # Cleaner JavaScript output
+    def calculate(x: int, y: int) -> int:
+        return x + y * 2
+    ```
+
+!!! tip "Types Propagate Through Variables"
+    ```python
+    # x is inferred as Int from literal
+    x = 10
+    # y is inferred as Int from x
+    y = x + 5  # Uses native +
+    ```
+
+!!! note "Fallback is Safe"
+    When types are unknown, Prescrypt safely falls back to runtime helpers that handle all Python semantics correctly.
 
 ## Tree-Shaking
 

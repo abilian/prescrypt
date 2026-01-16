@@ -331,6 +331,71 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 
 ---
 
+## Stage 7: Type-Informed Code Generation
+
+**Goal:** Generate cleaner JavaScript by using type information to emit native operators instead of runtime helpers.
+
+**Completed:**
+
+- **Phase 1 - Arithmetic optimization** (`codegen/_expressions/ops.py`):
+  - Created `codegen/type_utils.py` with type checking helpers
+  - `+` uses native operator when both operands are `Int`, `Float`, or `String`
+  - `*` uses native operator for numeric types
+  - `*` uses `.repeat()` for string repetition (`str * int`)
+  - Falls back to `_pyfunc_op_add`/`_pyfunc_op_mul` for unknown types
+
+- **Phase 2 - Enhanced type inference** (`front/passes/type_inference.py`):
+  - Added `BUILTIN_RETURN_TYPES` map (30+ builtins):
+    - Type constructors: `int()`, `str()`, `float()`, `bool()`, etc.
+    - Numeric: `len()`, `abs()`, `round()`, `sum()`, `ord()`, `chr()`
+    - Sequences: `range()`, `enumerate()`, `zip()`, `map()`, `filter()`, `sorted()`
+  - Added `METHOD_RETURN_TYPES` map (50+ methods):
+    - String methods: `upper()`, `lower()`, `strip()`, `split()`, `find()`, `count()`, etc.
+    - List methods: `copy()`, `index()`, `count()`
+    - Dict methods: `keys()`, `values()`, `items()`, `copy()`
+  - Improved `visit_BinOp` with proper arithmetic type rules:
+    - Numeric promotion: `Int + Float` → `Float`
+    - Division always returns `Float`
+    - Floor division/modulo preserve `Int` when both operands are `Int`
+  - Added scope tracking for variable types (propagates through assignments)
+
+- **Phase 3 - Equality optimization** (`codegen/_expressions/ops.py`):
+  - `==` uses `===` when both operands are primitives (`Int`, `Float`, `String`, `Bool`)
+  - `!=` uses `!==` for primitives
+  - Falls back to `_pyfunc_op_equals` for lists, dicts, and unknown types
+
+- **Phase 4 - F-string optimization** (`codegen/_expressions/f_strings.py`):
+  - F-strings with primitive-typed interpolations use direct concatenation
+  - `f"Hello, {name}!"` → `('Hello, ' + name + '!')` when `name: str`
+  - Falls back to `_pymeth_format` for format specs (`.2f`) or conversions (`!r`)
+
+- **Type inference pipeline integration:**
+  - Added `TypeInference().visit(tree)` to `compiler.py` after Binder pass
+  - Type information flows from literals → variables → expressions → code generation
+
+- **Phase 5 - print/str optimization** (`codegen/stdlib_py/functions.py`, `codegen/stdlib_py/constructors.py`):
+  - `print()` skips `_pyfunc_str` wrapper for primitive types (Int, Float, String, Bool)
+  - `str()` uses native `String()` for numbers/bools, passthrough for strings
+  - Function return type annotations now propagate to call sites
+  - Fixed: `_set_var_type(node.name, ...)` in `visit_FunctionDef` registers return type in scope
+
+- **Documentation updates:**
+  - Added "Type-Informed Code Generation" section to `docs/guide/optimization.md`
+  - Updated `README.md` example to show optimized output
+  - Updated `docs/guide/language-support.md` with type annotation tips
+  - Updated feature tables in `docs/index.md`
+
+**Test Results:** 1207 passing, 31 skipped
+
+**New tests added:** 144
+- `test_type_optimized_codegen.py`: 31 tests (Phase 1)
+- `test_enhanced_type_inference.py`: 35 tests (Phase 2)
+- `test_equality_optimization.py`: 27 tests (Phase 3)
+- `test_fstring_optimization.py`: 30 tests (Phase 4)
+- `test_print_str_optimization.py`: 21 tests (Phase 5)
+
+---
+
 ## Summary Statistics
 
 | Stage | Tests Passing | Key Achievement |
@@ -345,9 +410,9 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 | 6 | 2188 | ES6 modules, multi-file CLI |
 | 6.7 | 2216 | Source map generation |
 | 6.10 | 2224 | Strict mode fix, MkDocs docs |
+| 7 | 1207 | Type-informed code generation |
 
 **Total lines cleaned:** 330+
-**Total tests added:** 1595+
 **Coverage:** 83%
 
 ## Key Design Decisions
@@ -357,3 +422,4 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 3. **Pattern Matching:** Used throughout for type-safe, readable code
 4. **Constant Folding:** Compile-time evaluation of constant expressions
 5. **Special Methods:** Runtime dispatch via `op_*` functions in stdlib
+6. **Type-Informed Codegen:** Use native JS operators when types are known, safe fallback to helpers otherwise

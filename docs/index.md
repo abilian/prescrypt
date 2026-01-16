@@ -103,6 +103,7 @@ js.document.getElementById("app").innerHTML = "Hello!"
 | **Source Maps** | Debug Python code in browser DevTools |
 | **Tree-Shaking** | Only include stdlib functions you actually use |
 | **Constant Folding** | Compile-time evaluation of constant expressions |
+| **Type-Informed Codegen** | Native operators when types are known from annotations or inference |
 | **Multi-file Projects** | Compile entire directories with module resolution |
 
 ## Quick Example
@@ -143,7 +144,7 @@ js.document.getElementById("app").innerHTML = "Hello!"
     ```
 
 !!! note "Generated output includes stdlib helpers"
-    The actual output includes `_pyfunc_*` and `_pymeth_*` helpers for Python-compatible behavior. Tree-shaking ensures only what you use is included.
+    The actual output includes `_pyfunc_*` and `_pymeth_*` helpers for Python-compatible behavior. Tree-shaking ensures only what you use is included. When types are known (from annotations or inference), native JavaScript operators are used instead of helpers—see [Type-Informed Code Generation](guide/optimization.md#type-informed-code-generation).
 
 ## Installation
 

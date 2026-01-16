@@ -84,8 +84,14 @@ let greeting = _pymeth_format.call("Hello, {}!", name);
 let formatted = _pyfunc_format(x, ".2f");
 ```
 
-!!! note "F-string implementation"
-    F-strings use stdlib helpers (`_pymeth_format`, `_pyfunc_format`) for Python-compatible formatting. For simple cases, consider using string concatenation directly for smaller output.
+!!! note "F-string optimization"
+    When interpolated values have known primitive types and no format specs, Prescrypt optimizes f-strings to direct concatenation:
+    ```python
+    def greet(name: str) -> str:
+        return f"Hello, {name}!"
+    # → return ('Hello, ' + name + '!');
+    ```
+    F-strings with format specs (like `:.2f`) or unknown types use stdlib helpers for Python-compatible formatting.
 
 ### String Methods
 
@@ -126,6 +132,15 @@ function add(a, b) {
 
 !!! note "Why `_pyfunc_op_add`?"
     Python's `+` is polymorphic—it concatenates strings/lists and adds numbers. Without type information, Prescrypt uses a runtime helper to preserve this behavior.
+
+!!! tip "Type Annotations Enable Cleaner Output"
+    When parameter types are annotated, Prescrypt generates native operators:
+    ```python
+    def add(a: int, b: int) -> int:
+        return a + b
+    # → return (a + b);
+    ```
+    See [Optimization](optimization.md#type-informed-code-generation) for details.
 
 ### Lambda Functions
 

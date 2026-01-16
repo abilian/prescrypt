@@ -5,6 +5,26 @@ All notable changes to Prescrypt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - unreleased
+
+### Added
+
+#### Optimizations
+- **Type-informed code generation**: Native operators when types are known
+  - Arithmetic: `a + b` → `(a + b)` when both are `int` or `str`
+  - String repeat: `s * n` → `s.repeat(n)` when types known
+  - Equality: `x == y` → `(x === y)` for primitive types
+  - F-strings: `f"Hello, {name}!"` → `('Hello, ' + name + '!')` with type annotations
+  - `print()`: Direct `console.log()` for primitives, skips `_pyfunc_str` wrapper
+  - `str()`: Native `String()` for numbers/bools, passthrough for strings
+  - Type inference from: literals, annotations, builtins (`len`, `str`), methods (`.upper()`, `.find()`), user-defined function return types
+
+### Documentation
+
+- Fix doc build issues
+- Removed unreliable claims
+
+
 ## [0.9.0] - 2026-01-16
 
 Major release with ES6 module support, optimizations, and developer tooling.
@@ -33,6 +53,14 @@ Major release with ES6 module support, optimizations, and developer tooling.
   - Strings: `"a" + "b"` → `"ab"`
   - Built-ins: `len("hello")` → `5`
 - **Function inlining**: `abs(-5)` → `5`, `min(1,2,3)` → `1`
+- **Type-informed code generation**: Native operators when types are known
+  - Arithmetic: `a + b` → `(a + b)` when both are `int` or `str`
+  - String repeat: `s * n` → `s.repeat(n)` when types known
+  - Equality: `x == y` → `(x === y)` for primitive types
+  - F-strings: `f"Hello, {name}!"` → `('Hello, ' + name + '!')` with type annotations
+  - `print()`: Direct `console.log()` for primitives, skips `_pyfunc_str` wrapper
+  - `str()`: Native `String()` for numbers/bools, passthrough for strings
+  - Type inference from: literals, annotations, builtins (`len`, `str`), methods (`.upper()`, `.find()`), user-defined function return types
 
 #### Class System Enhancements
 - `super()` calls with `_pyfunc_super_proxy` runtime
@@ -69,7 +97,7 @@ Major release with ES6 module support, optimizations, and developer tooling.
 
 ### Statistics
 
-- 2224 tests passing (up from 629)
+- 2347 tests passing (up from 629)
 - 330+ lines of dead code removed
 - 83% code coverage
 
