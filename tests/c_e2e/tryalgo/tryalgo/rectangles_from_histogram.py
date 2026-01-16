@@ -8,7 +8,6 @@ jill-jenn vie et christoph durr - 2014-2018
 
 # snip{
 # pylint: disable=len-as-condition
-from __future__ import annotations
 
 
 def rectangles_from_histogram(H):

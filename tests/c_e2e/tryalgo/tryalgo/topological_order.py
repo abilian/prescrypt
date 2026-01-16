@@ -7,7 +7,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 
 # snip{ topological_order_dfs
-from __future__ import annotations
 
 
 def topological_order_dfs(graph):

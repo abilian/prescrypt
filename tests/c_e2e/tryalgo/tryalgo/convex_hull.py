@@ -6,7 +6,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 """
 
 # pylint: disable=redefined-outer-name
-from __future__ import annotations
 
 from random import randint
 

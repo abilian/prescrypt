@@ -7,7 +7,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 # snip{ laser-miroir-preparation
 # directions
-from __future__ import annotations
 
 UP = 0
 LEFT = 1

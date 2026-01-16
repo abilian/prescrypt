@@ -26,16 +26,3 @@ def check(name, expr, expected):
     js_result = js_eval(js_code)
 
     assert js_eq(js_result, py_result)
-
-    # TODO:
-    # js_env = dukpy.JSInterpreter()
-    # js_env.evaljs(js_code)
-    # debug(js_code)
-    #
-    # js_result = js_env.evaljs("result")
-    # js_check = js_env.evaljs("check")
-    #
-    # debug(py_result, js_result, py_check, js_check)
-    #
-    # assert check
-    # assert js_result == py_result

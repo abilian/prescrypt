@@ -4,7 +4,6 @@ Linear equation system Ax=b by Gauss-Jordan
 
 jill-jenn vie et christoph durr - 2014-2018
 """
-from __future__ import annotations
 
 __all__ = ["gauss_jordan", "GJ_ZERO_SOLUTIONS", "GJ_SINGLE_SOLUTION",
            "GJ_SEVERAL_SOLUTIONS"]

@@ -10,7 +10,6 @@ jill-jênn vie, christoph dürr et louis abraham - 2014-2019
 
 
 # snip{
-from __future__ import annotations
 
 from math import (
     floor,

@@ -23,7 +23,6 @@ ainsi que p[i] = plus grand rayon d'un palindrome centré en i
 
 
 # snip{
-from __future__ import annotations
 
 
 def manacher(s):

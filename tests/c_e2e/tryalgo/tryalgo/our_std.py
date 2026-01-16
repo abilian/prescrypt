@@ -4,7 +4,6 @@ Our Standards
 
 Jill-Jênn Vie et Christoph Dürr - 2020
 """
-from __future__ import annotations
 
 from sys import stdin
 

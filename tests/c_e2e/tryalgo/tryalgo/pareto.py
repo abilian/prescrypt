@@ -4,7 +4,6 @@ Pareto sets
 
 jill-jenn vie et christoph durr - 2022
 """
-from __future__ import annotations
 
 from tryalgo.fenwick import FenwickMin
 

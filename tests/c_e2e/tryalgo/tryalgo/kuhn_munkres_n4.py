@@ -4,7 +4,6 @@ kuhn_munkres_n4
 
 jill-jênn vie et christoph dürr - 2014-2019
 """
-from __future__ import annotations
 
 __all__ = ["kuhn_munkres"]
 

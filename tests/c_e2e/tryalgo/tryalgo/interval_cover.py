@@ -4,7 +4,6 @@ Minimum interval cover
 
 jill-jênn vie et christoph dürr - 2014-2020
 """
-from __future__ import annotations
 
 from math import sqrt
 from sys import stdin

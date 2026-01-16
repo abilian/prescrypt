@@ -8,7 +8,6 @@ jill-jenn vie et christoph durr - 2014-2019
 
 # snip{
 # pylint: disable=unused-variable
-from __future__ import annotations
 
 
 def majority(L):

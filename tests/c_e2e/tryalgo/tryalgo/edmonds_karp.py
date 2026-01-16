@@ -4,7 +4,6 @@ Maximum flow by Edmonds-Karp
 
 jill-jênn vie et christoph dürr - 2015-2019
 """
-from __future__ import annotations
 
 from collections import deque
 

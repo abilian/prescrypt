@@ -9,7 +9,6 @@ footnote (1) here you can add parity check of cycle_len
 if only even cycles are requested
 """
 # pylint: disable=bad-whitespace, missing-docstring, multiple-statements
-from __future__ import annotations
 
 from collections import deque
 from sys import stdin

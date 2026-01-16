@@ -4,7 +4,6 @@ Breadth-first search, bfs and OurQueue
 
 christoph dürr - jill-jênn vie - 2015-2019
 """
-from __future__ import annotations
 
 from collections import deque
 

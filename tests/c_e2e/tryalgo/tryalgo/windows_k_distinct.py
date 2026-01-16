@@ -7,7 +7,6 @@ jill-jenn vie et christoph durr - 2014-2018
 
 
 # snip{
-from __future__ import annotations
 
 
 def windows_k_distinct(x, k):

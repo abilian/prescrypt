@@ -7,7 +7,6 @@ jill-jênn vie et christoph dürr - 2015-2019
 
 
 # snip{
-from __future__ import annotations
 
 
 def three_partition(x: list[int]) -> tuple[int, int, int] | None:

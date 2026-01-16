@@ -4,7 +4,6 @@ Dynamic Programming speeup tricks
 
 christoph dürr - jill-jênn vie - 2022
 """
-from __future__ import annotations
 
 
 def dyn_prog_Monge(W):

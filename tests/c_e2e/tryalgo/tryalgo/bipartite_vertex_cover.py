@@ -4,7 +4,6 @@ Bipartie vertex cover
 
 jill-jenn vie et christoph durr - 2014-2018
 """
-from __future__ import annotations
 
 from tryalgo.bipartite_matching import max_bipartite_matching
 

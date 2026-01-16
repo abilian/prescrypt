@@ -7,7 +7,6 @@ christoph dürr - 2016-2019
 
 
 # pylint: disable=line-too-long
-from __future__ import annotations
 
 
 def permutation_rank(p):

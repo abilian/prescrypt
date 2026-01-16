@@ -6,7 +6,6 @@ jill-jênn vie et christoph durr - 2014-2019
 """
 
 # snip{
-from __future__ import annotations
 
 from collections import deque
 

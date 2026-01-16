@@ -11,7 +11,6 @@ jill-jenn vie et christoph durr - 2014-2020
 # snip{ arithm_expr_eval
 # pylint: disable=redefined-outer-name
 # pylint: disable=inconsistent-return-statements
-from __future__ import annotations
 
 
 def arithm_expr_eval(cell, expr):

@@ -8,7 +8,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 
 # snip{ union_intervals
-from __future__ import annotations
 
 from collections import Counter
 

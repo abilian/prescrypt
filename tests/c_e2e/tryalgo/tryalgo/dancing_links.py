@@ -4,7 +4,6 @@ Exact set cover by the dancing links algorithm
 
 jill-jenn vie et christoph durr - 2014-2018
 """
-from __future__ import annotations
 
 __all__ = ["dancing_links"]
 

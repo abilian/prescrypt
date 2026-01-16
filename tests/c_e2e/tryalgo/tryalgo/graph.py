@@ -6,7 +6,6 @@ jill-jênn vie et christoph dürr - 2015-2019
 """
 # pylint: disable=bad-whitespace, line-too-long, missing-docstring
 # pylint: disable=dangerous-default-value, too-many-locals, too-many-branches
-from __future__ import annotations
 
 
 def readval(file, ty):

@@ -8,7 +8,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 # snip{
 # pylint: disable=bad-whitespace
-from __future__ import annotations
 
 
 def max_interval_intersec(S):

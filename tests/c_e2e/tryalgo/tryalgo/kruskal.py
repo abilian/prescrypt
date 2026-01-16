@@ -4,7 +4,6 @@ Minimum spanning tree by kruskal
 
 jill-jenn vie et christoph durr - 2014-2018
 """
-from __future__ import annotations
 
 import random
 from math import sqrt

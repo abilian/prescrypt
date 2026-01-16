@@ -7,7 +7,6 @@ jill-jenn vie et christoph durr - 2015-2019
 
 # http://www.wolframalpha.com/input/?i=nearest+prime+number+to+2**56
 # snip{ rabin_karp_roll_hash
-from __future__ import annotations
 
 PRIME = 72057594037927931     # < 2^{56}
 DOMAIN = 128

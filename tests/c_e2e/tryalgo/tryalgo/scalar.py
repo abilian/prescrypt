@@ -7,7 +7,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 
 # snip{
-from __future__ import annotations
 
 
 def min_scalar_prod(x, y):

@@ -4,7 +4,6 @@ Eulerian cycle
 
 jill-jênn vie et christoph dürr - 2015-2023
 """
-from __future__ import annotations
 
 import random
 

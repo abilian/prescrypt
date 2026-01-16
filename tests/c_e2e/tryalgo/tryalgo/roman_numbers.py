@@ -7,7 +7,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 
 # convert roman numbers
 # pylint: disable=bad-whitespace
-from __future__ import annotations
 
 roman = [['', 'I', 'II', 'III', 'IV',  'V',   'VI',  'VII', 'VIII', 'IX'],
          ['', 'X', 'XX', 'XXX', 'XL',  'L',   'LX',  'LXX', 'LXXX', 'XC'],

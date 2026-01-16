@@ -8,7 +8,6 @@ jill-jênn vie et christoph dürr - 2014-2019
 # Don't write a Trie class otherwise you cannot represent leaves with None
 
 # snip{
-from __future__ import annotations
 
 ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 

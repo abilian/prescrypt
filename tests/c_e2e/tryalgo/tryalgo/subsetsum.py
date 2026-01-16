@@ -7,7 +7,6 @@ jill-jenn vie et christoph durr - 2015-2018
 
 
 # snip{ subsetsum
-from __future__ import annotations
 
 
 def subset_sum(x, R):

@@ -4,7 +4,6 @@ Decompose DAG into a minimum number of chains
 
 jill-jenn vie et christoph durr - 2015-2018
 """
-from __future__ import annotations
 
 from tryalgo.bipartite_matching import max_bipartite_matching
 

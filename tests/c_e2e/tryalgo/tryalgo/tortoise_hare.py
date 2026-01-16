@@ -7,7 +7,6 @@ jill-jenn vie et christoph durr - 2023
 
 
 # snip{
-from __future__ import annotations
 
 
 def tortoise_hare(f, source=0):

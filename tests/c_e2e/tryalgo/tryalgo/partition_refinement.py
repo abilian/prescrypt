@@ -7,7 +7,6 @@ christoph dürr - 2016-2019
 log: 10/11/2016 modified to preserve class order after refinement
      15/11/2016 this was nonsense, moved back
 """
-from __future__ import annotations
 
 __all__ = ["PartitionRefinement"]
 

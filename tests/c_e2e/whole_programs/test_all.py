@@ -18,7 +18,6 @@ def get_source_files():
         yield str(src.name)
 
 
-@pytest.mark.skip(reason="E2E tests need various codegen fixes")
 @pytest.mark.parametrize("source_file", get_source_files())
 def test_module(source_file):
     src = PROGRAMS_DIR / source_file

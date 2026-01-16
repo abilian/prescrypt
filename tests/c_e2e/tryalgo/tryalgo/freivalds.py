@@ -6,7 +6,6 @@ jill-jênn vie et christoph dürr - 2015-2020
 """
 
 # snip{
-from __future__ import annotations
 
 from random import randint
 from sys import stdin

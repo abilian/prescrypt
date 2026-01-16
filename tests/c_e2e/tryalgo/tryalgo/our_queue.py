@@ -8,7 +8,6 @@ christoph dürr - jill-jênn vie - 2015-2019
 
 # snip{ OurQueue
 # pylint: disable=missing-docstring
-from __future__ import annotations
 
 
 class OurQueue:

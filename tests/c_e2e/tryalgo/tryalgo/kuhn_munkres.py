@@ -40,7 +40,6 @@ primal-dual algorithm:
 
 # snip{
 # pylint: disable=too-many-locals, too-many-branches
-from __future__ import annotations
 
 
 def kuhn_munkres(G, TOLERANCE=1e-6):

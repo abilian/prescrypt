@@ -4,7 +4,6 @@ Maximum flow by Ford-Fulkerson
 
 jill-jenn vie et christoph durr - 2014-2018
 """
-from __future__ import annotations
 
 from tryalgo.graph import add_reverse_arcs
 
