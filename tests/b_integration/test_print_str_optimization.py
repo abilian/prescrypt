@@ -3,6 +3,7 @@
 These tests verify that print() and str() skip the _pyfunc_str wrapper
 when the argument type is known to be a primitive (int, float, str, bool).
 """
+
 from __future__ import annotations
 
 import pytest
