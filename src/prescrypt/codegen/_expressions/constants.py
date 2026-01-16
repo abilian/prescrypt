@@ -24,6 +24,11 @@ def gen_constant(node: ast.Constant, codegen: CodeGen):
         case ast.Constant(None):
             return "null"
 
+        case ast.Constant(bytes(b)):
+            # Convert bytes to Uint8Array: b"hello" -> new Uint8Array([104, 101, 108, 108, 111])
+            byte_values = ", ".join(str(byte) for byte in b)
+            return f"new Uint8Array([{byte_values}])"
+
         case _:  # pragma: no cover
             msg = f"Unknown Constant: {node}"
             raise ValueError(msg)

@@ -32,7 +32,7 @@ def convert(node: ast.AST) -> my_ast.AST:
             case ast.AST():
                 kwargs[k] = convert(v)
                 children.append(kwargs[k])
-            case int() | float() | str() | bool() | None:
+            case int() | float() | str() | bool() | bytes() | None:
                 kwargs[k] = v
             case _:  # pragma: no cover
                 msg = f"Unknown type: {type(v)}"

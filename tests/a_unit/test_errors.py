@@ -152,15 +152,12 @@ class TestErrorInCompilation:
         assert err.location.line >= 1
         assert "interface" in err.message
 
-    def test_set_literal_error(self):
+    def test_set_literal_compiles(self):
         from prescrypt.compiler import py2js
 
-        with pytest.raises(JSError) as exc_info:
-            py2js("x = {1, 2, 3}")  # Sets not supported
-
-        err = exc_info.value
-        assert err.location is not None
-        assert "Set" in err.message
+        # Set literals are now supported
+        result = py2js("x = {1, 2, 3}")
+        assert "new Set(" in result
 
     def test_multiple_inheritance_error(self):
         from prescrypt.compiler import py2js

@@ -26,8 +26,9 @@ def gen_tuple(node: ast.Tuple, codegen: CodeGen):
 
 @gen_expr.register
 def gen_set(node: ast.Set, codegen: CodeGen):
-    msg = "Set literals are not supported in JavaScript"
-    raise JSError(msg, node)
+    """Generate Set literal: {1, 2, 3} -> new Set([1, 2, 3])"""
+    elements = [flatten(codegen.gen_expr(el)) for el in node.elts]
+    return f"new Set([{', '.join(elements)}])"
 
 
 @gen_expr.register
