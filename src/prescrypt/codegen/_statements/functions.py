@@ -13,13 +13,6 @@ def gen_functiondef(node: ast.FunctionDef, codegen: CodeGen):
     return fun_def.gen()
 
 
-# FIXME: should accept an expr.
-@gen_stmt.register
-def gen_lambda(node: ast.Lambda, codegen: CodeGen):
-    fun_def = LambdaDef(node, codegen)
-    return fun_def.gen()
-
-
 @gen_stmt.register
 def gen_asyncfunctiondef(node: ast.AsyncFunctionDef, codegen: CodeGen):
     fun_def = AsyncFunDef(node, codegen)
@@ -30,7 +23,7 @@ class BaseFunDef:
     _async = ""
 
     def __init__(self, node: ast.AST, codegen: CodeGen):
-        assert isinstance(node, (ast.FunctionDef, ast.Lambda, ast.AsyncFunctionDef))
+        assert isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
         self.node = node
         self.codegen = codegen
 
@@ -230,9 +223,4 @@ class AsyncFunDef(BaseFunDef):
     _async = "async "
 
     def __init__(self, node: ast.AsyncFunctionDef, codegen: CodeGen):
-        super().__init__(node, codegen)
-
-
-class LambdaDef(BaseFunDef):
-    def __init__(self, node: ast.Lambda, codegen: CodeGen):
         super().__init__(node, codegen)

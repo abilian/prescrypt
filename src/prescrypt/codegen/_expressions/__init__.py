@@ -6,6 +6,7 @@ from . import (
     constants,
     constructors,
     f_strings,
+    lambda_expr,
     misc,
     ops,
     variables,
@@ -29,7 +30,7 @@ from . import (
 + Attribute(expr value, identifier attr, expr_context ctx)
 + IfExp(expr test, expr body, expr orelse)
 
-- Lambda(arguments args, expr body)
++ Lambda(arguments args, expr body)
 
 - ListComp(expr elt, comprehension* generators)
 - SetComp(expr elt, comprehension* generators)

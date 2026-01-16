@@ -7,7 +7,10 @@ include = [
     "pyproject.toml",
 ]
 exclude = [
-    "tests/c_e2e",
+    # "tests/c_e2e",
+    "tests/c_e2e/*/programs",
+    "tests/c_e2e/tryalgo/tryalgo",
+    "tests/c_e2e/tryalgo/tests/xtest*",
 ]
 
 lint.select = [
@@ -103,4 +106,4 @@ lint.extend-ignore = [
 [lint.isort]
 combine-as-imports = true
 required-imports = ["from __future__ import annotations"]
-known-first-party = ["prezo"]
+known-first-party = ["prescrypt"]

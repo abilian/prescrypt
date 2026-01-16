@@ -84,6 +84,9 @@ class CodeGen:
         self._source_map = source_map
         self._output_line = 0  # Current line in generated output (0-indexed)
 
+        # Track exception variable for bare raise support
+        self._exception_var_stack: list[str] = []
+
         self._init_dispatch()
 
     @property
@@ -100,6 +103,19 @@ class CodeGen:
     def used_std_methods(self) -> set[str]:
         """Get the set of stdlib methods used during code generation."""
         return self._used_std_methods
+
+    def _push_exception_var(self, name: str) -> None:
+        """Enter an except block with this exception variable."""
+        self._exception_var_stack.append(name)
+
+    def _pop_exception_var(self) -> None:
+        """Exit an except block."""
+        if self._exception_var_stack:
+            self._exception_var_stack.pop()
+
+    def _get_exception_var(self) -> str | None:
+        """Get the current exception variable name, if in an except block."""
+        return self._exception_var_stack[-1] if self._exception_var_stack else None
 
     def get_declaration_kind(self, name: str) -> str:
         """Get the JS declaration keyword for a variable.

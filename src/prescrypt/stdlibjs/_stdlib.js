@@ -473,6 +473,52 @@ var _pyfunc_setattr = function (ob, name, value) {
   // nargs: 3
   ob[name] = value;
 };
+var _pyfunc_slice = function (obj, start, stop, step) {
+  // nargs: 4
+  // Slice with step: handles a[::2], a[::-1], a[1:5:2], etc.
+  const len = obj.length;
+
+  // Normalize step
+  if (step === 0) {
+    throw new ValueError("slice step cannot be zero");
+  }
+
+  // Normalize start
+  if (start === null) {
+    start = step < 0 ? len - 1 : 0;
+  } else if (start < 0) {
+    start = Math.max(0, len + start);
+  } else {
+    start = Math.min(start, step < 0 ? len - 1 : len);
+  }
+
+  // Normalize stop
+  if (stop === null) {
+    stop = step < 0 ? -1 : len;
+  } else if (stop < 0) {
+    stop = Math.max(-1, len + stop);
+  } else {
+    stop = Math.min(stop, len);
+  }
+
+  // Collect elements
+  const result = [];
+  if (step > 0) {
+    for (let i = start; i < stop; i += step) {
+      result.push(obj[i]);
+    }
+  } else {
+    for (let i = start; i > stop; i += step) {
+      result.push(obj[i]);
+    }
+  }
+
+  // Return same type as input
+  if (typeof obj === "string") {
+    return result.join("");
+  }
+  return result;
+};
 var _pyfunc_sorted = function (iter, key, reverse) {
   // nargs: 1 2 3
   if (typeof iter === "object" && !Array.isArray(iter)) {

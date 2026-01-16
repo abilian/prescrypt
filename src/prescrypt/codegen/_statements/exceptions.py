@@ -15,9 +15,14 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
 
     exc_node, cause_node = node.exc, node.cause
 
+    # Bare raise - re-raise current exception
     if exc_node is None:
-        msg = "When raising, provide an error object"
-        raise JSError(msg, node)
+        exc_var = codegen._get_exception_var()
+        if exc_var is None:
+            msg = "bare 'raise' outside of except clause"
+            raise JSError(msg, node)
+        return [codegen.lf(f"throw {exc_var};")]
+
     if cause_node is not None:
         msg = 'When raising, "cause" is not supported'
         raise JSError(msg, cause_node)
@@ -77,26 +82,37 @@ def gen_try(node: ast.Try, codegen: CodeGen):
     orelse_nodes = node.orelse
     finalbody_nodes = node.finalbody
 
-    if orelse_nodes:
-        msg = "No support for try-else clause"
-        raise JSError(msg, orelse_nodes[0])
-
     code = []
+    has_else = bool(orelse_nodes)
+
+    # If there's an else clause, we need a flag to track if exception occurred
+    exc_flag = None
+    if has_else:
+        exc_flag = f"_no_exc_{codegen._indent}"
+        code.append(codegen.lf(f"let {exc_flag} = true;"))
 
     # Try
-    if True:
-        code.append(codegen.lf("try {"))
-        codegen.indent()
-        for n in body_nodes:
-            code += codegen.gen_stmt(n)
-        codegen.dedent()
-        code.append(codegen.lf("}"))
+    code.append(codegen.lf("try {"))
+    codegen.indent()
+    for n in body_nodes:
+        code += codegen.gen_stmt(n)
+    codegen.dedent()
+    code.append(codegen.lf("}"))
 
     # Except
     if handler_nodes:
         codegen.indent()
         err_name = "err_%i" % codegen._indent
+
+        # Track exception variable for bare raise support
+        codegen._push_exception_var(err_name)
+
         code.append(" catch(%s) {" % err_name)
+
+        # If there's an else clause, set the flag to false when entering catch
+        if has_else:
+            code.append(codegen.lf(f"{exc_flag} = false;"))
+
         subcode = []
         for i, handler in enumerate(handler_nodes):
             if i == 0:
@@ -110,8 +126,18 @@ def gen_try(node: ast.Try, codegen: CodeGen):
         if subcode and subcode[0].startswith("if"):
             code.append(" else { throw %s; }" % err_name)
 
+        codegen._pop_exception_var()
         codegen.dedent()
         code.append(codegen.lf("}"))  # end catch
+
+    # Else clause - runs if no exception was raised
+    if has_else:
+        code.append(codegen.lf(f"if ({exc_flag}) {{"))
+        codegen.indent()
+        for n in orelse_nodes:
+            code += codegen.gen_stmt(n)
+        codegen.dedent()
+        code.append(codegen.lf("}"))
 
     # Finally
     if finalbody_nodes:

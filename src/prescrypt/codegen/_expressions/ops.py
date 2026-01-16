@@ -63,9 +63,14 @@ def _strip_js_ffi_prefix(node: ast.AST, codegen: CodeGen) -> str:
 
 @gen_expr.register
 def gen_subscript(node: ast.Subscript, codegen: CodeGen):
-    # TODO: handle slice
     value, slice_node = node.value, node.slice
     js_value = flatten(codegen.gen_expr(value))
+
+    # Handle slice expressions: a[1:5], a[:], a[::2]
+    if isinstance(slice_node, ast.Slice):
+        return gen_slice_expr(js_value, slice_node, codegen)
+
+    # Handle regular index access
     js_slice = flatten(codegen.gen_expr(slice_node))
 
     # Check context: Load (reading) vs Store (writing) vs Del (deleting)
@@ -76,6 +81,38 @@ def gen_subscript(node: ast.Subscript, codegen: CodeGen):
     else:
         # For Load (and Del) context, use op_getitem for __getitem__ support
         return codegen.call_std_function("op_getitem", [js_value, js_slice])
+
+
+def gen_slice_expr(js_value: str, slice_node: ast.Slice, codegen: CodeGen) -> str:
+    """Generate slice expression: a[1:5], a[:], a[::2], etc."""
+    lower = slice_node.lower
+    upper = slice_node.upper
+    step = slice_node.step
+
+    # Optimize: no step, use native .slice()
+    if step is None:
+        if lower is None and upper is None:
+            # a[:] -> a.slice()
+            return f"{js_value}.slice()"
+        elif lower is None:
+            # a[:5] -> a.slice(0, 5)
+            js_upper = flatten(codegen.gen_expr(upper))
+            return f"{js_value}.slice(0, {js_upper})"
+        elif upper is None:
+            # a[1:] -> a.slice(1)
+            js_lower = flatten(codegen.gen_expr(lower))
+            return f"{js_value}.slice({js_lower})"
+        else:
+            # a[1:5] -> a.slice(1, 5)
+            js_lower = flatten(codegen.gen_expr(lower))
+            js_upper = flatten(codegen.gen_expr(upper))
+            return f"{js_value}.slice({js_lower}, {js_upper})"
+
+    # Step present: use runtime helper
+    js_lower = flatten(codegen.gen_expr(lower)) if lower else "null"
+    js_upper = flatten(codegen.gen_expr(upper)) if upper else "null"
+    js_step = flatten(codegen.gen_expr(step))
+    return codegen.call_std_function("slice", [js_value, js_lower, js_upper, js_step])
 
 
 @gen_expr.register
