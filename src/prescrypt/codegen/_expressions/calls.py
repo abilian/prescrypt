@@ -39,6 +39,20 @@ class FuncCall:
                 # a method call.
                 return self.gen_method_call(value, method_name, args, keywords)
 
+            case ast.Call() | ast.Subscript() | ast.IfExp() | ast.Lambda():
+                # Callable is the result of another expression:
+                # - f(x)(y) - chained call
+                # - items[0]() - subscript call
+                # - (foo if cond else bar)() - conditional call
+                # - (lambda x: x)() - lambda call
+                js_func = flatten(self.codegen.gen_expr(func))
+                return f"({js_func}){self.gen_args()}"
+
+            case ast.Constant():
+                # Calling a literal like 1() - valid Python that raises TypeError at runtime
+                js_func = flatten(self.codegen.gen_expr(func))
+                return f"({js_func}){self.gen_args()}"
+
             case _:
                 msg = f"gen_call not implemented for {func!r}"
                 raise NotImplementedError(msg)
