@@ -5,8 +5,14 @@ class A:
     def __init__(self):
         self.a = 1
 
+    def f(self, x):
+        return x * 2
+
+    def mutate(self):
+        self.a += 1
+
 a = A()
 print(a.a)
-
-# FIXME: not working
-# print(A().f(1))
+print(a.f(1))
+a.mutate()
+print(a.a)
