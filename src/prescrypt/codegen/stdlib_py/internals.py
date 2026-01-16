@@ -9,7 +9,8 @@ def function_this_is_js(compiler, args):
     # directly. This replacement with a string is when this_is_js()
     # is used outside an if statement.
     if len(args) != 0:
-        raise JSError("this_is_js() expects zero arguments.")
+        msg = "this_is_js() expects zero arguments."
+        raise JSError(msg)
     return '"this_is_js()"'
 
 
@@ -18,10 +19,11 @@ def function_RawJS(compiler, args):
         return None  # maybe RawJS is a thing
 
     if not isinstance(args[0], ast.Str):
-        raise JSError(
+        msg = (
             "RawJS needs a verbatim string (use multiple "
             "args to bypass PScript's RawJS)."
         )
+        raise JSError(msg)
 
     lines = RawJS._str2lines(node.arg_nodes[0].value.strip())
     nl = "\n" + (compiler._indent * 4) * " "

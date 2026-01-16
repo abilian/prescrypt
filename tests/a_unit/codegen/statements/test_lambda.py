@@ -9,6 +9,6 @@ LAMBDAS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", LAMBDAS)
+@pytest.mark.parametrize(("code", "expected"), LAMBDAS)
 def test_lambda(code, expected):
     check_gen(code, expected)

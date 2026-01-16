@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import ast as _ast
 import operator
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
@@ -352,14 +353,11 @@ class ConstantFolder(ast.NodeTransformer):
         try:
             return self._make_constant(op_func(left, right), node)
         except ZeroDivisionError:
-            raise JSError(
-                f"Division by zero at line {getattr(node, 'lineno', '?')}: {left} / {right}"
-            )
+            msg = f"Division by zero at line {getattr(node, 'lineno', '?')}: {left} / {right}"
+            raise JSError(msg)
         except OverflowError:
-            raise JSError(
-                f"Numeric overflow at line {getattr(node, 'lineno', '?')}: {left} {type(node.op).__name__} {right}"
-            )
+            msg = f"Numeric overflow at line {getattr(node, 'lineno', '?')}: {left} {type(node.op).__name__} {right}"
+            raise JSError(msg)
         except ValueError as err:
-            raise JSError(
-                f"Invalid operation at line {getattr(node, 'lineno', '?')}: {err}"
-            )
+            msg = f"Invalid operation at line {getattr(node, 'lineno', '?')}: {err}"
+            raise JSError(msg)

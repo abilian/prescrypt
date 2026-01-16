@@ -25,6 +25,8 @@ lint.extend-ignore = [
     "TD",
     "TC",
     "DOC",
+    "PTH",
+    "FBT",
 
     # False positive
     "S101", # Use of `assert` detected
@@ -36,75 +38,52 @@ lint.extend-ignore = [
     "RUF022", # 	[*] unsorted-dunder-all
     "FURB110",
     "PLW1514",
+    "SLF001", # 	[ ] private-member-access
 
     # Fix later (or not)
-    "FBT001", # Boolean positional arg - common in widget/Textual APIs
-    "FBT002", # Boolean default arg - common in widget/Textual APIs
-    "FBT003", # Boolean positional value - common with reactive()
-    "ARG002", # Unused argument - common in watch methods/event handlers
-    "PLR0913", # Too many arguments - export functions need them
-    "S603", # subprocess call - intentional for $EDITOR
-    "BLE001", # Blind exception - acceptable for user-facing error handling
-    "SLF001", # Private member access - accessing own class's private attrs
-    "PLW2901", # Loop variable overwritten - common strip() pattern
-    "ANN003", # Missing **kwargs annotation - common in widget subclasses
-    "ANN001", # Missing arg annotation - event handlers
-    "PTH108", # os.unlink -> Path.unlink - contextlib.suppress pattern
-    "PTH123", # open() -> Path.open() - binary file writing
-    "S110", # try-except-pass - acceptable for config loading with defaults
-    "PLW0603", # global statement - used for singleton config/state
-    "TRY300", # return in try block - cleaner for import checks
-    "PERF401", # list comprehension - explicit append loop is clearer
-    #
     "TRY003", # 	[ ] raise-vanilla-args
-    "E501", #   	[ ] line-too-long
-    "E712", #   	[ ] true-false-comparison
-    "EM101", #  	[ ] raw-string-in-exception
-    "F401", #   	[-] unused-import
-    "ARG001", # 	[ ] unused-function-argument
     "RET505", # 	[*] superfluous-else-return
-    "EM102", #  	[ ] f-string-in-exception
-    "SIM102", # 	[ ] collapsible-if
+    "ARG001", # 	[ ] unused-function-argument
+    "E501", #   	[ ] line-too-long
+    "F401", #   	[-] unused-import
     "UP031", #  	[ ] printf-string-formatting
-    "FIX002", # 	[ ] line-contains-todo
-    "PT006", #  	[ ] pytest-parametrize-names-wrong-type
     "F841", #   	[ ] unused-variable
-    "PGH004", # 	[ ] blanket-noqa
-    "PLC0415", #	[ ] import-outside-top-level
     "C901", #   	[ ] complex-structure
-    "FIX001", # 	[ ] line-contains-fixme
-    "RUF005", # 	[ ] collection-literal-concatenation
-    "E721", #   	[ ] type-comparison
-    "A001", #   	[ ] builtin-variable-shadowing
-    "B904", #   	[ ] raise-without-from-inside-except
-    "FURB188", #	[*] slice-to-remove-prefix-or-suffix
-    "RUF059", # 	[ ] unused-unpacked-variable
-    "UP035", #  	[-] deprecated-import
-    "A002", #   	[ ] builtin-argument-shadowing
-    "B905", #   	[ ] zip-without-explicit-strict
-    "F821", #   	[ ] undefined-name
-    "PT018", #  	[ ] pytest-composite-assertion
-    "RUF012", # 	[ ] mutable-class-default
-    "S605", #   	[ ] start-process-with-a-shell
+    "PGH004", # 	[ ] blanket-noqa
+    "FIX002", # 	[ ] line-contains-todo
     "SIM108", # 	[ ] if-else-block-instead-of-if-exp
-    "B010", #   	[*] set-attr-with-constant
-    "B016", #   	[ ] raise-literal
+    "ARG002", # 	[ ] unused-method-argument
+    "E721", #   	[ ] type-comparison
+    "RUF005", # 	[ ] collection-literal-concatenation
+    "A001", #   	[ ] builtin-variable-shadowing
+    "PLW2901", #	[ ] redefined-loop-name
+    "B904", #   	[ ] raise-without-from-inside-except
+    "B905", #   	[ ] zip-without-explicit-strict
+    "FURB188", #	[*] slice-to-remove-prefix-or-suffix
+    "PERF401", #	[ ] manual-list-comprehension
+    "PLC0415", #	[ ] import-outside-top-level
+    "A002", #   	[ ] builtin-argument-shadowing
+    "F821", #   	[ ] undefined-name
+    "S605", #   	[ ] start-process-with-a-shell
+    "SIM102", # 	[ ] collapsible-if
+    "BLE001", # 	[ ] blind-except
     "C416", #   	[ ] unnecessary-comprehension
-    "E711", #   	[ ] none-comparison
+    "FIX001", # 	[ ] line-contains-fixme
     "PIE810", # 	[ ] multiple-starts-ends-with
     "PLC0206", #	[ ] dict-index-missing-items
-    "PTH122", # 	[ ] os-path-splitext
-    "RET506", # 	[*] superfluous-else-raise
+    "PT018", #  	[ ] pytest-composite-assertion
     "RUF100", # 	[*] unused-noqa
     "S306", #   	[ ] suspicious-mktemp-usage
+    "S603", #   	[ ] subprocess-without-shell-equals-true
     "S607", #   	[ ] start-process-with-partial-path
     "SIM105", # 	[ ] suppressible-exception
     "UP007", #  	[ ] non-pep604-annotation-union
-    "UP037", #  	[*] quoted-annotation
 ]
 
 [lint.extend-per-file-ignores]
 "tests/**/*.py" = [
+    "E711",
+    "E712",
     "E501", # line too long in test assertions
     "S311", #  	[ ] suspicious-non-cryptographic-random-usage
     "S307", #  	[ ] suspicious-eval-usage

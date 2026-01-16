@@ -38,7 +38,7 @@ FUNC_CALLS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", FUNC_CALLS)
+@pytest.mark.parametrize(("code", "expected"), FUNC_CALLS)
 def test_func_call(code, expected):
     module = ast.parse(code)
     codegen = CodeGen(module)
@@ -47,6 +47,6 @@ def test_func_call(code, expected):
     assert func_call.gen() == expected
 
 
-@pytest.mark.parametrize("code,expected", FUNC_CALLS)
+@pytest.mark.parametrize(("code", "expected"), FUNC_CALLS)
 def test_func_call_2(code, expected):
     check_gen(code, expected)

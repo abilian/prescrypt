@@ -133,13 +133,15 @@ class Binder(Visitor):
             case ast.Store():
                 # Assigning to a variable
                 if name in builtin_names:
-                    raise ValueError(f"cannot assign to '{name}'")
+                    msg = f"cannot assign to '{name}'"
+                    raise ValueError(msg)
                 self.add_var(name)
 
             case ast.Del():
                 # Deleting a variable
                 if name in builtin_names:
-                    raise ValueError(f"cannot delete '{name}'")
+                    msg = f"cannot delete '{name}'"
+                    raise ValueError(msg)
 
     def visit_arg(self, node: ast.arg):
         """Register function argument as a variable."""
@@ -189,7 +191,7 @@ class Binder(Visitor):
             if module_scope and name in module_scope.vars:
                 module_scope.vars[name].is_const = False
 
-    def _get_module_scope(self) -> "Scope | None":
+    def _get_module_scope(self) -> Scope | None:
         """Find the module (root) scope."""
         scope = self.scope
         while scope.parent is not None:
@@ -201,10 +203,12 @@ class Binder(Visitor):
         for name in node.names:
             # Verify the name exists in an enclosing scope
             if self.scope.parent is None:
-                raise SyntaxError("nonlocal declaration not allowed at module level")
+                msg = "nonlocal declaration not allowed at module level"
+                raise SyntaxError(msg)
             enclosing_var = self.scope.parent.search(name)
             if enclosing_var is None:
-                raise SyntaxError(f"no binding for nonlocal '{name}' found")
+                msg = f"no binding for nonlocal '{name}' found"
+                raise SyntaxError(msg)
             self.scope.vars[name] = Variable(name=name, type="nonlocal")
 
             # Mark the enclosing variable as mutable since it can be modified
@@ -261,13 +265,15 @@ class Binder(Visitor):
     def visit_Continue(self, node: ast.Continue):
         """Continue must be inside a loop."""
         if self.loop is None:
-            raise SyntaxError("'continue' not properly in loop")
+            msg = "'continue' not properly in loop"
+            raise SyntaxError(msg)
         node._definition = self.loop
 
     def visit_Break(self, node: ast.Break):
         """Break must be inside a loop."""
         if self.loop is None:
-            raise SyntaxError("'break' not properly in loop")
+            msg = "'break' not properly in loop"
+            raise SyntaxError(msg)
         node._definition = self.loop
 
     #

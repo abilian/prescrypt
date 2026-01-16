@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen
-from prescrypt.codegen.type_utils import get_type, is_numeric, is_primitive
+from prescrypt.codegen.type_utils import get_type, is_numeric
 from prescrypt.codegen.utils import unify
 from prescrypt.exceptions import JSError
 from prescrypt.front.passes.types import Bool, String
@@ -28,7 +28,8 @@ def function_str(codegen: CodeGen, args, _kwargs):
                 # Unknown or complex type: use _pyfunc_str for Python-style output
                 return codegen.call_std_function("str", args)
         case _:
-            raise JSError("str() at most one argument")
+            msg = "str() at most one argument"
+            raise JSError(msg)
 
 
 def function_bool(codegen: CodeGen, args, _kwargs):
@@ -39,7 +40,8 @@ def function_bool(codegen: CodeGen, args, _kwargs):
             js_expr = codegen.call_std_function("truthy", args)
             return f"!!({js_expr})"
         case _:
-            raise JSError("bool() at most one argument")
+            msg = "bool() at most one argument"
+            raise JSError(msg)
 
 
 def function_int(codegen: CodeGen, args, _kwargs):
@@ -50,7 +52,8 @@ def function_int(codegen: CodeGen, args, _kwargs):
             js_arg = unify(codegen.gen_expr(arg))
             return f"parseInt({js_arg})"
         case _:
-            raise JSError("int() at most one argument")
+            msg = "int() at most one argument"
+            raise JSError(msg)
 
 
 def function_float(codegen: CodeGen, args, _kwargs):
@@ -61,7 +64,8 @@ def function_float(codegen: CodeGen, args, _kwargs):
             js_arg = unify(codegen.gen_expr(arg))
             return f"parseFloat({js_arg})"
         case _:
-            raise JSError("float() at most one argument")
+            msg = "float() at most one argument"
+            raise JSError(msg)
 
 
 def function_dict(codegen: CodeGen, args, kwargs):
@@ -77,7 +81,8 @@ def function_dict(codegen: CodeGen, args, kwargs):
             return codegen.call_std_function("dict", args)
         case _, _:
             # TODO
-            raise JSError("dict() takes at most one argument")
+            msg = "dict() takes at most one argument"
+            raise JSError(msg)
 
 
 def function_list(codegen: CodeGen, args, _kwargs):

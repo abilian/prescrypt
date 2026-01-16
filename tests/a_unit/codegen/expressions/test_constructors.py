@@ -19,6 +19,6 @@ CONSTRUCTORS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", CONSTRUCTORS)
+@pytest.mark.parametrize(("code", "expected"), CONSTRUCTORS)
 def test_constructors(code, expected):
     check_gen(code, expected)

@@ -92,7 +92,8 @@ def gen_unary_op(node: ast.UnaryOp, codegen: CodeGen) -> str | list:
             right = unify(codegen.gen_expr(operand))
             return [js_op, right]
         case _:  # pragma: no cover
-            raise ValueError(f"Unknown unary operator {op!r} (should not happen)")
+            msg = f"Unknown unary operator {op!r} (should not happen)"
+            raise ValueError(msg)
 
 
 @gen_expr.register

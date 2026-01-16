@@ -35,7 +35,8 @@ def convert(node: ast.AST) -> my_ast.AST:
             case int() | float() | str() | bool() | None:
                 kwargs[k] = v
             case _:  # pragma: no cover
-                raise ValueError(f"Unknown type: {type(v)}")
+                msg = f"Unknown type: {type(v)}"
+                raise ValueError(msg)
 
     new_node = cls(**kwargs)
 

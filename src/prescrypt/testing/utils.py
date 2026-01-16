@@ -4,7 +4,7 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 import quickjs
 

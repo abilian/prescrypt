@@ -16,7 +16,7 @@ EXPRESSIONS = _EXPRESSIONS + [
 
 @pytest.mark.parametrize("expression", EXPRESSIONS)
 def test_expressions(expression: str):
-    tree, binder = parse(expression)
+    _tree, _binder = parse(expression)
 
 
 def test_globals():
@@ -29,7 +29,7 @@ def test_globals():
             pass
         """
     )
-    tree, binder = parse(prog)
+    _tree, binder = parse(prog)
 
     # Global scope
     g_scope = binder.scope

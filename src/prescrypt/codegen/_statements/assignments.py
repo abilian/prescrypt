@@ -15,7 +15,8 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
     js_value = flatten(codegen.gen_expr(value_node))
 
     if len(target_nodes) > 1:
-        raise JSError("Multiple assignment not (yet) supported", node)
+        msg = "Multiple assignment not (yet) supported"
+        raise JSError(msg, node)
 
     target_node = target_nodes[0]
 
@@ -60,7 +61,8 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
             return f"{codegen.call_std_function('op_setitem', [js_obj, js_key, js_value])};"
 
         case _:
-            raise NotImplementedError(f"gen_assign not implemented for {node!r}")
+            msg = f"gen_assign not implemented for {node!r}"
+            raise NotImplementedError(msg)
 
     #
     # code = [codegen.lf()]

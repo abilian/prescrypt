@@ -16,9 +16,11 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
     exc_node, cause_node = node.exc, node.cause
 
     if exc_node is None:
-        raise JSError("When raising, provide an error object", node)
+        msg = "When raising, provide an error object"
+        raise JSError(msg, node)
     if cause_node is not None:
-        raise JSError('When raising, "cause" is not supported', cause_node)
+        msg = 'When raising, "cause" is not supported'
+        raise JSError(msg, cause_node)
     err_node = exc_node
 
     # Get cls and msg
@@ -76,7 +78,8 @@ def gen_try(node: ast.Try, codegen: CodeGen):
     finalbody_nodes = node.finalbody
 
     if orelse_nodes:
-        raise JSError("No support for try-else clause", orelse_nodes[0])
+        msg = "No support for try-else clause"
+        raise JSError(msg, orelse_nodes[0])
 
     code = []
 

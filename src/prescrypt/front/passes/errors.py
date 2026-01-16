@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from prescrypt.exceptions import PrescryptError, SemanticError, SourceLocation
+from prescrypt.exceptions import PrescryptError, SemanticError
 
 if TYPE_CHECKING:
     from prescrypt.front import ast

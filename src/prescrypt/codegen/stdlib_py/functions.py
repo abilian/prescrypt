@@ -5,7 +5,6 @@ from prescrypt.codegen.type_utils import get_type, is_primitive
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
-from prescrypt.front.passes.types import String
 
 from .constructors import function_str
 
@@ -15,7 +14,8 @@ from .constructors import function_str
 #
 def function_isinstance(codegen: CodeGen, args, kwargs):
     if len(args) != 2:
-        raise JSError("isinstance() expects two arguments.")
+        msg = "isinstance() expects two arguments."
+        raise JSError(msg)
 
     ob = unify(codegen.gen_expr(args[0]))
     cls = unify(codegen.gen_expr(args[1]))
@@ -73,14 +73,16 @@ def function_isinstance(codegen: CodeGen, args, kwargs):
         # http://tobyho.com/2011/01/28/checking-types-in-javascript/
         cmp = unify(cls)
         if cmp[0] == "(":
-            raise JSError("isinstance() can only compare to simple types")
+            msg = "isinstance() can only compare to simple types"
+            raise JSError(msg)
         return [ob, " instanceof ", cmp]
 
 
 def function_issubclass(codegen: CodeGen, args, kwargs):
     # issubclass only needs to work on custom classes
     if len(args) != 2:
-        raise JSError("issubclass() expects two arguments.")
+        msg = "issubclass() expects two arguments."
+        raise JSError(msg)
 
     cls1 = unify(codegen.gen_expr(args[0]))
     cls2 = unify(codegen.gen_expr(args[1]))
@@ -98,9 +100,11 @@ def function_print(codegen: CodeGen, args, kwargs):
         elif kw.arg == "end":
             end = flatten(codegen.gen_expr(kw.value))
         elif kw.arg in ("file", "flush"):
-            raise JSError("print() file and flush args not supported")
+            msg = "print() file and flush args not supported"
+            raise JSError(msg)
         else:
-            raise JSError(f"Invalid argument for print(): {kw.arg!r}")
+            msg = f"Invalid argument for print(): {kw.arg!r}"
+            raise JSError(msg)
 
     # Combine args - optimize for primitive types
     js_args = []
@@ -130,13 +134,15 @@ def function_len(codegen: CodeGen, args, kwargs):
             # Use op_len runtime function which checks for __len__ method
             return codegen.call_std_function("op_len", [arg])
         case _:
-            raise JSError("len() needs exactly one argument")
+            msg = "len() needs exactly one argument"
+            raise JSError(msg)
 
 
 def function_max(codegen: CodeGen, args, kwargs):
     match args:
         case []:
-            raise JSError("max() needs at least one argument")
+            msg = "max() needs at least one argument"
+            raise JSError(msg)
         case [arg]:
             js_arg = flatten(codegen.gen_expr(arg))
             return f"Math.max.apply(null, {js_arg})"
@@ -148,7 +154,8 @@ def function_max(codegen: CodeGen, args, kwargs):
 def function_min(codegen: CodeGen, args, kwargs):
     match args:
         case []:
-            raise JSError("min() needs at least one argument")
+            msg = "min() needs at least one argument"
+            raise JSError(msg)
         case [arg]:
             js_arg = flatten(codegen.gen_expr(arg))
             return f"Math.min.apply(null, {js_arg})"
@@ -163,7 +170,8 @@ def function_callable(codegen: CodeGen, args, kwargs):
             js_arg = unify(codegen.gen_expr(arg))
             return f'(typeof {js_arg} === "function")'
         case _:
-            raise JSError("callable() needs exactly one argument")
+            msg = "callable() needs exactly one argument"
+            raise JSError(msg)
 
 
 def function_chr(codegen: CodeGen, args, kwargs) -> str:
@@ -172,7 +180,8 @@ def function_chr(codegen: CodeGen, args, kwargs) -> str:
             js_arg = flatten(codegen.gen_expr(arg))
             return f"String.fromCharCode({js_arg})"
         case _:
-            raise JSError("chr() needs exactly one argument")
+            msg = "chr() needs exactly one argument"
+            raise JSError(msg)
 
 
 def function_ord(codegen: CodeGen, args, kwargs) -> str:
@@ -181,7 +190,8 @@ def function_ord(codegen: CodeGen, args, kwargs) -> str:
             js_arg = flatten(codegen.gen_expr(arg))
             return f"{js_arg}.charCodeAt(0)"
         case _:
-            raise JSError("ord() exactly one argument")
+            msg = "ord() exactly one argument"
+            raise JSError(msg)
 
 
 def function_range(codegen: CodeGen, args, kwargs):
@@ -195,12 +205,14 @@ def function_range(codegen: CodeGen, args, kwargs):
         case [_a, _b, _c]:
             return codegen.call_std_function("range", args)
         case _:
-            raise JSError("range() needs 1, 2 or 3 arguments")
+            msg = "range() needs 1, 2 or 3 arguments"
+            raise JSError(msg)
 
 
 def function_sorted(codegen: CodeGen, args, kwargs):
     if len(args) != 1:
-        raise JSError("sorted() needs one argument")
+        msg = "sorted() needs one argument"
+        raise JSError(msg)
 
     key, reverse = "undefined", ast.Constant(False)
     for kw in kwargs:
@@ -209,7 +221,8 @@ def function_sorted(codegen: CodeGen, args, kwargs):
         elif kw.arg == "reverse":
             reverse = kw.value
         else:
-            raise JSError(f"Invalid keyword argument for sorted: {kw.arg!r}")
+            msg = f"Invalid keyword argument for sorted: {kw.arg!r}"
+            raise JSError(msg)
 
     return codegen.call_std_function("sorted", [args[0], key, reverse])
 
@@ -221,7 +234,8 @@ def function_super(codegen: CodeGen, args, kwargs):
     that binds methods to the current instance.
     """
     if kwargs:
-        raise JSError("super() does not accept keyword arguments")
+        msg = "super() does not accept keyword arguments"
+        raise JSError(msg)
 
     match args:
         case []:
@@ -246,4 +260,5 @@ def function_super(codegen: CodeGen, args, kwargs):
                 "super_proxy", [js_obj, f"{js_cls}.prototype"]
             )
         case _:
-            raise JSError("super() takes 0 or 2 arguments")
+            msg = "super() takes 0 or 2 arguments"
+            raise JSError(msg)

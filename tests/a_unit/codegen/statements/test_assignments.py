@@ -14,6 +14,6 @@ ASSIGNMENTS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", ASSIGNMENTS)
+@pytest.mark.parametrize(("code", "expected"), ASSIGNMENTS)
 def test_assignments(code, expected):
     check_gen(code, expected)

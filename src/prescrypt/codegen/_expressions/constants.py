@@ -25,4 +25,5 @@ def gen_constant(node: ast.Constant, codegen: CodeGen):
             return "null"
 
         case _:  # pragma: no cover
-            raise ValueError(f"Unknown Constant: {node}")
+            msg = f"Unknown Constant: {node}"
+            raise ValueError(msg)

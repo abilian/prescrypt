@@ -61,7 +61,8 @@ def decode_vlq(encoded: str) -> tuple[int, str]:
                 result = result >> 1
             return result, encoded[i + 1 :]
 
-    raise ValueError("Invalid VLQ: unexpected end of string")
+    msg = "Invalid VLQ: unexpected end of string"
+    raise ValueError(msg)
 
 
 @dataclass

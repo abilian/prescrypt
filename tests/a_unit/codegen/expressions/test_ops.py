@@ -63,6 +63,6 @@ OPS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", OPS)
+@pytest.mark.parametrize(("code", "expected"), OPS)
 def test_ops(code, expected):
     check_gen(code, expected)

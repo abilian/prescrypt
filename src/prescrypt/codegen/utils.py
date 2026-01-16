@@ -42,4 +42,5 @@ def flatten(js_code: list | str, sep="") -> str:
             assert x[0] != "\nA"
             return sep.join(flatten(s) for s in x)
         case _:
-            raise ValueError(f"Unexpected type: {type(js_code)}")
+            msg = f"Unexpected type: {type(js_code)}"
+            raise ValueError(msg)

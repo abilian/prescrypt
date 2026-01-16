@@ -13,6 +13,6 @@ IFS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", IFS)
+@pytest.mark.parametrize(("code", "expected"), IFS)
 def test_if(code, expected):
     check_gen(code, expected)

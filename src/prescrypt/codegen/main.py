@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from functools import singledispatch
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 from prescrypt.constants import RETURNING_BOOL
 from prescrypt.exceptions import JSError
@@ -19,12 +20,14 @@ if TYPE_CHECKING:
 
 @singledispatch
 def gen_expr(node: ast.expr, gen: CodeGen) -> str | None:
-    raise NotImplementedError(f"gen_expr not implemented for {node!r}")
+    msg = f"gen_expr not implemented for {node!r}"
+    raise NotImplementedError(msg)
 
 
 @singledispatch
 def gen_stmt(node: ast.stmt, gen: CodeGen) -> str:
-    raise NotImplementedError(f"gen_stmt not implemented for {node!r}")
+    msg = f"gen_stmt not implemented for {node!r}"
+    raise NotImplementedError(msg)
 
 
 class CodeGen:
@@ -320,10 +323,11 @@ class CodeGen:
         # Get matches
         matches = list(re.finditer(r"%[0-9.+#-]*[srdeEfgGioxXc]", left_str))
         if len(matches) != len(value_nodes):
-            raise JSError(
+            msg = (
                 "In string formatting, number of placeholders "
                 "does not match number of replacements"
             )
+            raise JSError(msg)
 
         # Format
         parts = []

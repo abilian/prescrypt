@@ -153,7 +153,8 @@ class Desugarer(ast.NodeTransformer):
             case ast.Not | ast.Invert:
                 return node
             case _:  # pragma: no cover
-                raise ValueError(f"UnaryOp {node.op} should not exist")
+                msg = f"UnaryOp {node.op} should not exist"
+                raise ValueError(msg)
 
     @rewriter
     def visit_BoolOp(self, node: ast.BoolOp):

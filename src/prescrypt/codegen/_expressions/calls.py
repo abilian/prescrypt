@@ -40,7 +40,8 @@ class FuncCall:
                 return self.gen_method_call(value, method_name, args, keywords)
 
             case _:
-                raise NotImplementedError(f"gen_call not implemented for {func!r}")
+                msg = f"gen_call not implemented for {func!r}"
+                raise NotImplementedError(msg)
 
     def gen_call_named(self, func_name, args, keywords):
         stdlib_py = stdlib

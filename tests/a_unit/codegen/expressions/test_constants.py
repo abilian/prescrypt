@@ -15,6 +15,6 @@ CONSTANTS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", CONSTANTS)
+@pytest.mark.parametrize(("code", "expected"), CONSTANTS)
 def test_constants(code, expected):
     check_gen(code, expected)

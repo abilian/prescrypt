@@ -10,7 +10,8 @@ from prescrypt.front import ast
 #
 def method_sort(codegen: CodeGen, base, args, kwargs):
     if len(args) != 0:  # sorts args are keyword-only
-        raise JSError("Method sort() is keyword-only.")
+        msg = "Method sort() is keyword-only."
+        raise JSError(msg)
 
     key, reverse = ast.Name("undefined"), ast.Constant(False)
     for kw in kwargs:
@@ -19,13 +20,15 @@ def method_sort(codegen: CodeGen, base, args, kwargs):
         elif kw.arg == "reverse":
             reverse = kw.value
         else:
-            raise JSError(f"Invalid keyword argument for sort: {kw.arg!r}")
+            msg = f"Invalid keyword argument for sort: {kw.arg!r}"
+            raise JSError(msg)
 
     return codegen.call_std_method(base, "sort", [key, reverse])
 
 
 def method_format(codegen: CodeGen, base, args, kwargs):
     if kwargs:
-        raise JSError("Method format() currently does not support keyword args.")
+        msg = "Method format() currently does not support keyword args."
+        raise JSError(msg)
 
     return codegen.call_std_method(base, "format", args)

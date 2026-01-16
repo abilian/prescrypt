@@ -11,6 +11,6 @@ COMPREHENSIONS = [
 ]
 
 
-@pytest.mark.parametrize("code,expected", COMPREHENSIONS)
+@pytest.mark.parametrize(("code", "expected"), COMPREHENSIONS)
 def test_comprehensions(code, expected):
     check_gen(code, expected)

@@ -26,7 +26,8 @@ def gen_tuple(node: ast.Tuple, codegen: CodeGen):
 
 @gen_expr.register
 def gen_set(node: ast.Set, codegen: CodeGen):
-    raise JSError("Set literals are not supported in JavaScript", node)
+    msg = "Set literals are not supported in JavaScript"
+    raise JSError(msg, node)
 
 
 @gen_expr.register
