@@ -71,7 +71,8 @@ clean: clean-test
 	find . -type d -empty -delete
 	rm -rf *.egg-info *.egg .coverage .eggs .cache .mypy_cache .pyre \
 		.pytest_cache .pytest .DS_Store  docs/_build docs/cache docs/tmp \
-		dist build pip-wheel-metadata junit-*.xml htmlcov coverage.xml
+		dist build pip-wheel-metadata junit-*.xml htmlcov coverage.xml \
+		.ruff_cache
 
 ## Cleanup tests artifacts
 clean-test: ## remove test and coverage artifacts
@@ -89,7 +90,8 @@ tidy: clean
 
 ## Update dependencies
 update-deps:
-	uv sync --all-groups -U
+	uv sync --all-groups --all-extras -U
+	pre-commit autoupdate
 
 ## Publish to PyPI
 publish: clean
