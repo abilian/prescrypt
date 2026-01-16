@@ -177,9 +177,7 @@ def gen_unpack_assign(targets: list[ast.expr], js_value: str, codegen: CodeGen) 
     return gen_complex_unpack(targets, js_value, codegen)
 
 
-def gen_complex_unpack(
-    targets: list[ast.expr], js_value: str, codegen: CodeGen
-) -> str:
+def gen_complex_unpack(targets: list[ast.expr], js_value: str, codegen: CodeGen) -> str:
     """Handle complex unpacking with nesting or starred expressions."""
     # Check for starred element
     starred_idx = None

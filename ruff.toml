@@ -81,6 +81,7 @@ lint.extend-ignore = [
     "S607", #   	[ ] start-process-with-partial-path
     "SIM105", # 	[ ] suppressible-exception
     "UP007", #  	[ ] non-pep604-annotation-union
+    "PGH003",
 ]
 
 [lint.extend-per-file-ignores]
