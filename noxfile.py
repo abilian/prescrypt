@@ -2,21 +2,21 @@ from __future__ import annotations
 
 import nox
 
-PYTHON_VERSIONS = ["3.10", "3.11"]
-nox.options.sessions = ["lint", "pytest"]
+PYTHONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+# nox.options.sessions = ["lint", "pytest"]
 
 
-@nox.session(python=PYTHON_VERSIONS)
-def lint(session: nox.Session) -> None:
-    session.install(".")
-    session.install("ruff")
-    session.run("pip", "check")
-    session.run("make", "lint", external=True)
+@nox.session(python=PYTHONS)
+def tests(session: nox.Session):
+    # Note: we use 'uv' instead of 'pip' to make setup quicker
+    # '--active' and 'external=True' are needed for proper setup
+    session.run("uv", "sync", "--active", external=True)
+    session.run("uv", "run", "--active", "pytest", external=True)
 
 
-@nox.session(python=PYTHON_VERSIONS)
-def pytest(session: nox.Session) -> None:
-    session.install(".")
-    session.install("pytest")
-    session.run("pip", "check")
-    session.run("pytest", "src", "tests")
+@nox.session(python=PYTHONS[0])
+def lint(session: nox.Session):
+    # Note: we use 'uv' instead of 'pip' to make setup quicker
+    # '--active' and 'external=True' are needed for proper setup
+    session.run("uv", "sync", "--active", external=True)
+    session.run("uv", "run", "--active", "ruff", "check", external=True)
