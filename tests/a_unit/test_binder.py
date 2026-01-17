@@ -490,14 +490,15 @@ class TestVariableUsageValidation:
         # Act & Assert - should not raise
         binder.visit(tree)
 
-    def test_assign_to_builtin_raises_value_error(self):
-        # Arrange
-        code = "len = 5"
-        tree = ast.parse(code)
-        binder = Binder()
+    def test_assign_to_builtin_is_allowed(self):
+        """Python allows shadowing builtins like len, type, super."""
+        # Arrange - test several builtins that can be shadowed
+        for builtin in ["len", "type", "super", "print", "str"]:
+            code = f"{builtin} = 5"
+            tree = ast.parse(code)
+            binder = Binder()
 
-        # Act & Assert
-        with pytest.raises(ValueError, match="cannot assign"):
+            # Act & Assert - should not raise (Python allows this)
             binder.visit(tree)
 
 

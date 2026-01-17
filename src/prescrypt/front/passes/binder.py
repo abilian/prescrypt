@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import builtins
 from pathlib import Path
 
 from prescrypt.front import Scope, Variable, ast
 
 from .base import Visitor
 
-builtin_names = {name for name in dir(builtins)}
+# True reserved names that cannot be assigned (Python keywords)
+# Note: Most builtins (like 'type', 'super', 'len') CAN be shadowed in Python
+reserved_names = {"True", "False", "None"}
 
 
 class Binder(Visitor):
@@ -132,14 +133,14 @@ class Binder(Visitor):
 
             case ast.Store():
                 # Assigning to a variable
-                if name in builtin_names:
+                if name in reserved_names:
                     msg = f"cannot assign to '{name}'"
                     raise ValueError(msg)
                 self.add_var(name)
 
             case ast.Del():
                 # Deleting a variable
-                if name in builtin_names:
+                if name in reserved_names:
                     msg = f"cannot delete '{name}'"
                     raise ValueError(msg)
 

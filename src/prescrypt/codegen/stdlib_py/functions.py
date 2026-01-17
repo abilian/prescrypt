@@ -195,6 +195,12 @@ def function_ord(codegen: CodeGen, args, kwargs) -> str:
 
 
 def function_range(codegen: CodeGen, args, kwargs):
+    # Check for starred args - if present, pass to runtime to handle spreading
+    has_starred = any(isinstance(arg, ast.Starred) for arg in args)
+    if has_starred or kwargs:
+        # Let runtime handle starred args and kwargs (which Python rejects)
+        return codegen.call_std_function("range", args)
+
     match args:
         case [a]:
             args = [ast.Constant(0), a, ast.Constant(1)]
@@ -210,9 +216,14 @@ def function_range(codegen: CodeGen, args, kwargs):
 
 
 def function_sorted(codegen: CodeGen, args, kwargs):
-    if len(args) != 1:
-        msg = "sorted() needs one argument"
+    if len(args) < 1:
+        msg = "sorted() needs at least one argument"
         raise JSError(msg)
+
+    if len(args) > 1:
+        # Extra positional args (e.g., sorted([], None)) - let runtime handle error
+        # Python raises TypeError for this, so we compile it but it will fail at runtime
+        return codegen.call_std_function("sorted", args)
 
     key, reverse = "undefined", ast.Constant(False)
     for kw in kwargs:

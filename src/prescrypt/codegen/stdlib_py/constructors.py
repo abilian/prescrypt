@@ -51,8 +51,13 @@ def function_int(codegen: CodeGen, args, _kwargs):
         case [arg]:
             js_arg = unify(codegen.gen_expr(arg))
             return f"parseInt({js_arg})"
+        case [arg, base]:
+            # int(x, base) - e.g., int('ff', 16)
+            js_arg = unify(codegen.gen_expr(arg))
+            js_base = unify(codegen.gen_expr(base))
+            return f"parseInt({js_arg}, {js_base})"
         case _:
-            msg = "int() at most one argument"
+            msg = "int() takes at most 2 arguments"
             raise JSError(msg)
 
 
@@ -74,14 +79,21 @@ def function_dict(codegen: CodeGen, args, kwargs):
             return "({})"
         case [], [*_]:
             js_kwargs = [
-                f"{arg.arg}: {unify(codegen.gen_expr(arg.value))}" for arg in kwargs
+                f"{kw.arg}: {unify(codegen.gen_expr(kw.value))}" for kw in kwargs
             ]
             return "({%s})" % ", ".join(js_kwargs)
-        case [*_], []:
+        case [arg], []:
             return codegen.call_std_function("dict", args)
-        case _, _:
-            # TODO
-            msg = "dict() takes at most one argument"
+        case [arg], [*_]:
+            # dict({1:2}, a=3) or dict([(1,2)], a=3)
+            # Merge positional arg with kwargs using Object.assign
+            js_arg = codegen.call_std_function("dict", [arg])
+            js_kwargs = [
+                f"{kw.arg}: {unify(codegen.gen_expr(kw.value))}" for kw in kwargs
+            ]
+            return f"Object.assign({js_arg}, {{{', '.join(js_kwargs)}}})"
+        case _:
+            msg = "dict() takes at most one positional argument"
             raise JSError(msg)
 
 
