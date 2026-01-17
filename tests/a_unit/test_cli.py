@@ -139,8 +139,8 @@ class TestCompileFile:
             src_file = tmppath / "test.py"
             dst_file = tmppath / "test.js"
 
-            # Write code with unsupported feature
-            src_file.write_text("def gen():\n    yield 1")
+            # Write code with unsupported feature (multiple inheritance)
+            src_file.write_text("class C(A, B):\n    pass")
 
             success = compile_file(src_file, dst_file, quiet=True)
 
@@ -347,7 +347,8 @@ class TestCompileDirectory:
 
             src_dir.mkdir()
             (src_dir / "good.py").write_text("x = 1")
-            (src_dir / "bad.py").write_text("def gen():\n    yield 1")  # Unsupported
+            # Multiple inheritance is unsupported
+            (src_dir / "bad.py").write_text("class C(A, B):\n    pass")
 
             success_count, error_count = compile_directory(
                 src_dir, dst_dir, include_stdlib=False, quiet=True

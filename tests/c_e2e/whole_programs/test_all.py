@@ -43,4 +43,5 @@ def test_module(source_file):
 
     assert p2.returncode == 0 and stdout1 == stdout2
 
+    # In case of failure (early return) we can inspect the generated JS code.
     os.unlink(dst)

@@ -351,6 +351,49 @@ for i in range(3):
 !!! warning "Lambda Default Args Not Supported"
     The Python idiom `lambda i=i: i` does NOT work in Prescrypt. Use factory functions instead.
 
+### Generator Iteration Timing
+
+When iterating over generators with `for` loops, Prescrypt converts the generator to an array before iterating. This means all `yield` statements execute before the loop body runs.
+
+```python
+def gen():
+    print("yielding 1")
+    yield 1
+    print("yielding 2")
+    yield 2
+
+for x in gen():
+    print(f"got {x}")
+
+# Python output:
+# yielding 1
+# got 1
+# yielding 2
+# got 2
+
+# Prescrypt output:
+# yielding 1
+# yielding 2
+# got 1
+# got 2
+```
+
+**Why:** JavaScript `for` loops don't natively support iterators in the same way. The generated code uses `[...generator]` to convert to an array first.
+
+**Impact:** This affects interleaved output timing but doesn't affect correctness for most use cases. The final values are the same.
+
+**Workaround:** If you need true lazy evaluation, use `while` with `next()`:
+
+```python
+it = gen()
+while True:
+    try:
+        x = next(it)
+        print(f"got {x}")
+    except StopIteration:
+        break
+```
+
 ## See Also
 
 - [Limitations](limitations.md) - What's not supported
