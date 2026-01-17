@@ -7,6 +7,38 @@ from prescrypt.codegen.utils import flatten
 from prescrypt.front import ast
 
 
+def _is_generator_function(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Check if function contains yield/yield from (making it a generator).
+
+    Only checks direct children, not nested functions/classes.
+    """
+
+    class YieldFinder(ast.NodeVisitor):
+        def __init__(self):
+            self.has_yield = False
+
+        def visit_Yield(self, node):
+            self.has_yield = True
+
+        def visit_YieldFrom(self, node):
+            self.has_yield = True
+
+        # Don't descend into nested functions/classes
+        def visit_FunctionDef(self, node):
+            pass
+
+        def visit_AsyncFunctionDef(self, node):
+            pass
+
+        def visit_ClassDef(self, node):
+            pass
+
+    finder = YieldFinder()
+    for stmt in node.body:
+        finder.visit(stmt)
+    return finder.has_yield
+
+
 @gen_stmt.register
 def gen_functiondef(node: ast.FunctionDef, codegen: CodeGen):
     fun_def = FunDef(node, codegen)
@@ -26,20 +58,28 @@ class BaseFunDef:
         assert isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
         self.node = node
         self.codegen = codegen
+        self._is_generator = _is_generator_function(node)
+
+    @property
+    def _func_keyword(self) -> str:
+        """Return 'function' or 'function*' depending on generator status."""
+        if self._is_generator:
+            return f"{self._async}function*"
+        return f"{self._async}function"
 
     def gen(self):
         name = self.node.name
-        _async = self._async
+        _func = self._func_keyword
 
         # Check for special decorators
         decorator_type = self._get_decorator_type()
 
         if self.codegen.ns.type == "class":
-            return self._gen_class_method(name, _async, decorator_type)
+            return self._gen_class_method(name, _func, decorator_type)
         elif self.codegen.ns.type == "function":
-            return self._gen_nested_function(name, _async)
+            return self._gen_nested_function(name, _func)
         else:
-            return self._gen_module_function(name, _async)
+            return self._gen_module_function(name, _func)
 
     def _get_decorator_type(self) -> str | None:
         """Check for @staticmethod or @classmethod decorators."""
@@ -52,7 +92,7 @@ class BaseFunDef:
                     return "classmethod"
         return None
 
-    def _gen_class_method(self, name: str, _async: str, decorator_type: str | None):
+    def _gen_class_method(self, name: str, _func: str, decorator_type: str | None):
         """Generate a method inside a class."""
         class_name = self.codegen.ns.name
 
@@ -63,7 +103,7 @@ class BaseFunDef:
             js_body = self.gen_body()
             return dedent(
                 f"""
-                {class_name}.{name} = {class_name}.prototype.{name} = {_async}function ({js_args}) {{
+                {class_name}.{name} = {class_name}.prototype.{name} = {_func} ({js_args}) {{
                 {js_body}
                 }};
                 {class_name}.{name}.nobind = true;
@@ -77,7 +117,7 @@ class BaseFunDef:
             js_body = self.gen_body()
             return dedent(
                 f"""
-                {class_name}.{name} = {class_name}.prototype.{name} = {_async}function ({js_args}) {{
+                {class_name}.{name} = {class_name}.prototype.{name} = {_func} ({js_args}) {{
                 let cls = {class_name}.prototype;
                 {js_body}
                 }};
@@ -90,48 +130,59 @@ class BaseFunDef:
             full_name = self.codegen.with_prefix(name)
             return dedent(
                 f"""
-                {full_name} = {_async}function ({js_args}) {{
+                {full_name} = {_func} ({js_args}) {{
                 {js_body}
                 }};
                 """
             )
 
-    def _gen_nested_function(self, name: str, _async: str):
+    def _gen_nested_function(self, name: str, _func: str):
         """Generate a nested function inside another function."""
         args = self.node.args.args
         has_self = args and args[0].arg in ("self", "this")
 
         if not has_self:
             # Bind to parent's this
+            # Note: generators cannot use .bind(), so we skip binding for generators
             js_args = self.gen_args()
             js_body = self.gen_body()
             self.codegen.add_var(name)
-            return dedent(
-                f"""
-                let {name} = ({_async}function {name}({js_args}) {{
-                {js_body}
-                }}).bind(this);
-                """
-            )
+            if self._is_generator:
+                # Generators don't need binding since they create their own context
+                return dedent(
+                    f"""
+                    let {name} = {_func} {name}({js_args}) {{
+                    {js_body}
+                    }};
+                    """
+                )
+            else:
+                return dedent(
+                    f"""
+                    let {name} = ({_func} {name}({js_args}) {{
+                    {js_body}
+                    }}).bind(this);
+                    """
+                )
         else:
             js_args = self.gen_args()
             js_body = self.gen_body()
             return dedent(
                 f"""
-                {_async}function {name}({js_args}) {{
+                {_func} {name}({js_args}) {{
                 {js_body}
                 }}
                 """
             )
 
-    def _gen_module_function(self, name: str, _async: str):
+    def _gen_module_function(self, name: str, _func: str):
         """Generate a module-level function."""
         js_args = self.gen_args()
         js_body = self.gen_body()
         export_prefix = "export " if self.codegen.should_export() else ""
         return dedent(
             f"""
-            {export_prefix}{_async}function {name}({js_args}) {{
+            {export_prefix}{_func} {name}({js_args}) {{
             {js_body}
             }}
             """

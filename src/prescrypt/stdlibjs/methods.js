@@ -558,6 +558,10 @@ export const join = function (x) {
   // nargs: 1
   if (this.constructor !== String) return this.KEY.apply(this, arguments);
 
+  // Handle iterators/generators by converting to array first
+  if (!Array.isArray(x) && typeof x[Symbol.iterator] === 'function') {
+    x = [...x];
+  }
   return x.join(this); // call join on the list instead of the string.
 };
 

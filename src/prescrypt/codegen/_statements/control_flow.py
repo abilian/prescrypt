@@ -191,6 +191,13 @@ def gen_for(node: ast.For, codegen: CodeGen):
 
 
 def _make_iterable(codegen: CodeGen, name1, name2, newlines=True):
+    """Convert an expression to an iterable array.
+
+    Handles:
+    - Arrays: passed through
+    - Plain objects: converted to Object.keys()
+    - Iterators/generators: converted to array using spread
+    """
     code = []
     lf = codegen.lf
     if not newlines:  # pragma: no cover
@@ -198,11 +205,23 @@ def _make_iterable(codegen: CodeGen, name1, name2, newlines=True):
 
     if name1 != name2:
         code.append(lf(f"let {name2} = {name1};"))
+
+    # Handle iterators/generators first (they have Symbol.iterator but not length)
     code.append(
-        lf(f'if ((typeof {name2} === "object") && (!Array.isArray({name2}))) {{')
+        lf(
+            f"if (!Array.isArray({name2}) && typeof {name2}[Symbol.iterator] === 'function') {{"
+        )
+    )
+    code.append(f" {name2} = [...{name2}];")
+    code.append("}")
+
+    # Handle plain objects (convert to keys)
+    code.append(
+        lf(f'else if ((typeof {name2} === "object") && (!Array.isArray({name2}))) {{')
     )
     code.append(f" {name2} = Object.keys({name2});")
     code.append("}")
+
     return "".join(code)
 
 

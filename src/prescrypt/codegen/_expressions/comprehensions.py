@@ -77,6 +77,74 @@ def _iterator_assign(val, *names):
         return " ".join(code)
 
 
+def _gen_loop_target(target_node, codegen: CodeGen) -> str:
+    """Generate loop variable pattern for comprehension/generator.
+
+    Handles simple names and tuple unpacking.
+    """
+    match target_node:
+        case ast.Name(id=name):
+            return name
+        case ast.Tuple(elts=elts):
+            parts = [_gen_loop_target(e, codegen) for e in elts]
+            return "[" + ", ".join(parts) + "]"
+        case _:
+            from prescrypt.exceptions import JSError
+
+            msg = (
+                f"Unsupported loop target in generator expression: {type(target_node)}"
+            )
+            raise JSError(msg)
+
+
+@gen_expr.register
+def gen_generator_exp(node: ast.GeneratorExp, codegen: CodeGen) -> list[str]:
+    """Generate generator expression using JS generator function.
+
+    Python: (expr for target in iter if cond)
+    JS: (function*() { for (let target of iter) if (cond) yield expr; })()
+
+    This produces a lazy iterator, matching Python's generator semantics.
+    """
+    elt_node, generator_nodes = node.elt, node.generators
+
+    codegen.push_ns("function", "<genexpr>")
+
+    # Build the generator function body
+    js_code = ["(function* () {"]
+
+    for _gen_idx, comprehension in enumerate(generator_nodes):
+        assert isinstance(comprehension, ast.comprehension)
+
+        # Get target pattern
+        loop_target = _gen_loop_target(comprehension.target, codegen)
+
+        # Get iterable
+        js_iter = flatten(codegen.gen_expr(comprehension.iter))
+
+        # Use for...of for proper iteration (works with generators, arrays, etc.)
+        js_code.append(f"for (let {loop_target} of {js_iter}) {{")
+
+        # Add if conditions
+        if_nodes = comprehension.ifs
+        for if_node in if_nodes:
+            js_condition = flatten(codegen.gen_expr(if_node))
+            js_code.append(f"if (!({js_condition})) continue;")
+
+    # Yield the element expression
+    js_elt = flatten(codegen.gen_expr(elt_node))
+    js_code.append(f"yield {js_elt};")
+
+    # Close all for loops
+    js_code.append("}" * len(generator_nodes))
+
+    # Close generator function and invoke it
+    js_code.append("})()")
+
+    codegen.pop_ns()
+    return js_code
+
+
 @gen_expr.register
 def gen_dict_comp(node: ast.DictComp, codegen: CodeGen) -> list[str]:
     """Generate dict comprehension: {k: v for k, v in items if condition}"""

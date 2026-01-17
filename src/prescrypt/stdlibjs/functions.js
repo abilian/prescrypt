@@ -198,10 +198,16 @@ export const dict = function (x) {
 
 // function: list
 export const list = function (x) {
-  const res = [];
-  if (typeof x === "object" && !Array.isArray(x)) {
-    x = Object.keys(x);
+  // Handle iterators/generators using spread
+  if (typeof x[Symbol.iterator] === 'function') {
+    return [...x];
   }
+  // Handle plain objects by converting to array of keys
+  if (typeof x === "object" && !Array.isArray(x)) {
+    return Object.keys(x);
+  }
+  // Fallback for array-like objects
+  const res = [];
   for (let i = 0; i < x.length; i++) {
     res.push(x[i]);
   }
@@ -338,6 +344,10 @@ export const pow = Math.pow; // nargs: 2;
 // function: sum
 export const sum = function (x) {
   // nargs: 1
+  // Convert iterators/generators to array first
+  if (!Array.isArray(x) && typeof x[Symbol.iterator] === 'function') {
+    x = [...x];
+  }
   return x.reduce(function (a, b) {
     return a + b;
   }, 0);
@@ -451,8 +461,9 @@ export const divmod = function (x, y) {
 // function: all
 export const all = function (x) {
   // nargs: 1
-  for (let i = 0; i < x.length; i++) {
-    if (!FUNCTION_PREFIXtruthy(x[i])) {
+  // Use for...of to handle both arrays and iterators/generators
+  for (const item of x) {
+    if (!FUNCTION_PREFIXtruthy(item)) {
       return false;
     }
   }
@@ -464,8 +475,9 @@ export const all = function (x) {
 // function: any
 export const any = function (x) {
   // nargs: 1
-  for (let i = 0; i < x.length; i++) {
-    if (FUNCTION_PREFIXtruthy(x[i])) {
+  // Use for...of to handle both arrays and iterators/generators
+  for (const item of x) {
+    if (FUNCTION_PREFIXtruthy(item)) {
       return true;
     }
   }
@@ -478,6 +490,15 @@ export const any = function (x) {
 export const enumerate = function (iter) {
   // nargs: 1
   const res = [];
+  // Handle iterators/generators
+  if (!Array.isArray(iter) && typeof iter[Symbol.iterator] === 'function') {
+    let i = 0;
+    for (const item of iter) {
+      res.push([i++, item]);
+    }
+    return res;
+  }
+  // Handle plain objects
   if (typeof iter === "object" && !Array.isArray(iter)) {
     iter = Object.keys(iter);
   }
@@ -613,6 +634,10 @@ export const op_len = function op_len(obj) {
   }
   if (obj.length !== undefined) {
     return obj.length;
+  }
+  // JavaScript Set and Map use .size instead of .length
+  if (obj.size !== undefined) {
+    return obj.size;
   }
   if (obj.constructor === Object) {
     return Object.keys(obj).length;

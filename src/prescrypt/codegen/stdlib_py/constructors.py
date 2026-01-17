@@ -102,9 +102,21 @@ def function_list(codegen: CodeGen, args, _kwargs):
         case []:
             return "[]"
         case [*_]:
-            js_args = [codegen.gen_expr(arg) for arg in args]
+            js_args = [unify(codegen.gen_expr(arg)) for arg in args]
             return codegen.call_std_function("list", js_args)
 
 
 def function_tuple(codegen: CodeGen, args, kwargs):
     return function_list(codegen, args, kwargs)
+
+
+def function_set(codegen: CodeGen, args, _kwargs):
+    match args:
+        case []:
+            return "new Set()"
+        case [arg]:
+            js_arg = unify(codegen.gen_expr(arg))
+            return f"new Set({js_arg})"
+        case _:
+            msg = "set() takes at most one argument"
+            raise JSError(msg)
