@@ -13,7 +13,7 @@ PROGRAMS_DIR = Path(__file__).parent / "programs"
 
 def get_source_files():
     for src in PROGRAMS_DIR.glob("*.py"):
-        if src.name.startswith("test_"):
+        if src.name.startswith("_"):
             continue
         yield str(src.name)
 
