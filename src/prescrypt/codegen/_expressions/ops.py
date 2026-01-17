@@ -197,6 +197,10 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
         case ast.FloorDiv():
             return ["Math.floor(", js_left, "/", js_right, ")"]
 
+        case ast.MatMult():
+            # Matrix multiplication operator @
+            return codegen.call_std_function("op_matmul", [js_left, js_right])
+
         case _:
             # Default
             js_op = f" {BINARY_OP[op]} "

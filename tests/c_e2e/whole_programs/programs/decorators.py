@@ -1,51 +1,74 @@
-"""Test higher-order functions (decorator patterns).
+"""Test decorator syntax.
 
-Note: Prescrypt does not support @decorator syntax. This test demonstrates
-higher-order function patterns that work without decorator syntax.
+Now with @decorator syntax support!
 """
 from __future__ import annotations
 
 
-# Higher-order function that wraps another function
-def make_doubler(func):
-    def wrapper(x):
-        return func(x) * 2
+# Basic decorator
+def simple_decorator(func):
+    def wrapper():
+        print("before")
+        func()
+        print("after")
     return wrapper
 
 
-def square(x):
-    return x * x
+@simple_decorator
+def say_hello():
+    print("hello")
 
-doubled_square = make_doubler(square)
-print(doubled_square(3))  # (3*3) * 2 = 18
-
-
-# Function returning function (currying)
-def make_adder(n):
-    def add(x):
-        return x + n
-    return add
-
-add_five = make_adder(5)
-print(add_five(10))  # 15
+say_hello()
 
 
-# Function composition
-def compose(f, g):
-    def combined(x):
-        return f(g(x))
-    return combined
+# Decorator with arguments passthrough
+def passthrough(func):
+    def wrapper(*args):
+        return func(*args)
+    return wrapper
 
 
-def inc(x):
-    return x + 1
+@passthrough
+def add(a, b):
+    return a + b
+
+print(add(3, 4))
 
 
-def double(x):
-    return x * 2
+# Decorator that modifies return value
+def double_result(func):
+    def wrapper(*args):
+        result = func(*args)
+        return result * 2
+    return wrapper
 
-inc_then_double = compose(double, inc)
-print(inc_then_double(5))  # (5 + 1) * 2 = 12
+
+@double_result
+def get_value(x):
+    return x + 10
+
+print(get_value(5))
+
+
+# Multiple decorators (stacked)
+def add_exclaim(func):
+    def wrapper(*args):
+        return func(*args) + "!"
+    return wrapper
+
+
+def add_greeting(func):
+    def wrapper(*args):
+        return "Hello, " + func(*args)
+    return wrapper
+
+
+@add_exclaim
+@add_greeting
+def get_name(name):
+    return name
+
+print(get_name("World"))
 
 
 # Closure with state
@@ -57,9 +80,9 @@ def make_counter():
     return counter
 
 c = make_counter()
-print(c())  # 1
-print(c())  # 2
-print(c())  # 3
+print(c())
+print(c())
+print(c())
 
 
 # Simple class
@@ -73,5 +96,16 @@ class Counter:
 
 
 obj = Counter()
-print(obj.increment())  # 1
-print(obj.increment())  # 2
+print(obj.increment())
+print(obj.increment())
+
+
+# Function with *args (now working!)
+def sum_all(*args):
+    total = 0
+    for x in args:
+        total += x
+    return total
+
+print(sum_all(1, 2, 3))
+print(sum_all(1, 2, 3, 4, 5))

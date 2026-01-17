@@ -14,6 +14,11 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
     if name == "self":
         return "this"
 
+    # Handle Ellipsis builtin - reference the stdlib constant
+    if name == "Ellipsis":
+        codegen._used_std_functions.add("Ellipsis")
+        return codegen.function_prefix + "Ellipsis"
+
     if name in JS_RESERVED_NAMES:
         msg = f"Cannot use reserved name '{name}' as a variable name"
         raise JSError(msg, node)

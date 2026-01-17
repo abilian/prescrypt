@@ -180,13 +180,36 @@ class BaseFunDef:
         js_args = self.gen_args()
         js_body = self.gen_body()
         export_prefix = "export " if self.codegen.should_export() else ""
-        return dedent(
+
+        # Generate function definition
+        func_def = dedent(
             f"""
             {export_prefix}{_func} {name}({js_args}) {{
             {js_body}
             }}
             """
         )
+
+        # Apply decorators (in reverse order, innermost first)
+        decorators = getattr(self.node, "decorator_list", [])
+        if decorators:
+            # Filter out staticmethod/classmethod which are only for class methods
+            applicable = [
+                d
+                for d in decorators
+                if not (
+                    isinstance(d, ast.Name) and d.id in ("staticmethod", "classmethod")
+                )
+            ]
+            if applicable:
+                code = [func_def]
+                # Apply decorators in reverse order
+                for dec in reversed(applicable):
+                    dec_name = flatten(self.codegen.gen_expr(dec))
+                    code.append(f"{name} = {dec_name}({name});\n")
+                return "".join(code)
+
+        return func_def
 
     def _gen_args_no_self_conversion(self) -> str:
         """Generate args without self→this conversion (for staticmethod)."""
@@ -225,27 +248,56 @@ class BaseFunDef:
         # - kwarg: None | arg
         # - defaults: list[expr]
 
-        args = self.node.args.args
+        args_node = self.node.args
+        args = args_node.args
         code = []
+
+        # Calculate default value positions
+        num_defaults = len(args_node.defaults)
+        num_args = len(args)
 
         # Collect args
         argnames = []
-        for arg in args:
+        for i, arg in enumerate(args):
             name = arg.arg
             if name == "self":
                 name = "this"
             if name != "this":
                 argnames.append(name)
-                # Add code and comma
-                code.append(name)
+                # Check for default value
+                default_idx = i - (num_args - num_defaults)
+                if default_idx >= 0:
+                    default = flatten(
+                        self.codegen.gen_expr(args_node.defaults[default_idx])
+                    )
+                    code.append(f"{name} = {default}")
+                else:
+                    code.append(name)
                 code.append(", ")
-        if argnames:
+
+        # Handle *args (vararg) - convert to JS rest parameter
+        if args_node.vararg:
+            vararg_name = args_node.vararg.arg
+            code.append(f"...{vararg_name}")
+            code.append(", ")
+
+        if code and code[-1] == ", ":
             code.pop(-1)  # pop last comma
         return "".join(code)
 
     def gen_body(self):
         # Push function namespace to isolate local variables
         self.codegen.push_ns("function", self.node.name)
+
+        # Register function parameters in the namespace so they're recognized as defined
+        args_node = self.node.args
+        for arg in args_node.args:
+            name = arg.arg
+            if name not in ("self", "this"):
+                self.codegen.add_var(name)
+        # Also register *args parameter if present
+        if args_node.vararg:
+            self.codegen.add_var(args_node.vararg.arg)
 
         # Use function's binding scope for variable declarations
         old_binding_scope = self.codegen._binding_scope

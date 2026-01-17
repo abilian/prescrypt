@@ -353,8 +353,8 @@ class ConstantFolder(ast.NodeTransformer):
         try:
             return self._make_constant(op_func(left, right), node)
         except ZeroDivisionError:
-            msg = f"Division by zero at line {getattr(node, 'lineno', '?')}: {left} / {right}"
-            raise JSError(msg)
+            # Leave for runtime - don't fail at compile time
+            return node
         except OverflowError:
             msg = f"Numeric overflow at line {getattr(node, 'lineno', '?')}: {left} {type(node.op).__name__} {right}"
             raise JSError(msg)

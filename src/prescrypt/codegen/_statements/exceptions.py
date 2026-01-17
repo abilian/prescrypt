@@ -23,17 +23,19 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
             raise JSError(msg, node)
         return [codegen.lf(f"throw {exc_var};")]
 
-    if cause_node is not None:
-        msg = 'When raising, "cause" is not supported'
-        raise JSError(msg, cause_node)
-    err_node = exc_node
-
     # Get cls and msg
     err_cls, err_msg = None, "''"
 
     match exc_node:
         case ast.Name(id):
             if id.islower():  # raise an (error) object
+                if cause_node is not None:
+                    # raise obj from cause -> obj.__cause__ = cause; throw obj
+                    js_cause = unify(codegen.gen_expr(cause_node))
+                    return [
+                        codegen.lf(f"{id}.__cause__ = {js_cause};"),
+                        codegen.lf(f"throw {id};"),
+                    ]
                 return [codegen.lf("throw " + id + ";")]
             err_cls = id
         case ast.Call(func, args, keywords):
@@ -48,11 +50,23 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
 
     # Build code to throw
     if err_cls:
-        code = codegen.call_std_function("op_error", [f"'{err_cls}'", err_msg or '""'])
+        exc_code = codegen.call_std_function(
+            "op_error", [f"'{err_cls}'", err_msg or '""']
+        )
     else:
-        code = err_msg
+        exc_code = err_msg
 
-    return [codegen.lf("throw " + code + ";")]
+    # Handle exception chaining: raise X from Y
+    if cause_node is not None:
+        js_cause = unify(codegen.gen_expr(cause_node))
+        tmp_var = codegen.dummy("exc")
+        return [
+            codegen.lf(f"let {tmp_var} = {exc_code};"),
+            codegen.lf(f"{tmp_var}.__cause__ = {js_cause};"),
+            codegen.lf(f"throw {tmp_var};"),
+        ]
+
+    return [codegen.lf("throw " + exc_code + ";")]
 
 
 @gen_stmt.register

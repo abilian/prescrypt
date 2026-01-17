@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Language Features
+- **Set comprehensions**: `{x for x in items}` now compiles to JavaScript `Set`
+- **Decorator syntax**: `@decorator` on functions now applies decorators correctly
+- **MatMult operator**: `a @ b` matrix multiplication operator (delegates to `__matmul__`)
+- **Ellipsis literal**: `...` and `Ellipsis` now compile to `Symbol.for('Ellipsis')`
+- **Exception chaining**: `raise X from Y` now sets `__cause__` on the exception
+
 #### Optimizations
 - **Type-informed code generation**: Native operators when types are known
   - Arithmetic: `a + b` → `(a + b)` when both are `int` or `str`
@@ -19,10 +26,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `str()`: Native `String()` for numbers/bools, passthrough for strings
   - Type inference from: literals, annotations, builtins (`len`, `str`), methods (`.upper()`, `.find()`), user-defined function return types
 
+### Fixed
+
+- **Negative array/tuple indexing**: `arr[-1]` now correctly returns last element
+- **Function *args**: Rest parameters (`...args`) work correctly in nested functions
+- **Function *args calls**: `func(*args)` now generates valid `.apply(null, args)`
+- **Parameter reassignment**: Reassigning function parameters no longer creates shadowed variables
+- **Default arguments with None**: `def foo(x=None)` generates correct `x = null` default
+- **sorted() with numbers**: Uses proper comparison function instead of JavaScript string sort
+- **Division by zero in constants**: Left for runtime instead of crashing compiler
+
 ### Documentation
 
 - Fix doc build issues
 - Removed unreliable claims
+
+### Statistics
+
+- 2622 tests passing (up from 2347)
 
 
 ## [0.9.0] - 2026-01-16

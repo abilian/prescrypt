@@ -61,6 +61,15 @@ if "hello":
 if not "":
     print("empty string is falsy")
 
+# Default value pattern (now working with None defaults!)
+def greet(name=None):
+    if name is None:
+        name = "World"
+    return "Hello, " + name
+
+print(greet())
+print(greet("Alice"))
+
 # Or for default
 a = None
 b = a or "default"

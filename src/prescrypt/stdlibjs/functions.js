@@ -1,3 +1,8 @@
+// function: Ellipsis
+export const Ellipsis = Symbol.for('Ellipsis')
+
+// ---
+
 // function: perf_counter
 export const perf_counter = function () {
   // nargs: 0
@@ -554,18 +559,24 @@ export const sorted = function (iter, key, reverse) {
   if (typeof iter === "object" && !Array.isArray(iter)) {
     iter = Object.keys(iter);
   }
-  let comp = function (a, b) {
-    a = key(a);
-    b = key(b);
-    if (a < b) {
-      return -1;
-    }
-    if (a > b) {
-      return 1;
-    }
-    return 0;
-  };
-  comp = Boolean(key) ? comp : undefined;
+  let comp;
+  if (key) {
+    // Custom key function provided
+    comp = function (a, b) {
+      a = key(a);
+      b = key(b);
+      if (a < b) return -1;
+      if (a > b) return 1;
+      return 0;
+    };
+  } else {
+    // Default comparison - Python-like behavior (works correctly for numbers and strings)
+    comp = function (a, b) {
+      if (a < b) return -1;
+      if (a > b) return 1;
+      return 0;
+    };
+  }
   iter = iter.slice().sort(comp);
   if (reverse) iter.reverse();
   return iter;
@@ -656,6 +667,10 @@ export const op_getitem = function op_getitem(obj, key) {
   }
   if (typeof obj.__getitem__ === 'function') {
     return obj.__getitem__(key);
+  }
+  // Handle negative indices for arrays and strings
+  if (typeof key === 'number' && key < 0 && (Array.isArray(obj) || typeof obj === 'string')) {
+    key = obj.length + key;
   }
   return obj[key];
 };
@@ -783,6 +798,22 @@ export const op_mul = function (a, b) {
     }
   }
   return a * b;
+};
+
+// ---
+
+// function: op_matmul
+export const op_matmul = function (a, b) {
+  // nargs: 2
+  // Matrix multiplication operator @
+  // Delegates to __matmul__ method if available
+  if (typeof a.__matmul__ === 'function') {
+    return a.__matmul__(b);
+  }
+  if (typeof b.__rmatmul__ === 'function') {
+    return b.__rmatmul__(a);
+  }
+  throw new TypeError("unsupported operand type(s) for @");
 };
 
 // ---

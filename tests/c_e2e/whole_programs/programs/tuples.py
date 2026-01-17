@@ -20,11 +20,12 @@ print(implicit[0])
 empty = ()
 print(len(empty))
 
-# Tuple indexing (positive only - negative indices have issues)
+# Tuple indexing - including negative indices (now fixed!)
 t = (10, 20, 30, 40, 50)
 print(t[0])
 print(t[2])
-print(t[4])  # Use positive index instead of t[-1]
+print(t[-1])  # Negative indexing now works
+print(t[-2])
 
 # Tuple slicing - print elements
 sliced = t[1:4]
@@ -56,6 +57,7 @@ print(y)
 nested = ((1, 2), (3, 4), (5, 6))
 print(nested[1][0])
 print(nested[1][1])
+print(nested[-1][0])  # Negative index in nested
 
 # Tuple concatenation
 t1 = (1, 2)

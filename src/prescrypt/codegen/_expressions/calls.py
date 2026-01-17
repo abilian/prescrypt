@@ -94,7 +94,7 @@ class FuncCall:
         """Generate arguments for function call."""
         args = self.node.args
         keywords = self.node.keywords
-        base_name = "xxx"
+        base_name = "null"
         return flatten(self._get_args(args, keywords, base_name))
 
     def _get_args(self, args, keywords, base_name, use_call_or_apply=False):

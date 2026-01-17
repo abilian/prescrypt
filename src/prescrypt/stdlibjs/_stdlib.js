@@ -1,3 +1,4 @@
+var _pyfunc_Ellipsis = Symbol.for('Ellipsis');
 var _pyfunc_abs = Math.abs;;
 var _pyfunc_all = function (x) {
   // nargs: 1
@@ -344,6 +345,10 @@ var _pyfunc_op_getitem = function op_getitem(obj, key) {
   if (typeof obj.__getitem__ === 'function') {
     return obj.__getitem__(key);
   }
+  // Handle negative indices for arrays and strings
+  if (typeof key === 'number' && key < 0 && (Array.isArray(obj) || typeof obj === 'string')) {
+    key = obj.length + key;
+  }
   return obj[key];
 };
 var _pyfunc_op_instantiate = function (ob, args) {
@@ -389,6 +394,18 @@ var _pyfunc_op_len = function op_len(obj) {
     return Object.keys(obj).length;
   }
   throw new TypeError("object has no len()");
+};
+var _pyfunc_op_matmul = function (a, b) {
+  // nargs: 2
+  // Matrix multiplication operator @
+  // Delegates to __matmul__ method if available
+  if (typeof a.__matmul__ === 'function') {
+    return a.__matmul__(b);
+  }
+  if (typeof b.__rmatmul__ === 'function') {
+    return b.__rmatmul__(a);
+  }
+  throw new TypeError("unsupported operand type(s) for @");
 };
 var _pyfunc_op_mul = function (a, b) {
   // nargs: 2
@@ -545,18 +562,24 @@ var _pyfunc_sorted = function (iter, key, reverse) {
   if (typeof iter === "object" && !Array.isArray(iter)) {
     iter = Object.keys(iter);
   }
-  let comp = function (a, b) {
-    a = key(a);
-    b = key(b);
-    if (a < b) {
-      return -1;
-    }
-    if (a > b) {
-      return 1;
-    }
-    return 0;
-  };
-  comp = Boolean(key) ? comp : undefined;
+  let comp;
+  if (key) {
+    // Custom key function provided
+    comp = function (a, b) {
+      a = key(a);
+      b = key(b);
+      if (a < b) return -1;
+      if (a > b) return 1;
+      return 0;
+    };
+  } else {
+    // Default comparison - Python-like behavior (works correctly for numbers and strings)
+    comp = function (a, b) {
+      if (a < b) return -1;
+      if (a > b) return 1;
+      return 0;
+    };
+  }
   iter = iter.slice().sort(comp);
   if (reverse) iter.reverse();
   return iter;

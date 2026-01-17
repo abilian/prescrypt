@@ -29,6 +29,11 @@ def gen_constant(node: ast.Constant, codegen: CodeGen):
             byte_values = ", ".join(str(byte) for byte in b)
             return f"new Uint8Array([{byte_values}])"
 
+        case ast.Constant(value) if value is ...:
+            # Ellipsis literal: ... -> Symbol.for('Ellipsis')
+            # Using Symbol.for ensures ... === Ellipsis is true
+            return "Symbol.for('Ellipsis')"
+
         case _:  # pragma: no cover
             msg = f"Unknown Constant: {node}"
             raise ValueError(msg)

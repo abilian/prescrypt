@@ -64,19 +64,22 @@ class TestArithmeticFolding:
 
 
 class TestDivisionEdgeCases:
-    """Test that division by zero raises compile-time error."""
+    """Test that division by zero is left for runtime (not folded)."""
 
-    def test_division_by_zero_raises_error(self):
-        with pytest.raises(JSError, match="Division by zero"):
-            parse_and_fold("x = 1 / 0")
+    def test_division_by_zero_not_folded(self):
+        # Division by zero should be left for runtime, not folded
+        result = parse_and_fold("x = 1 / 0")
+        assert "/ 0" in result or "/0" in result
 
-    def test_floor_division_by_zero_raises_error(self):
-        with pytest.raises(JSError, match="Division by zero"):
-            parse_and_fold("x = 1 // 0")
+    def test_floor_division_by_zero_not_folded(self):
+        # Floor division by zero should be left for runtime
+        result = parse_and_fold("x = 1 // 0")
+        assert "// 0" in result or "//0" in result
 
-    def test_modulo_by_zero_raises_error(self):
-        with pytest.raises(JSError, match="Division by zero"):
-            parse_and_fold("x = 5 % 0")
+    def test_modulo_by_zero_not_folded(self):
+        # Modulo by zero should be left for runtime
+        result = parse_and_fold("x = 5 % 0")
+        assert "% 0" in result or "%0" in result
 
 
 class TestStringFolding:
