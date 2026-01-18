@@ -20,3 +20,7 @@ __pycache__/
 /tmp
 /sandbox
 .envrc
+
+# Test manager
+/data/test-results.db
+/data/reports/
