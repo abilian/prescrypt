@@ -131,10 +131,12 @@ export const op_parse_kwargs = function (
 // ---
 
 // function: op_error
-export const op_error = function (etype, msg) {
-  // nargs: 2
+export const op_error = function (etype, ...args) {
+  // nargs: 1+
+  let msg = args.join(", ");
   let e = new Error(etype + ": " + msg);
   e.name = etype;
+  e.args = args;  // Store args for repr()
   return e;
 };
 
@@ -427,6 +429,16 @@ export const str = function (x) {
 // function: repr
 export const repr = function (x) {
   // nargs: 1
+  // Handle Error objects (Python exceptions)
+  if (x instanceof Error && x.name && x.args !== undefined) {
+    let argsRepr = x.args.map(a => FUNCTION_PREFIXrepr(a)).join(", ");
+    return x.name + "(" + argsRepr + ")";
+  }
+  // Handle strings - use single quotes like Python
+  if (typeof x === "string") {
+    // Escape single quotes and backslashes, use single quotes
+    return "'" + x.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+  }
   let res;
   try {
     res = JSON.stringify(x);

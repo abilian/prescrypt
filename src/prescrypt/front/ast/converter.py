@@ -22,13 +22,17 @@ def convert(node: ast.AST) -> my_ast.AST:
         v = getattr(node, k)
         match v:
             case list():
-                # Handle lists - could be AST nodes or primitives (e.g., Global.names is list[str])
-                if v and isinstance(v[0], ast.AST):
-                    kwargs[k] = [convert(x) for x in v]
-                    children += kwargs[k]
-                else:
-                    # List of primitives (strings, etc.) - keep as-is
-                    kwargs[k] = v
+                # Handle lists - could be AST nodes, primitives, or mixed (e.g., kw_defaults has None for missing defaults)
+                converted_list = []
+                for x in v:
+                    if isinstance(x, ast.AST):
+                        converted = convert(x)
+                        converted_list.append(converted)
+                        children.append(converted)
+                    else:
+                        # Primitive value (string, int, None, etc.) - keep as-is
+                        converted_list.append(x)
+                kwargs[k] = converted_list
             case ast.AST():
                 kwargs[k] = convert(v)
                 children.append(kwargs[k])

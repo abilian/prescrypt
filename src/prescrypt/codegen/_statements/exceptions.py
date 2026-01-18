@@ -19,8 +19,12 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
     if exc_node is None:
         exc_var = codegen._get_exception_var()
         if exc_var is None:
-            msg = "bare 'raise' outside of except clause"
-            raise JSError(msg, node)
+            # Outside except block: raise RuntimeError at runtime
+            # (Python raises "RuntimeError: No active exception to re-raise")
+            err_code = codegen.call_std_function(
+                "op_error", ["'RuntimeError'", "'No active exception to re-raise'"]
+            )
+            return [codegen.lf(f"throw {err_code};")]
         return [codegen.lf(f"throw {exc_var};")]
 
     # Get cls and msg
@@ -41,7 +45,7 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
         case ast.Call(func, args, keywords):
             assert isinstance(func, ast.Name)
             err_cls = func.id
-            err_msg = "".join([unify(codegen.gen_expr(arg)) for arg in args])
+            err_msg = ", ".join([unify(codegen.gen_expr(arg)) for arg in args])
         case _:
             err_msg = "".join(codegen.gen_expr(exc_node))
 

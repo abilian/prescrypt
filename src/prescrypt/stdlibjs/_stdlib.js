@@ -330,10 +330,12 @@ var _pyfunc_op_equals = function op_equals(a, b) {
 
   return a == b;
 };
-var _pyfunc_op_error = function (etype, msg) {
-  // nargs: 2
+var _pyfunc_op_error = function (etype, ...args) {
+  // nargs: 1+
+  let msg = args.join(", ");
   let e = new Error(etype + ": " + msg);
   e.name = etype;
+  e.args = args;  // Store args for repr()
   return e;
 };
 var _pyfunc_op_getitem = function op_getitem(obj, key) {
@@ -481,6 +483,16 @@ var _pyfunc_range = function (start, end, step) {
 };
 var _pyfunc_repr = function (x) {
   // nargs: 1
+  // Handle Error objects (Python exceptions)
+  if (x instanceof Error && x.name && x.args !== undefined) {
+    let argsRepr = x.args.map(a => _pyfunc_repr(a)).join(", ");
+    return x.name + "(" + argsRepr + ")";
+  }
+  // Handle strings - use single quotes like Python
+  if (typeof x === "string") {
+    // Escape single quotes and backslashes, use single quotes
+    return "'" + x.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+  }
   let res;
   try {
     res = JSON.stringify(x);

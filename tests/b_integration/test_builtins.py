@@ -65,8 +65,8 @@ chr(x) + chr(x+1)
         assert js_eval(py2js("str()")) == ""
 
     def test_repr(self):
-        # Note: JS repr uses double quotes, Python uses single
-        assert js_eval(py2js("repr('hello')")) == '"hello"'
+        # repr uses single quotes for strings, like Python
+        assert js_eval(py2js("repr('hello')")) == "'hello'"
         assert js_eval(py2js("repr(42)")) == "42"
 
 
