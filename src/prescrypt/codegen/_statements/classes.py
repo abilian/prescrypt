@@ -21,9 +21,6 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     if keyword_nodes:
         msg = "Metaclasses not supported"
         raise JSError(msg, node)
-    if decorator_nodes:
-        msg = "Class decorators not supported"
-        raise JSError(msg, decorator_nodes[0])
 
     # Get base class (not the constructor)
     base_class = "Object"
@@ -73,6 +70,12 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
 
     code.append("\n")
     codegen.pop_ns()
+
+    # Apply decorators (in reverse order, innermost first)
+    if decorator_nodes:
+        for decorator in reversed(decorator_nodes):
+            dec_code = flatten(codegen.gen_expr(decorator))
+            code.append(f"{class_name} = {dec_code}({class_name});\n")
 
     return code
 

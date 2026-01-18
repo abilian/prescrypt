@@ -9,21 +9,21 @@ import pytest
 
 from prescrypt.compiler import py2js
 
-from .denylist import DENY_LIST
+from .denylist import ALLOW_LIST, DENY_LIST
 
 PROGRAMS_DIR = Path(__file__).parent / "programs"
 
 
 def get_source_files():
     for src in sorted(PROGRAMS_DIR.glob("*.py")):
-        if src.name in DENY_LIST:
+        if src.name in DENY_LIST and src.name not in ALLOW_LIST:
             continue
         yield str(src.name)
 
 
 @pytest.mark.parametrize("source_file", get_source_files())
 def test_module(source_file):
-    assert source_file not in DENY_LIST
+    # assert source_file not in DENY_LIST
     src = PROGRAMS_DIR / source_file
     js_code = py2js(src.read_text())
 

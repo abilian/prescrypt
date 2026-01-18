@@ -5,10 +5,10 @@ import pytest
 from .utils import check_gen
 
 OPS = [
-    # Int
-    ("1 + 1", "_pyfunc_op_add(1, 1)"),
+    # Int - optimized to native JS when both operands are numeric
+    ("1 + 1", "(1 + 1)"),
     ("1 - 1", "1 - 1"),
-    ("1 * 1", "_pyfunc_op_mul(1, 1)"),
+    ("1 * 1", "(1 * 1)"),
     ("1 / 1", "1 / 1"),
     ("1 // 1", "Math.floor(1/1)"),
     ("1 % 1", "1 % 1"),
@@ -23,13 +23,13 @@ OPS = [
     ("True and True", "true && true"),
     ("True or True", "true || true"),
     ("not True", "!true"),
-    # Float
-    ("1.0 + 1.0", "_pyfunc_op_add(1.0, 1.0)"),
+    # Float - optimized to native JS when both operands are numeric
+    ("1.0 + 1.0", "(1.0 + 1.0)"),
     ("1.0 - 1.0", "1.0 - 1.0"),
-    ("1.0 * 1.0", "_pyfunc_op_mul(1.0, 1.0)"),
-    # Strings
-    ("'a' + 'b'", "_pyfunc_op_add('a', 'b')"),
-    ("'a' * 2", "_pyfunc_op_mul('a', 2)"),
+    ("1.0 * 1.0", "(1.0 * 1.0)"),
+    # Strings - optimized to native JS when both operands are strings
+    ("'a' + 'b'", "('a' + 'b')"),
+    ("'a' * 2", "'a'.repeat(2)"),
     # Lists
     ("[1] + [2]", "_pyfunc_op_add([1], [2])"),
     ("[1] * 2", "_pyfunc_op_mul([1], 2)"),
@@ -38,9 +38,9 @@ OPS = [
     ("(1,) * 2", "_pyfunc_op_mul([1], 2)"),
     # Dicts
     ("{} + {}", "_pyfunc_op_add(_pyfunc_create_dict(), _pyfunc_create_dict())"),
-    # Comparisons
-    ("1 == 1", "_pyfunc_op_equals(1, 1)"),
-    ("1 != 1", "!_pyfunc_op_equals(1, 1)"),
+    # Comparisons - optimized to native JS for primitive types
+    ("1 == 1", "(1 === 1)"),
+    ("1 != 1", "(1 !== 1)"),
     ("1 < 1", "1 < 1"),
     ("1 <= 1", "1 <= 1"),
     ("1 > 1", "1 > 1"),
@@ -53,7 +53,7 @@ OPS = [
     ("1 < 1 > 1", "(1 < 1) && (1 > 1)"),
     ("1 < 1 <= 1", "(1 < 1) && (1 <= 1)"),
     ("1 < 1 >= 1", "(1 < 1) && (1 >= 1)"),
-    ("1 < 1 == 1", "(1 < 1) && _pyfunc_op_equals(1, 1)"),
+    ("1 < 1 == 1", "(1 < 1) && (1 === 1)"),
     # Matrix multiplication
     ("a @ b", "_pyfunc_op_matmul(a, b)"),
     # Other ops

@@ -27,9 +27,16 @@ def function_str(codegen: CodeGen, args, _kwargs):
             else:
                 # Unknown or complex type: use _pyfunc_str for Python-style output
                 return codegen.call_std_function("str", args)
+        case [bytes_arg, encoding]:
+            # str(bytes, encoding) - decode bytes to string
+            return codegen.call_std_function("str_decode", args)
+        case [bytes_arg, encoding, _errors]:
+            # str(bytes, encoding, errors) - decode with error handling
+            # For now, ignore errors parameter
+            return codegen.call_std_function("str_decode", [bytes_arg, encoding])
         case _:
-            msg = "str() at most one argument"
-            raise JSError(msg)
+            # Too many arguments - generate runtime TypeError
+            return codegen.call_std_function("str_error_args", args)
 
 
 def function_bool(codegen: CodeGen, args, _kwargs):

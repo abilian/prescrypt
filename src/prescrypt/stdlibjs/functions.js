@@ -397,6 +397,10 @@ export const str = function (x) {
   if (x === undefined) {
     return "";
   }
+  // Handle booleans with Python-style capitalization
+  if (typeof x === "boolean") {
+    return x ? "True" : "False";
+  }
   if (Array.isArray(x)) {
     if (x.length == 0) {
       return "[]";
@@ -420,8 +424,43 @@ export const str = function (x) {
   if (typeof x === "string") {
     return x;
   }
+  // Handle dicts (plain objects)
+  if (typeof x === "object" && x !== null && !Array.isArray(x) && x.constructor === Object) {
+    let entries = Object.entries(x);
+    if (entries.length === 0) {
+      return "{}";
+    }
+    let parts = entries.map(function([k, v]) {
+      let kStr = typeof k === "string" ? "'" + k + "'" : String(k);
+      let vStr = FUNCTION_PREFIXrepr(v);
+      return kStr + ": " + vStr;
+    });
+    return "{" + parts.join(", ") + "}";
+  }
   // Default
   return JSON.stringify(x);
+};
+
+// ---
+
+// function: str_decode
+export const str_decode = function (bytes, encoding) {
+  // nargs: 2
+  // Decode bytes/bytearray to string using specified encoding
+  // Convert to Uint8Array if needed (handles both Array and TypedArray)
+  let arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  // Use TextDecoder for proper encoding support
+  let decoder = new TextDecoder(encoding || "utf-8");
+  return decoder.decode(arr);
+};
+
+// ---
+
+// function: str_error_args
+export const str_error_args = function () {
+  // nargs: 0+
+  // Called when str() has too many arguments - raises TypeError at runtime
+  throw FUNCTION_PREFIXop_error("TypeError", "str() takes at most 3 arguments");
 };
 
 // ---
@@ -434,10 +473,36 @@ export const repr = function (x) {
     let argsRepr = x.args.map(a => FUNCTION_PREFIXrepr(a)).join(", ");
     return x.name + "(" + argsRepr + ")";
   }
+  // Handle booleans with Python-style capitalization
+  if (typeof x === "boolean") {
+    return x ? "True" : "False";
+  }
   // Handle strings - use single quotes like Python
   if (typeof x === "string") {
     // Escape single quotes and backslashes, use single quotes
     return "'" + x.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+  }
+  // Handle null (None in Python)
+  if (x === null) {
+    return "None";
+  }
+  // Handle arrays (lists/tuples)
+  if (Array.isArray(x)) {
+    let items = x.map(e => FUNCTION_PREFIXrepr(e));
+    return "[" + items.join(", ") + "]";
+  }
+  // Handle dicts (plain objects)
+  if (typeof x === "object" && x !== null && x.constructor === Object) {
+    let entries = Object.entries(x);
+    if (entries.length === 0) {
+      return "{}";
+    }
+    let parts = entries.map(function([k, v]) {
+      let kRepr = FUNCTION_PREFIXrepr(k);
+      let vRepr = FUNCTION_PREFIXrepr(v);
+      return kRepr + ": " + vRepr;
+    });
+    return "{" + parts.join(", ") + "}";
   }
   let res;
   try {
@@ -826,6 +891,251 @@ export const op_matmul = function (a, b) {
     return b.__rmatmul__(a);
   }
   throw new TypeError("unsupported operand type(s) for @");
+};
+
+// ---
+
+// function: string_mod
+export const string_mod = function (format_str, args) {
+  // nargs: 2
+  // Python-style % string formatting with runtime tuple unpacking
+  // format_str: the format string with %s, %d, %r, etc. placeholders
+  // args: either a single value or a tuple/array of values
+
+  // Check for named placeholders like %(name)s
+  const hasNamedPlaceholders = /%\([^)]+\)/.test(format_str);
+
+  if (hasNamedPlaceholders) {
+    // Handle named placeholders - args should be a dict
+    if (typeof args !== 'object' || Array.isArray(args)) {
+      throw new TypeError("format requires a mapping");
+    }
+    return format_str.replace(/%\(([^)]+)\)([-+0 #]*)?(\d+)?(?:\.(\d+))?([srdeEfgGioxXcu])|%%/g,
+      function(match, name, flags, width, precision, type) {
+        if (match === "%%") return "%";
+        if (!(name in args)) {
+          throw FUNCTION_PREFIXop_error("KeyError", name);
+        }
+        return FUNCTION_PREFIXformat_value(args[name], type, flags, width, precision);
+      }
+    );
+  }
+
+  // Count value slots needed (placeholders + * for dynamic width/precision)
+  // This regex matches: %[-+0 #]*[*]?[\d]*[.]?[*]?[\d]*[type]
+  const slot_re = /%(?:[-+0 #]*)?(\*)?(?:\d*)?(?:\.(\*)?\d*)?[srdeEfgGioxXcu]/g;
+  let slots = 0;
+  let m;
+  while ((m = slot_re.exec(format_str)) !== null) {
+    slots++; // The value itself
+    if (m[1] === '*') slots++; // Dynamic width
+    if (m[2] === '*') slots++; // Dynamic precision
+  }
+
+  // Normalize args to an array
+  // In Python, only tuples are unpacked for % formatting
+  // Non-tuple sequences (lists, etc.) are treated as single values
+  let values;
+  // Check if args is a tuple (unmarked array or explicitly marked)
+  // Arrays marked with _is_list are NOT tuples
+  const isList = args && args._is_list === true;
+  const isTuple = Array.isArray(args) && !isList;
+
+  if (slots === 0) {
+    values = [];
+  } else if (slots === 1 && !isTuple) {
+    // Single placeholder with non-tuple (list, scalar, etc.) - treat as single value
+    values = [args];
+  } else if (slots === 1 && isTuple && args.length === 1) {
+    // Single placeholder with single-element tuple - unpack
+    values = args;
+  } else if (slots === 1 && isTuple && args.length > 1) {
+    // Single placeholder with multi-element tuple - too many values
+    throw new TypeError("not all arguments converted during string formatting");
+  } else if (isTuple) {
+    // Multiple placeholders with tuple - unpack
+    values = args;
+  } else {
+    // Multiple placeholders but args is not a tuple - TypeError
+    throw new TypeError("not enough arguments for format string");
+  }
+
+  // Validate count
+  if (values.length < slots) {
+    throw new TypeError("not enough arguments for format string");
+  }
+  if (values.length > slots) {
+    throw new TypeError("not all arguments converted during string formatting");
+  }
+
+  // Replace placeholders
+  let valueIndex = 0;
+  return format_str.replace(/%(?:([-+0 #]*))?(\*)?(\d*)(?:\.(\*)?(\d*))?([srdeEfgGioxXcu])|%%/g,
+    function(match, flags, dynWidth, width, dynPrec, precision, type) {
+      if (match === "%%") return "%";
+      // Handle dynamic width
+      let actualWidth = width;
+      if (dynWidth === '*') {
+        actualWidth = String(values[valueIndex++]);
+      }
+      // Handle dynamic precision
+      let actualPrecision = precision;
+      if (dynPrec === '*') {
+        actualPrecision = String(values[valueIndex++]);
+      }
+      const value = values[valueIndex++];
+      return FUNCTION_PREFIXformat_value(value, type, flags, actualWidth, actualPrecision);
+    }
+  );
+};
+
+// ---
+
+// function: format_value
+export const format_value = function (value, type, flags, width, precision) {
+  // nargs: 5
+  // Format a single value according to % format specifier
+  let result;
+  let sign = '';
+  const useAltForm = flags && flags.indexOf('#') >= 0;
+  const forceSign = flags && flags.indexOf('+') >= 0;
+  const spaceSign = flags && flags.indexOf(' ') >= 0;
+  const zeroPad = flags && flags.indexOf('0') >= 0;
+  const leftAlign = flags && flags.indexOf('-') >= 0;
+
+  // Convert value to number for numeric formats
+  let numValue = value;
+  if (typeof value === 'boolean') {
+    numValue = value ? 1 : 0;
+  } else if (typeof value === 'object' && value !== null && typeof value.__int__ === 'function') {
+    numValue = value.__int__();
+  } else {
+    numValue = Number(value);
+  }
+
+  // Handle different types
+  switch (type) {
+    case 's':
+      result = FUNCTION_PREFIXstr(value);
+      break;
+    case 'r':
+      result = FUNCTION_PREFIXrepr(value);
+      break;
+    case 'd':
+    case 'i':
+    case 'u':
+      // Integer (u is deprecated in Python 3, same as d)
+      let intVal = Math.floor(numValue);
+      if (intVal < 0) {
+        sign = '-';
+        intVal = -intVal;
+      } else if (forceSign) {
+        sign = '+';
+      } else if (spaceSign) {
+        sign = ' ';
+      }
+      result = String(intVal);
+      // Handle precision for integers (minimum digits)
+      if (precision !== undefined && precision !== '') {
+        const prec = Number(precision);
+        while (result.length < prec) {
+          result = '0' + result;
+        }
+      }
+      result = sign + result;
+      break;
+    case 'o':
+      result = Math.floor(Math.abs(numValue)).toString(8);
+      if (useAltForm && result !== '0') {
+        result = '0o' + result;
+      }
+      break;
+    case 'x':
+      result = Math.floor(Math.abs(numValue)).toString(16);
+      if (useAltForm) {
+        result = '0x' + result;
+      }
+      break;
+    case 'X':
+      result = Math.floor(Math.abs(numValue)).toString(16).toUpperCase();
+      if (useAltForm) {
+        result = '0X' + result;
+      }
+      break;
+    case 'e':
+      result = numValue.toExponential(precision !== undefined && precision !== '' ? Number(precision) : 6);
+      break;
+    case 'E':
+      result = numValue.toExponential(precision !== undefined && precision !== '' ? Number(precision) : 6).toUpperCase();
+      break;
+    case 'f':
+    case 'F':
+      result = numValue.toFixed(precision !== undefined && precision !== '' ? Number(precision) : 6);
+      break;
+    case 'g':
+    case 'G':
+      result = numValue.toPrecision(precision !== undefined && precision !== '' ? Number(precision) : 6);
+      if (type === 'G') result = result.toUpperCase();
+      break;
+    case 'c':
+      // Character
+      if (typeof value === 'number') {
+        result = String.fromCharCode(value);
+      } else if (typeof value === 'string' && value.length === 1) {
+        result = value;
+      } else if (typeof value === 'boolean') {
+        result = String.fromCharCode(value ? 1 : 0);
+      } else {
+        throw new TypeError("%c requires int or char");
+      }
+      break;
+    default:
+      result = String(value);
+  }
+
+  // Handle precision for strings
+  if ((type === 's' || type === 'r') && precision !== undefined && precision !== '') {
+    result = result.slice(0, Number(precision));
+  }
+
+  // Handle width padding
+  if (width !== undefined && width !== '') {
+    const w = Number(width);
+    if (result.length < w) {
+      const padLen = w - result.length;
+      if (leftAlign) {
+        result = result + ' '.repeat(padLen);
+      } else if (zeroPad && !leftAlign && 'diuoxXeEfFgG'.indexOf(type) >= 0) {
+        // Zero padding goes after the sign
+        if (sign && result.startsWith(sign)) {
+          result = sign + '0'.repeat(padLen) + result.slice(sign.length);
+        } else if (result.startsWith('0x') || result.startsWith('0X') || result.startsWith('0o')) {
+          const prefix = result.slice(0, 2);
+          result = prefix + '0'.repeat(padLen) + result.slice(2);
+        } else {
+          result = '0'.repeat(padLen) + result;
+        }
+      } else {
+        result = ' '.repeat(padLen) + result;
+      }
+    }
+  }
+
+  return result;
+};
+
+// ---
+
+// function: op_mod
+export const op_mod = function (left, right) {
+  // nargs: 2
+  // Handles Python's % operator which can be either:
+  // - String formatting: "hello %s" % "world"
+  // - Numeric modulo: 7 % 3
+  if (typeof left === 'string') {
+    return FUNCTION_PREFIXstring_mod(left, right);
+  }
+  return left % right;
 };
 
 // ---

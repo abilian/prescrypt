@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+ALLOW_LIST = {
+    "decorator.py",
+    "slice_op.py",
+    # "try_except_break.py",
+    "try_reraise.py",
+    "try_reraise2.py",
+}
 DENY_LIST = {
     # Another error
     "try_except_break.py",

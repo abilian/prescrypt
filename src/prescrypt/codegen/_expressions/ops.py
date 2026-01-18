@@ -153,12 +153,21 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
 
     match op, left_node:
         case ast.Mod(), ast.Constant(str(s)):
-            # Modulo on a string is string formatting in Python
+            # Modulo on a string constant is string formatting in Python
             return codegen._format_string(left_node, right_node)
 
     # Get types for optimization decisions
     left_type = get_type(left_node)
     right_type = get_type(right_node)
+
+    # Handle % operator with possible string formatting
+    # If left type is known string, or if left type is unknown but could be string,
+    # use runtime op_mod which handles both string formatting and numeric modulo
+    if isinstance(op, ast.Mod):
+        if is_string(left_type) or not is_numeric(left_type):
+            js_left = unify(codegen.gen_expr(left_node))
+            js_right = unify(codegen.gen_expr(right_node))
+            return codegen.call_std_function("op_mod", [js_left, js_right])
 
     js_left = unify(codegen.gen_expr(left_node))
     js_right = unify(codegen.gen_expr(right_node))

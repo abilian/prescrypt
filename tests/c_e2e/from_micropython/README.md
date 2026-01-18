@@ -69,6 +69,9 @@ python tests/c_e2e/from_micropython/check_all.py -q
 # Generate a new denylist
 python tests/c_e2e/from_micropython/check_all.py --create-denylist
 
+# Update denylist: test only denied programs, show newly passing ones
+python tests/c_e2e/from_micropython/check_all.py --update-denylist
+
 # Show generated JavaScript for failures
 python tests/c_e2e/from_micropython/check_all.py --show-js
 

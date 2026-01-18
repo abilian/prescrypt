@@ -19,9 +19,9 @@ FUNC_CALLS = [
     # ("f(*t)", ""), # TODO
     ("f(*t, a=1)", "f({flx_args: t, flx_kwargs: {a: 1}})"),
     ("f(*t, **kw)", "f({flx_args: t, flx_kwargs: kw})"),
-    # Calls to stdlib functions
-    ("print(1)", "console.log(_pyfunc_str(1))"),
-    ("str(1)", "_pyfunc_str(1)"),
+    # Calls to stdlib functions - optimized for primitive types
+    ("print(1)", "console.log(1)"),  # Int is primitive, no str() needed
+    ("str(1)", "String(1)"),  # Int uses String() constructor
     ("bool(1)", "!!(_pyfunc_truthy(1))"),
     ("round(1)", "_pyfunc_round(1)"),
     # Calls to methods

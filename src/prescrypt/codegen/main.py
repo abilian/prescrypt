@@ -316,49 +316,28 @@ class CodeGen:
             return self.call_std_function("truthy", [test])
 
     def _format_string(self, left: ast.expr, right: ast.expr) -> str:
-        """Format a string using the old-school `%` operator."""
+        """Format a string using the old-school `%` operator.
 
-        # Get value_nodes
-        if isinstance(right, (ast.Tuple, ast.List)):
-            value_nodes = right.elts
-        else:
-            value_nodes = [right]
-
-        # Is the left side a string? If not, exit early
-        # This works, but we cannot know whether the left was a string or number :P
-        # if not isinstance(node.left_node, ast.Str):
-        #     thestring = unify(self.parse(node.left_node))
-        #     thestring += ".replace(/%([0-9\.\+\-\#]*[srdeEfgGioxXc])/g, '{:$1}')"
-        #     return self.use_std_method(thestring, 'format', value_nodes)
-
+        Uses the runtime string_mod function for consistent Python-compatible
+        formatting including proper boolean-to-int conversion for numeric formats.
+        """
         assert isinstance(left, ast.Constant) and isinstance(left.value, str)
-        left_str = left.value
         js_left = "".join(self.gen_expr(left))
-        sep = js_left[0]  # Quote character
 
-        # Get matches
-        matches = list(re.finditer(r"%[0-9.+#-]*[srdeEfgGioxXc]", left_str))
-        if len(matches) != len(value_nodes):
-            msg = (
-                "In string formatting, number of placeholders "
-                "does not match number of replacements"
-            )
-            raise JSError(msg)
+        # For tuples, generate array that will be unpacked at runtime
+        # For lists and other values, wrap in a marker array to prevent unpacking
+        if isinstance(right, ast.Tuple):
+            # Tuple - transpile normally, runtime will unpack
+            js_right = unify(self.gen_expr(right))
+        elif isinstance(right, ast.List):
+            # List - mark as non-tuple so runtime won't unpack
+            js_right = unify(self.gen_expr(right))
+            js_right = f"Object.assign({js_right}, {{_is_list: true}})"
+        else:
+            # Other value - runtime will handle based on type
+            js_right = unify(self.gen_expr(right))
 
-        # Format
-        parts = []
-        start = 0
-        for m in matches:
-            fmt = m.group(0)
-            fmt = {"%r": "!r", "%s": ""}.get(fmt, ":" + fmt[1:])
-            # Add the part in front of the match (and after prev match)
-            parts.append(left_str[start : m.start()])
-            parts.append("{" + fmt + "}")
-            start = m.end()
-        parts.append(left_str[start:])
-        thestring = sep + flatten(parts) + sep
-
-        return self.call_std_method(thestring, "format", value_nodes)
+        return self.call_std_function("string_mod", [js_left, js_right])
 
     def dummy(self, name=""):
         """Get a unique name.

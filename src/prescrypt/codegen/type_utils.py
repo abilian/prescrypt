@@ -5,6 +5,7 @@ Provides helper functions to check AST node types and make codegen decisions.
 
 from __future__ import annotations
 
+from prescrypt.front import ast
 from prescrypt.front.passes.types import Bool, Float, Int, List, String, Unknown
 
 
@@ -12,8 +13,25 @@ def get_type(node):
     """Get the inferred type of an AST node.
 
     Returns Unknown if no type information is available.
+    For Constant nodes, returns the type based on the value type.
     """
-    return getattr(node, "_type", Unknown)
+    # Check for existing type annotation from type inference pass
+    if hasattr(node, "_type") and node._type is not None:
+        return node._type
+
+    # For constants, infer type directly from the value
+    if isinstance(node, ast.Constant):
+        value = node.value
+        if isinstance(value, bool):
+            return Bool
+        elif isinstance(value, int):
+            return Int
+        elif isinstance(value, float):
+            return Float
+        elif isinstance(value, str):
+            return String
+
+    return Unknown
 
 
 def is_numeric(t) -> bool:

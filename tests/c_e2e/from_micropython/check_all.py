@@ -11,8 +11,9 @@ This script:
 
 Usage:
     python check_all.py [--verbose] [--filter PATTERN] [--show-js]
-    python check_all.py --create-denylist  # Generate DENY_LIST for test_all.py
-    python check_all.py -q                 # Quiet mode: outputs "failures/total"
+    python check_all.py --create-denylist   # Generate DENY_LIST for test_all.py
+    python check_all.py --update-denylist   # Test denylist, show newly passing + updated list
+    python check_all.py -q                  # Quiet mode: outputs "failures/total"
 """
 
 from __future__ import annotations
@@ -828,6 +829,11 @@ def main():
         action="store_true",
         help="Quiet mode: only output total programs and failures count",
     )
+    parser.add_argument(
+        "--update-denylist",
+        action="store_true",
+        help="Test only programs in current denylist, show newly passing programs and updated denylist",
+    )
 
     args = parser.parse_args()
 
@@ -835,6 +841,21 @@ def main():
     program_files = sorted(
         f for f in PROGRAMS_DIR.iterdir() if f.is_file() and f.suffix == ".py"
     )
+
+    # Load current denylist if --update-denylist is used
+    current_denylist: set[str] = set()
+    if args.update_denylist:
+        try:
+            from .denylist import DENY_LIST
+            current_denylist = DENY_LIST
+        except ImportError:
+            # Try direct import for standalone execution
+            import sys
+            sys.path.insert(0, str(Path(__file__).parent))
+            from denylist import DENY_LIST
+            current_denylist = DENY_LIST
+        # Filter to only test programs in the denylist
+        program_files = [f for f in program_files if f.name in current_denylist]
 
     # Apply filter
     if args.filter:
@@ -907,6 +928,28 @@ def main():
         print("=" * 80)
         print()
         print(generate_denylist(results))
+
+    # Update denylist mode: show newly passing and updated denylist
+    if args.update_denylist:
+        # Find programs that now pass (were in denylist, now succeed)
+        now_passing = [r for r in results if r.status == Status.SUCCESS]
+        still_failing = [r for r in results if r.status != Status.SUCCESS]
+
+        print("\n" + "=" * 80)
+        print("NEWLY PASSING PROGRAMS")
+        print("=" * 80)
+        if now_passing:
+            print(f"\n{len(now_passing)} program(s) now pass and can be removed from denylist:\n")
+            for r in sorted(now_passing, key=lambda x: x.filename):
+                print(f"  - {r.filename}")
+        else:
+            print("\nNo programs are newly passing.")
+
+        print("\n" + "=" * 80)
+        print("UPDATED DENY_LIST")
+        print("=" * 80)
+        print(f"\n# {len(still_failing)} programs still failing\n")
+        print(generate_denylist(still_failing))
 
 
 if __name__ == "__main__":
