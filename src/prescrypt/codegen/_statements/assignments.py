@@ -177,6 +177,23 @@ def gen_unpack_assign(targets: list[ast.expr], js_value: str, codegen: CodeGen) 
     return gen_complex_unpack(targets, js_value, codegen)
 
 
+def _collect_target_names(targets: list[ast.expr]) -> list[str]:
+    """Collect all variable names from destructuring targets."""
+    names = []
+    for t in targets:
+        match t:
+            case ast.Name(id=name):
+                names.append(name)
+            case ast.Tuple(elts=elts) | ast.List(elts=elts):
+                names.extend(_collect_target_names(elts))
+            case ast.Starred(value=ast.Name(id=name)):
+                names.append(name)
+            case ast.Starred(value=inner):
+                if isinstance(inner, (ast.Tuple, ast.List)):
+                    names.extend(_collect_target_names(inner.elts))
+    return names
+
+
 def gen_complex_unpack(targets: list[ast.expr], js_value: str, codegen: CodeGen) -> str:
     """Handle complex unpacking with nesting or starred expressions."""
     # Check for starred element
@@ -191,8 +208,14 @@ def gen_complex_unpack(targets: list[ast.expr], js_value: str, codegen: CodeGen)
     if starred_idx is not None:
         return gen_starred_unpack(targets, starred_idx, js_value, codegen)
 
+    # Check if any target names are already known (for reassignment detection)
+    all_names = _collect_target_names(targets)
+    any_known = any(codegen.ns.is_known(name) for name in all_names)
+
     # Nested unpacking without starred
     pattern = gen_destructure_pattern(targets, codegen)
+    if any_known:
+        return f"{pattern} = {js_value};"
     return f"let {pattern} = {js_value};"
 
 
@@ -221,9 +244,15 @@ def gen_starred_unpack(
     """Handle starred unpacking: first, *rest, last = items"""
     n = len(targets)
 
+    # Check if any target names are already known (for reassignment detection)
+    all_names = _collect_target_names(targets)
+    any_known = any(codegen.ns.is_known(name) for name in all_names)
+
     if starred_idx == n - 1:
         # Starred at end: [first, ...rest] works directly in JS
         pattern = gen_destructure_pattern(targets, codegen)
+        if any_known:
+            return f"{pattern} = {js_value};"
         return f"let {pattern} = {js_value};"
 
     # Starred not at end: need to split manually
@@ -236,8 +265,12 @@ def gen_starred_unpack(
     for t in reversed(after_starred):
         if isinstance(t, ast.Name):
             name = t.id
+            is_known = codegen.ns.is_known(name)
             codegen.add_var(name)
-            lines.append(f"let {name} = {tmp}.pop();")
+            if is_known:
+                lines.append(f"{name} = {tmp}.pop();")
+            else:
+                lines.append(f"let {name} = {tmp}.pop();")
         else:
             msg = "Complex unpacking after starred not supported"
             raise JSError(msg)
@@ -248,6 +281,7 @@ def gen_starred_unpack(
         starred_target.value, ast.Name
     ):
         starred_name = starred_target.value.id
+        starred_known = codegen.ns.is_known(starred_name)
         codegen.add_var(starred_name)
     else:
         msg = "Starred expression must be a simple name"
@@ -257,17 +291,26 @@ def gen_starred_unpack(
     before_starred = targets[:starred_idx]
     if before_starred:
         before_names = []
+        before_any_known = False
         for t in before_starred:
             if isinstance(t, ast.Name):
+                if codegen.ns.is_known(t.id):
+                    before_any_known = True
                 codegen.add_var(t.id)
                 before_names.append(t.id)
             else:
                 msg = "Complex unpacking before starred not supported"
                 raise JSError(msg)
         pattern = ", ".join(before_names)
-        lines.append(f"let [{pattern}, ...{starred_name}] = {tmp};")
+        if before_any_known or starred_known:
+            lines.append(f"[{pattern}, ...{starred_name}] = {tmp};")
+        else:
+            lines.append(f"let [{pattern}, ...{starred_name}] = {tmp};")
     else:
-        lines.append(f"let {starred_name} = {tmp};")
+        if starred_known:
+            lines.append(f"{starred_name} = {tmp};")
+        else:
+            lines.append(f"let {starred_name} = {tmp};")
 
     return "\n".join(lines)
 

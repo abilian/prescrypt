@@ -106,8 +106,15 @@ def gen_try(node: ast.Try, codegen: CodeGen):
     # If there's an else clause, we need a flag to track if exception occurred
     exc_flag = None
     if has_else:
-        exc_flag = f"_no_exc_{codegen._indent}"
+        exc_flag = codegen.dummy("noexc")
         code.append(codegen.lf(f"let {exc_flag} = true;"))
+
+    # Special case: both else and finally exist
+    # In Python, else runs BEFORE finally. We need to wrap the entire
+    # try/catch/else in an outer try/finally to ensure finally always runs.
+    if finalbody_nodes and has_else:
+        code.append(codegen.lf("try {"))
+        codegen.indent()
 
     # Try
     code.append(codegen.lf("try {"))
@@ -148,8 +155,9 @@ def gen_try(node: ast.Try, codegen: CodeGen):
         codegen.dedent()
         code.append(codegen.lf("}"))  # end catch
 
-    # Else clause - runs if no exception was raised
-    if has_else:
+    # Handle finally and else with correct Python semantics
+    if finalbody_nodes and has_else:
+        # Else runs before finally, inside the outer try
         code.append(codegen.lf(f"if ({exc_flag}) {{"))
         codegen.indent()
         for n in orelse_nodes:
@@ -157,14 +165,30 @@ def gen_try(node: ast.Try, codegen: CodeGen):
         codegen.dedent()
         code.append(codegen.lf("}"))
 
-    # Finally
-    if finalbody_nodes:
+        # Close inner structure, start finally
+        codegen.dedent()
+        code.append(codegen.lf("} finally {"))
+        codegen.indent()
+        for n in finalbody_nodes:
+            code += codegen.gen_stmt(n)
+        codegen.dedent()
+        code.append(codegen.lf("}"))
+    elif finalbody_nodes:
+        # Only finally, no else: use JS finally
         code.append(" finally {")
         codegen.indent()
         for n in finalbody_nodes:
             code += codegen.gen_stmt(n)
         codegen.dedent()
-        code.append(codegen.lf("}"))  # end finally
+        code.append(codegen.lf("}"))
+    elif has_else:
+        # Only else, no finally
+        code.append(codegen.lf(f"if ({exc_flag}) {{"))
+        codegen.indent()
+        for n in orelse_nodes:
+            code += codegen.gen_stmt(n)
+        codegen.dedent()
+        code.append(codegen.lf("}"))
 
     return code
 

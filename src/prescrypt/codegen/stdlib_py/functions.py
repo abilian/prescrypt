@@ -199,7 +199,8 @@ def function_ord(codegen: CodeGen, args, kwargs) -> str:
     match args:
         case [arg]:
             js_arg = flatten(codegen.gen_expr(arg))
-            return f"{js_arg}.charCodeAt(0)"
+            # Wrap in parentheses to handle literals like ord(1)
+            return f"({js_arg}).charCodeAt(0)"
         case _:
             msg = "ord() exactly one argument"
             raise JSError(msg)
@@ -278,8 +279,9 @@ def function_super(codegen: CodeGen, args, kwargs):
             # Two-argument super(cls, obj) - explicit form
             js_cls = unify(codegen.gen_expr(cls_arg))
             js_obj = unify(codegen.gen_expr(obj_arg))
+            # Wrap js_cls in parentheses to handle literals like super(1, x)
             return codegen.call_std_function(
-                "super_proxy", [js_obj, f"{js_cls}.prototype"]
+                "super_proxy", [js_obj, f"({js_cls}).prototype"]
             )
         case _:
             msg = "super() takes 0 or 2 arguments"

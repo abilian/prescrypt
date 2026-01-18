@@ -222,7 +222,13 @@ class ResultsDatabase:
             INSERT INTO runs (started_at, git_commit, git_branch, python_version, notes)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (datetime.now(tz=timezone.utc), git_commit, git_branch, python_version, notes),
+            (
+                datetime.now(tz=timezone.utc),
+                git_commit,
+                git_branch,
+                python_version,
+                notes,
+            ),
         )
         self.conn.commit()
         return cursor.lastrowid
@@ -243,7 +249,15 @@ class ResultsDatabase:
             SET finished_at = ?, total_programs = ?, passed = ?, failed = ?, skipped = ?, errors = ?
             WHERE id = ?
             """,
-            (datetime.now(tz=timezone.utc), total, passed, failed, skipped, errors, run_id),
+            (
+                datetime.now(tz=timezone.utc),
+                total,
+                passed,
+                failed,
+                skipped,
+                errors,
+                run_id,
+            ),
         )
         self.conn.commit()
 

@@ -12,7 +12,12 @@ def _gen_pass(node: ast.Pass, codegen: CodeGen):
 
 @gen_stmt.register
 def _gen_expr(node: ast.Expr, codegen: CodeGen):
-    return flatten(codegen.gen_expr(node.value)) + ";\n"
+    js_expr = flatten(codegen.gen_expr(node.value))
+    # Flush any pending declarations (e.g., from walrus operator)
+    pending_decls = codegen.flush_pending_declarations()
+    if pending_decls:
+        return pending_decls + js_expr + ";\n"
+    return js_expr + ";\n"
 
 
 @gen_stmt.register

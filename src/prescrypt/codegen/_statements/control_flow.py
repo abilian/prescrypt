@@ -61,8 +61,17 @@ def gen_if(node: ast.If, codegen: CodeGen):
     ):
         body = []
 
-    code = [codegen.lf("if (")]  # first part (popped in elif parsing)
-    code.append(codegen.gen_truthy(test))
+    # Generate test expression first to capture any pending declarations
+    js_test = codegen.gen_truthy(test)
+    pending_decls = codegen.flush_pending_declarations()
+
+    code = []
+    # Emit pending declarations before the if statement
+    if pending_decls:
+        code.append(pending_decls)
+
+    code.append(codegen.lf("if ("))  # first part (popped in elif parsing)
+    code.append(js_test)
     code.append(") {")
 
     codegen.indent()
@@ -72,14 +81,13 @@ def gen_if(node: ast.If, codegen: CodeGen):
 
     if orelse:
         if len(orelse) == 1 and isinstance(orelse[0], ast.If):
-            # gen_stmt returns a string like "\nif (...) {...\n}"
-            # We need to skip the "\nif (" at start and "\n}" at end
-            inner_if = codegen.gen_stmt(orelse[0])
-            # Remove leading newline and "if (" prefix
-            inner_if = inner_if.lstrip("\n")
+            # gen_stmt returns a list, flatten to string
+            inner_if = flatten(codegen.gen_stmt(orelse[0]))
+            # Remove leading whitespace and "if (" prefix
+            inner_if = inner_if.lstrip()
             if inner_if.startswith("if ("):
                 inner_if = inner_if[4:]  # Skip "if ("
-            # Remove trailing "}" and newline
+            # Remove trailing "}" and whitespace
             inner_if = inner_if.rstrip()
             if inner_if.endswith("}"):
                 inner_if = inner_if[:-1]
@@ -230,6 +238,9 @@ def gen_while(node: ast.While, codegen: CodeGen):
     test_node, body_nodes, orelse_nodes = node.test, node.body, node.orelse
     js_test = "".join(codegen.gen_expr(test_node))
 
+    # Flush any pending declarations (e.g., from walrus operator in condition)
+    pending_decls = codegen.flush_pending_declarations()
+
     # Collect body and else-body
     js_for_body = []
     codegen.indent()
@@ -239,6 +250,10 @@ def gen_while(node: ast.While, codegen: CodeGen):
 
     # Init code
     code = []
+
+    # Emit pending declarations first
+    if pending_decls:
+        code.append(pending_decls)
 
     # Prepare variable to detect else
     if orelse_nodes:
@@ -324,12 +339,18 @@ def gen_with(node: ast.With, codegen: CodeGen):
     if optional_vars:
         if isinstance(optional_vars, ast.Name):
             var_name = optional_vars.id
+            # Check if known BEFORE adding (for reassignment detection)
+            is_known = codegen.ns.is_known(var_name)
             codegen.add_var(var_name)
-            decl = codegen.get_declaration_kind(var_name)
-            if decl:
-                code.append(codegen.lf(f"{decl} {var_name} = {js_context};"))
-            else:
+            if is_known:
+                # Already declared - just reassign
                 code.append(codegen.lf(f"{var_name} = {js_context};"))
+            else:
+                decl = codegen.get_declaration_kind(var_name)
+                if decl:
+                    code.append(codegen.lf(f"{decl} {var_name} = {js_context};"))
+                else:
+                    code.append(codegen.lf(f"{var_name} = {js_context};"))
         else:
             msg = "Complex 'with' variable binding not supported"
             raise JSError(msg, optional_vars)

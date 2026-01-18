@@ -87,6 +87,9 @@ class CodeGen:
         # Track exception variable for bare raise support
         self._exception_var_stack: list[str] = []
 
+        # Pending variable declarations (for walrus operator in expressions)
+        self._pending_declarations: list[str] = []
+
         self._init_dispatch()
 
     @property
@@ -116,6 +119,38 @@ class CodeGen:
     def _get_exception_var(self) -> str | None:
         """Get the current exception variable name, if in an except block."""
         return self._exception_var_stack[-1] if self._exception_var_stack else None
+
+    def is_known_in_any_scope(self, name: str) -> bool:
+        """Check if a variable is known in any enclosing scope.
+
+        Used for walrus operator to avoid redeclaring variables that
+        exist in parent scopes (e.g., module-level variables used in
+        comprehensions).
+        """
+        for ns in self._stack:
+            if ns.is_known(name):
+                return True
+        return False
+
+    def add_pending_declaration(self, name: str) -> None:
+        """Add a variable to be declared before the current statement.
+
+        Used for walrus operator where the variable needs to be declared
+        before the expression containing it is evaluated.
+        """
+        if name not in self._pending_declarations:
+            self._pending_declarations.append(name)
+
+    def flush_pending_declarations(self) -> str:
+        """Emit and clear any pending variable declarations.
+
+        Returns the declaration statements as a string (may be empty).
+        """
+        if not self._pending_declarations:
+            return ""
+        decls = [f"let {name};" for name in self._pending_declarations]
+        self._pending_declarations.clear()
+        return self.lf("") + self.lf("".join(decls))
 
     def get_declaration_kind(self, name: str) -> str:
         """Get the JS declaration keyword for a variable.
@@ -358,6 +393,10 @@ class CodeGen:
 
     def with_prefix(self, name, new=False):
         """Add class prefix to a variable name if necessary."""
+        # Rename 'super' to '_super' since it's a JS reserved keyword
+        if name == "super":
+            name = "_super"
+
         if self.ns.type == "class":
             ns_name = self.ns.name
             if name.startswith("__") and not name.endswith("__"):

@@ -609,7 +609,9 @@ def cmd_export_denylist(args, config: Config, db: ResultsDatabase):
         if added:
             print(f"\nWould add {len(added)} new failures")
         if removed:
-            print(f"Would remove {len(removed)} previously known failures (now passing)")
+            print(
+                f"Would remove {len(removed)} previously known failures (now passing)"
+            )
     else:
         with open(CONFIG_PATH, "w") as f:
             tomlkit.dump(doc, f)

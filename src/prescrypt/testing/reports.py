@@ -643,6 +643,30 @@ def generate_markdown_report(
     )
     lines.append("")
 
+    # Section names for filtering
+    SECTION_NAMES = {
+        "missing_names": ["Missing Names", "ReferenceError", "Reference Error"],
+        "compile_errors": ["Compilation Errors", "Compile Errors", "Compile"],
+        "type_errors": ["Type Errors", "TypeError"],
+        "syntax_errors": ["Syntax Errors", "SyntaxError", "JavaScript Syntax"],
+        "output_mismatches": ["Output Mismatches", "Output Mismatch", "Mismatch"],
+    }
+
+    # Helper to check if filter matches a section
+    def section_matches(section_key: str) -> bool:
+        if not filter_pattern:
+            return True
+        try:
+            pattern = re.compile(filter_pattern, re.IGNORECASE)
+            return any(
+                pattern.search(name) for name in SECTION_NAMES.get(section_key, [])
+            )
+        except re.error:
+            return any(
+                filter_pattern.lower() in name.lower()
+                for name in SECTION_NAMES.get(section_key, [])
+            )
+
     # Helper to check if item matches filter
     def matches_filter(text: str) -> bool:
         if not filter_pattern:
@@ -653,11 +677,19 @@ def generate_markdown_report(
             return filter_pattern.lower() in text.lower()
 
     # Missing Names (Reference Errors)
-    filtered_ref_errors = {
-        name: paths
-        for name, paths in reference_errors.items()
-        if name != "_other_" and matches_filter(name)
-    }
+    include_ref_errors = section_matches("missing_names")
+    if include_ref_errors or not filter_pattern:
+        filtered_ref_errors = {
+            name: paths
+            for name, paths in reference_errors.items()
+            if name != "_other_" and (include_ref_errors or matches_filter(name))
+        }
+    else:
+        filtered_ref_errors = {
+            name: paths
+            for name, paths in reference_errors.items()
+            if name != "_other_" and matches_filter(name)
+        }
     if filtered_ref_errors:
         lines.append("## Missing Names (ReferenceError)")
         lines.append("")
@@ -671,28 +703,34 @@ def generate_markdown_report(
             lines.append("")
 
     # Compile Errors
-    filtered_compile = {
-        err_type: items
-        for err_type, items in compile_errors.items()
-        if any(
-            matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
-            for path, msg in items
-        )
-    }
+    include_compile = section_matches("compile_errors")
+    if include_compile:
+        filtered_compile = compile_errors
+    else:
+        filtered_compile = {
+            err_type: items
+            for err_type, items in compile_errors.items()
+            if any(
+                matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
+                for path, msg in items
+            )
+        }
     if filtered_compile:
         lines.append("## Compilation Errors")
         lines.append("")
         for err_type, items in sorted(
             filtered_compile.items(), key=lambda x: -len(x[1])
         ):
-            # Filter items within this error type
-            filtered_items = [
-                (path, msg)
-                for path, msg in items
-                if matches_filter(err_type)
-                or matches_filter(path)
-                or matches_filter(msg)
-            ]
+            if include_compile:
+                filtered_items = items
+            else:
+                filtered_items = [
+                    (path, msg)
+                    for path, msg in items
+                    if matches_filter(err_type)
+                    or matches_filter(path)
+                    or matches_filter(msg)
+                ]
             if not filtered_items:
                 continue
             lines.append(f"### {err_type} ({len(filtered_items)} programs)")
@@ -706,25 +744,32 @@ def generate_markdown_report(
                 lines.append("")
 
     # Type Errors
-    filtered_type = {
-        err_type: items
-        for err_type, items in type_errors.items()
-        if any(
-            matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
-            for path, msg in items
-        )
-    }
+    include_type = section_matches("type_errors")
+    if include_type:
+        filtered_type = type_errors
+    else:
+        filtered_type = {
+            err_type: items
+            for err_type, items in type_errors.items()
+            if any(
+                matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
+                for path, msg in items
+            )
+        }
     if filtered_type:
         lines.append("## Type Errors")
         lines.append("")
         for err_type, items in sorted(filtered_type.items(), key=lambda x: -len(x[1])):
-            filtered_items = [
-                (path, msg)
-                for path, msg in items
-                if matches_filter(err_type)
-                or matches_filter(path)
-                or matches_filter(msg)
-            ]
+            if include_type:
+                filtered_items = items
+            else:
+                filtered_items = [
+                    (path, msg)
+                    for path, msg in items
+                    if matches_filter(err_type)
+                    or matches_filter(path)
+                    or matches_filter(msg)
+                ]
             if not filtered_items:
                 continue
             lines.append(f"### {err_type} ({len(filtered_items)} programs)")
@@ -738,27 +783,34 @@ def generate_markdown_report(
                 lines.append("")
 
     # Syntax Errors
-    filtered_syntax = {
-        err_type: items
-        for err_type, items in syntax_errors.items()
-        if any(
-            matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
-            for path, msg in items
-        )
-    }
+    include_syntax = section_matches("syntax_errors")
+    if include_syntax:
+        filtered_syntax = syntax_errors
+    else:
+        filtered_syntax = {
+            err_type: items
+            for err_type, items in syntax_errors.items()
+            if any(
+                matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
+                for path, msg in items
+            )
+        }
     if filtered_syntax:
         lines.append("## Syntax Errors")
         lines.append("")
         for err_type, items in sorted(
             filtered_syntax.items(), key=lambda x: -len(x[1])
         ):
-            filtered_items = [
-                (path, msg)
-                for path, msg in items
-                if matches_filter(err_type)
-                or matches_filter(path)
-                or matches_filter(msg)
-            ]
+            if include_syntax:
+                filtered_items = items
+            else:
+                filtered_items = [
+                    (path, msg)
+                    for path, msg in items
+                    if matches_filter(err_type)
+                    or matches_filter(path)
+                    or matches_filter(msg)
+                ]
             if not filtered_items:
                 continue
             lines.append(f"### {err_type} ({len(filtered_items)} programs)")
@@ -772,11 +824,17 @@ def generate_markdown_report(
                 lines.append("")
 
     # Output Mismatches
-    filtered_mismatches = [
-        (path, expected, actual)
-        for path, expected, actual in output_mismatches
-        if matches_filter(path) or matches_filter(expected) or matches_filter(actual)
-    ]
+    include_mismatches = section_matches("output_mismatches")
+    if include_mismatches:
+        filtered_mismatches = output_mismatches
+    else:
+        filtered_mismatches = [
+            (path, expected, actual)
+            for path, expected, actual in output_mismatches
+            if matches_filter(path)
+            or matches_filter(expected)
+            or matches_filter(actual)
+        ]
     if filtered_mismatches:
         lines.append(f"## Output Mismatches ({len(filtered_mismatches)} tests)")
         lines.append("")
@@ -879,7 +937,7 @@ def categorize_results(results: list) -> tuple[dict, dict, dict, dict, list]:
             if "error:" in error_msg.lower():
                 # Find the position after "error:" and extract what follows
                 idx = error_msg.lower().find("error:")
-                err_text = error_msg[idx + 6:].strip()
+                err_text = error_msg[idx + 6 :].strip()
                 # Take the first meaningful phrase as error type
                 if err_text:
                     # Truncate at reasonable length for grouping
@@ -917,4 +975,10 @@ def categorize_results(results: list) -> tuple[dict, dict, dict, dict, list]:
             actual = (r["js_output"] or "").strip()
             output_mismatches.append((path, expected[:200], actual[:200]))
 
-    return reference_errors, type_errors, syntax_errors, compile_errors, output_mismatches
+    return (
+        reference_errors,
+        type_errors,
+        syntax_errors,
+        compile_errors,
+        output_mismatches,
+    )

@@ -36,6 +36,10 @@ def gen_namedexpr(node: ast.NamedExpr, codegen: CodeGen) -> str:
 
     The walrus operator assigns and returns the value.
     In JavaScript, assignment is also an expression.
+
+    For new variables, we register them for declaration before the containing
+    statement (via pending declarations) to avoid putting var/let inside
+    expressions like while conditions.
     """
     # Get the target name
     target = node.target
@@ -49,12 +53,13 @@ def gen_namedexpr(node: ast.NamedExpr, codegen: CodeGen) -> str:
     js_value = flatten(codegen.gen_expr(node.value))
 
     # Check if variable needs declaration
-    needs_decl = not codegen.ns.is_known(name)
+    # Use is_known_in_any_scope to handle comprehensions where walrus operator
+    # should reference variables from enclosing scopes
+    needs_decl = not codegen.is_known_in_any_scope(name)
     if needs_decl:
         codegen.add_var(name)
-        # Use 'var' because it's hoisted - declaration will be moved to top of scope
-        # Emit as separate statement (with newline) followed by the expression
-        return f"var {name};\n({name} = {js_value})"
+        # Register for declaration before the containing statement
+        codegen.add_pending_declaration(name)
 
     return f"({name} = {js_value})"
 

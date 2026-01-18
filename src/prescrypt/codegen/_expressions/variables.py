@@ -66,6 +66,11 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
     if name == "self":
         return "this"
 
+    # Rename 'super' when used as a regular variable (not the builtin)
+    # JavaScript reserves 'super' as a keyword
+    if name == "super" and codegen.ns.is_known(name):
+        return "_super"
+
     # Handle Ellipsis builtin - reference the stdlib constant
     if name == "Ellipsis":
         codegen._used_std_functions.add("Ellipsis")
