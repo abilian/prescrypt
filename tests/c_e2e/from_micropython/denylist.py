@@ -5,6 +5,8 @@ DENY_LIST = {
     "try_except_break.py",
     # Compilation timeouts (hangs or memory exhaustion)
     "string_format2.py",
+    # Fails on Python 3.12+
+    "slice_op.py",
     #
     # Compilation errors
     # 10

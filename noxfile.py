@@ -21,4 +21,6 @@ def lint(session: nox.Session):
 # Utils
 #
 def uv_sync(session: nox.Session):
-    session.run("uv", "sync", "--all-groups", "--all-extras", "--active", external=True)
+    session.run(
+        "uv", "sync", "-q", "--all-groups", "--all-extras", "--active", external=True
+    )
