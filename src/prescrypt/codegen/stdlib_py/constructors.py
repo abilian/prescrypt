@@ -127,3 +127,31 @@ def function_set(codegen: CodeGen, args, _kwargs):
         case _:
             msg = "set() takes at most one argument"
             raise JSError(msg)
+
+
+def function_bytes(codegen: CodeGen, args, _kwargs):
+    """Handle bytes() constructor.
+
+    Forms:
+    - bytes() -> empty bytes
+    - bytes(n) -> n zero bytes
+    - bytes(iterable) -> bytes from iterable of ints
+    - bytes(bytes_obj) -> copy of bytes
+    - bytes(string, encoding) -> encode string
+    - bytes(string, encoding, errors) -> encode with error handling
+    """
+    match args:
+        case []:
+            return "new Uint8Array()"
+        case [arg]:
+            # bytes(source) - could be int, bytes, or iterable
+            return codegen.call_std_function("bytes", args)
+        case [string_arg, encoding]:
+            # bytes(string, encoding)
+            return codegen.call_std_function("bytes_encode", args)
+        case [string_arg, encoding, errors]:
+            # bytes(string, encoding, errors) - ignore errors for now
+            return codegen.call_std_function("bytes_encode", [string_arg, encoding])
+        case _:
+            # Too many arguments
+            return codegen.call_std_function("bytes_error_args", args)

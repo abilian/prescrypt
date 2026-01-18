@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-ALLOW_LIST = {
-    "decorator.py",
-    "slice_op.py",
-    # "try_except_break.py",
-    "try_reraise.py",
-    "try_reraise2.py",
-}
+ALLOW_LIST = {}
+#     "decorator.py",
+#     "slice_op.py",
+#     # "try_except_break.py",
+#     "try_reraise.py",
+#     "try_reraise2.py",
+# }
 DENY_LIST = {
     # Another error
     "try_except_break.py",
@@ -14,6 +14,8 @@ DENY_LIST = {
     "string_format2.py",
     # Fails on Python 3.12+
     "slice_op.py",
+    # Compilation timeouts (hangs or memory exhaustion)
+    # "string_format2.py",
     #
     # Compilation errors
     # 10
@@ -26,14 +28,11 @@ DENY_LIST = {
     "class_bases.py",  # 16:0: error: Multiple inheritance not (yet) supported
     # 17
     "io_stringio_base.py",  # 17:8: error: Base classes must be simple names
-    "try_reraise.py",  # 17:4: error: bare 'raise' outside of except clause
     # 20
     "builtin_property_inherit.py",  # 20:0: error: Multiple inheritance not (yet) supported
     # 21
     "class_store_class.py",  # 21:0: error: Multiple inheritance not (yet) supported
     "fun_code_lnotab.py",  # 21:11: error: Base classes must be simple names
-    # 22
-    "decorator.py",  # 22:1: error: Class decorators not supported
     # 23
     "annotate_var.py",  # 23:4: error: Annotated assignment target must be a simple na...
     # 26
@@ -63,15 +62,9 @@ DENY_LIST = {
     "async_with_break.py",  # gen_stmt not implemented for <AsyncWith (AST node)>
     "async_with_return.py",  # gen_stmt not implemented for <AsyncWith (AST node)>
     "bytes_subscr.py",  # gen_assign not implemented for <Assign (AST node)>
-    "fun_kwonlydef.py",  # module 'prescrypt.front.ast.ast' has no attribute 'NoneType'
     "op_error.py",  # gen_assign not implemented for <Assign (AST node)>
     # error
     "builtin_slice.py",  # error: Slice assignment with step is not supported
-    "bytearray1.py",  # error: str() at most one argument
-    "bytes.py",  # error: str() at most one argument
-    "namedtuple1.py",  # error: In string formatting, number of placeholders does not...
-    "string_format_modulo.py",  # error: In string formatting, number of placeholders does not...
-    "string_format_modulo_int.py",  # error: In string formatting, number of placeholders does not...
     # unhashable type
     "builtin_hash.py",  # unhashable type: 'list'
     #
@@ -87,6 +80,8 @@ DENY_LIST = {
     "exceptpoly.py",  # Exception: Exception:
     # NotImplementedError
     "exceptpoly2.py",  # NotImplementedError: NotImplementedError:
+    # OverflowError
+    "int_bytes_optional_args_cp311.py",  # OverflowError: OverflowError: int too big to convert
     # RangeError
     "string_mult.py",  # RangeError: invalid repeat count
     # ReferenceError
@@ -126,6 +121,7 @@ DENY_LIST = {
     "builtin_str_hex.py",  # ReferenceError: 'bytes' is not defined
     "builtin_type.py",  # ReferenceError: 'type' is not defined
     "builtin_zip.py",  # ReferenceError: 'zip' is not defined
+    "bytearray1.py",  # ReferenceError: 'bytearray' is not defined
     "bytearray_add.py",  # ReferenceError: 'bytearray' is not defined
     "bytearray_add_self.py",  # ReferenceError: 'bytearray' is not defined
     "bytearray_append.py",  # ReferenceError: 'bytearray' is not defined
@@ -144,18 +140,14 @@ DENY_LIST = {
     "bytes_add_endian.py",  # ReferenceError: 'array' is not defined
     "bytes_compare_array.py",  # ReferenceError: 'array' is not defined
     "bytes_compare_bytearray.py",  # ReferenceError: 'bytearray' is not defined
-    "bytes_construct.py",  # ReferenceError: 'bytes' is not defined
-    "bytes_construct_array.py",  # ReferenceError: 'bytes' is not defined
-    "bytes_construct_bytearray.py",  # ReferenceError: 'bytes' is not defined
-    "bytes_construct_endian.py",  # ReferenceError: 'bytes' is not defined
-    "bytes_construct_intbig.py",  # ReferenceError: 'bytes' is not defined
+    "bytes_construct_array.py",  # ReferenceError: 'array' is not defined
+    "bytes_construct_bytearray.py",  # ReferenceError: 'bytearray' is not defined
+    "bytes_construct_endian.py",  # ReferenceError: 'array' is not defined
     "bytes_count.py",  # ReferenceError: 'bytes' is not defined
-    "bytes_gen.py",  # ReferenceError: 'bytes' is not defined
     "class2.py",  # ReferenceError: 'type' is not defined
     "class3.py",  # ReferenceError: 'type' is not defined
     "class_bind_self.py",  # ReferenceError: 'int' is not defined
     "class_dict.py",  # ReferenceError: 'int' is not defined
-    "class_misc.py",  # ReferenceError: 'bytes' is not defined
     "class_new.py",  # ReferenceError: 'object' is not defined
     "class_notimpl.py",  # ReferenceError: 'NotImplemented' is not defined
     "class_ordereddict.py",  # ReferenceError: 'int' is not defined
@@ -181,9 +173,10 @@ DENY_LIST = {
     "fun_calldblstar.py",  # ReferenceError: 'len' is not defined
     "fun_calldblstar2.py",  # ReferenceError: 'exec' is not defined
     "fun_calldblstar3.py",  # ReferenceError: 'kw' is not defined
-    "fun_callstardblstar.py",  # ReferenceError: 'iter' is not defined
+    "fun_callstardblstar.py",  # ReferenceError: 'kwargs' is not defined
     "fun_code.py",  # ReferenceError: 'type' is not defined
     "fun_kwonly.py",  # ReferenceError: 'x' is not defined
+    "fun_kwonlydef.py",  # ReferenceError: 'a' is not defined
     "fun_kwvarargs.py",  # ReferenceError: 'kwargs' is not defined
     "gc1.py",  # ReferenceError: 'gc' is not defined
     "gen_yield_from_close.py",  # ReferenceError: 'next' is not defined
@@ -202,14 +195,16 @@ DENY_LIST = {
     "generator_throw.py",  # ReferenceError: 'next' is not defined
     "generator_throw_multi_arg.py",  # ReferenceError: 'next' is not defined
     "generator_throw_nested.py",  # ReferenceError: 'next' is not defined
-    "getitem.py",  # ReferenceError: 'iter' is not defined
+    "getitem.py",  # ReferenceError: 'next' is not defined
     "globals_del.py",  # ReferenceError: 'type' is not defined
     "ifcond.py",  # ReferenceError: f2 is not initialized
     "import_instance_method.py",  # ReferenceError: 'sys' is not defined
     "int_64_basics.py",  # ReferenceError: 'sys' is not defined
     "int_big1.py",  # ReferenceError: 'sys' is not defined
     "int_big_error.py",  # ReferenceError: 'bytearray' is not defined
-    "int_bytes_int64.py",  # ReferenceError: 'int' is not defined
+    "int_bytes.py",  # ReferenceError: 'sys' is not defined
+    "int_bytes_int64.py",  # ReferenceError: 'hex' is not defined
+    "int_bytes_intbig.py",  # ReferenceError: 'sys' is not defined
     "int_parse.py",  # ReferenceError: 'bytearray' is not defined
     "io_bytesio_cow.py",  # ReferenceError: 'io' is not defined
     "io_bytesio_ext.py",  # ReferenceError: 'io' is not defined
@@ -217,16 +212,15 @@ DENY_LIST = {
     "io_stringio1.py",  # ReferenceError: 'io' is not defined
     "io_stringio_with.py",  # ReferenceError: 'io' is not defined
     "io_write_ext.py",  # ReferenceError: 'io' is not defined
-    "iter0.py",  # ReferenceError: 'iter' is not defined
     "iter1.py",  # ReferenceError: 'StopIteration' is not defined
     "iter2.py",  # ReferenceError: 'StopIteration' is not defined
-    "iter_of_iter.py",  # ReferenceError: 'iter' is not defined
     "lexer.py",  # ReferenceError: 'exec' is not defined
     "list_slice.py",  # ReferenceError: 'ValueError' is not defined
     "memoryview_slice_assign.py",  # ReferenceError: 'memoryview' is not defined
     "module1.py",  # ReferenceError: '__main__' is not defined
     "module2.py",  # ReferenceError: 'sys' is not defined
     "module_dict.py",  # ReferenceError: 'sys' is not defined
+    "namedtuple1.py",  # ReferenceError: 'namedtuple' is not defined
     "namedtuple_asdict.py",  # ReferenceError: 'namedtuple' is not defined
     "nanbox_smallint.py",  # ReferenceError: 'micropython' is not defined
     "object1.py",  # ReferenceError: 'object' is not defined
@@ -238,7 +232,6 @@ DENY_LIST = {
     "python34.py",  # ReferenceError: 'exec' is not defined
     "scope_implicit.py",  # ReferenceError: x is not initialized
     "self_type_check.py",  # ReferenceError: 'sys' is not defined
-    "set_iter_of_iter.py",  # ReferenceError: 'iter' is not defined
     "set_type.py",  # ReferenceError: 'set' is not defined
     "set_unop.py",  # ReferenceError: 'hash' is not defined
     "special_methods2.py",  # ReferenceError: 'dir' is not defined
@@ -249,6 +242,7 @@ DENY_LIST = {
     "struct2.py",  # ReferenceError: 'struct' is not defined
     "struct_endian.py",  # ReferenceError: 'struct' is not defined
     "struct_micropython.py",  # ReferenceError: 'struct' is not defined
+    "subclass_native3.py",  # ReferenceError: 'Exception' is not defined
     "subclass_native4.py",  # ReferenceError: 'list' is not defined
     "subclass_native_buffer.py",  # ReferenceError: 'bytes' is not defined
     "subclass_native_cmp.py",  # ReferenceError: 'tuple' is not defined
@@ -284,11 +278,7 @@ DENY_LIST = {
     "class_super.py",  # SyntaxError: invalid number literal
     "class_super_aslocal.py",  # SyntaxError: variable name expected
     "dict_del.py",  # SyntaxError: unexpected token in expression: 'if'
-    "fun_name.py",  # SyntaxError: invalid number literal
     "generator_closure.py",  # SyntaxError: expecting ')'
-    "int_bytes.py",  # SyntaxError: invalid number literal
-    "int_bytes_intbig.py",  # SyntaxError: invalid number literal
-    "int_bytes_optional_args_cp311.py",  # SyntaxError: invalid number literal
     "list_index.py",  # SyntaxError: invalid redefinition of lexical identifier
     "set_remove.py",  # SyntaxError: unexpected token in expression: 'if'
     "string_fstring.py",  # SyntaxError: expecting ';'
@@ -296,16 +286,13 @@ DENY_LIST = {
     "string_partition.py",  # SyntaxError: invalid redefinition of lexical identifier
     "string_rindex.py",  # SyntaxError: invalid redefinition of lexical identifier
     "string_rpartition.py",  # SyntaxError: invalid redefinition of lexical identifier
-    "subclass_native3.py",  # SyntaxError: expecting ','
     "sys_tracebacklimit.py",  # SyntaxError: unexpected token in expression: 'if'
     "try_else.py",  # SyntaxError: invalid redefinition of lexical identifier
     "try_else_finally.py",  # SyntaxError: unexpected token in expression: 'finally'
     "try_finally_break.py",  # SyntaxError: unexpected token in expression: 'if'
-    "try_reraise2.py",  # SyntaxError: expecting ','
     "tuple_index.py",  # SyntaxError: invalid redefinition of lexical identifier
     "unpack1.py",  # SyntaxError: invalid redefinition of lexical identifier
     "with1.py",  # SyntaxError: invalid redefinition of lexical identifier
-    "with_raise.py",  # SyntaxError: expecting ','
     # SystemExit
     "builtin_delattr.py",  # SystemExit: SystemExit:
     "builtin_enumerate.py",  # SystemExit: SystemExit:
@@ -341,6 +328,7 @@ DENY_LIST = {
     # TypeError
     "async_def.py",  # TypeError: not a function
     "builtin_issubclass.py",  # TypeError: invalid 'instanceof' right operand
+    "bytes_construct_intbig.py",  # TypeError: not a function
     "bytes_find.py",  # TypeError: not a function
     "bytes_replace.py",  # TypeError: cannot read property 'apply' of undefined
     "bytes_split.py",  # TypeError: cannot read property 'apply' of undefined
@@ -358,6 +346,7 @@ DENY_LIST = {
     "dict_views.py",  # TypeError: not a function
     "fun_code_colines.py",  # TypeError: cannot read property 'co_lines' of undefined
     "fun_code_full.py",  # TypeError: cannot read property 'co_code' of undefined
+    "fun_name.py",  # TypeError: cannot read property '__name__' of undefined
     "fun_str.py",  # TypeError: cannot read property 'slice' of undefined
     "gen_yield_from_ducktype.py",  # TypeError: value is not iterable
     "gen_yield_from_throw_repeat.py",  # TypeError: not a function
@@ -365,6 +354,7 @@ DENY_LIST = {
     "generator_name.py",  # TypeError: cannot read property '__name__' of undefined
     "generator_send.py",  # TypeError: not a function
     "generator_throw_repeat.py",  # TypeError: not a function
+    "iter0.py",  # TypeError: not a function
     "list1.py",  # TypeError: not a function
     "list_extend.py",  # TypeError: not a object
     "scope_class.py",  # TypeError: not a function
@@ -396,7 +386,6 @@ DENY_LIST = {
     "andor.py",
     "bool1.py",
     "builtin_abs_intbig.py",
-    "builtin_allany.py",
     "builtin_callable.py",
     "builtin_chr.py",
     "builtin_divmod.py",
@@ -409,11 +398,7 @@ DENY_LIST = {
     "builtin_round_int.py",
     "builtin_round_intbig.py",
     "builtin_sum.py",
-    "bytes_add.py",
-    "bytes_compare.py",
-    "bytes_compare2.py",
-    "bytes_compare3.py",
-    "bytes_escape_unicode.py",
+    "bytes_construct.py",
     "bytes_format_modulo.py",
     "bytes_mult.py",
     "class_binop.py",
@@ -427,7 +412,6 @@ DENY_LIST = {
     "class_str.py",
     "closure_defargs.py",
     "closure_namedarg.py",
-    "compare_multi.py",
     "comprehension1.py",
     "del_deref.py",
     "del_global.py",
@@ -439,12 +423,10 @@ DENY_LIST = {
     "dict_construct.py",
     "dict_from_iter.py",
     "dict_get.py",
-    "dict_intern.py",
     "dict_iterator.py",
     "dict_pop.py",
     "dict_popitem.py",
     "dict_setdefault.py",
-    "equal_class.py",
     "floordivide_intbig.py",
     "for2.py",
     "fun_annotations.py",
@@ -485,8 +467,7 @@ DENY_LIST = {
     "int_divzero.py",
     "int_intbig.py",
     "int_small.py",
-    "is_isnot.py",
-    "is_isnot_literal.py",
+    "iter_of_iter.py",
     "lambda_defargs.py",
     "list_compare.py",
     "list_mult.py",
@@ -494,7 +475,6 @@ DENY_LIST = {
     "list_slice_3arg.py",
     "list_slice_assign.py",
     "list_sort.py",
-    "logic_constfolding.py",
     "op_error_literal.py",
     "return1.py",
     "scope.py",
@@ -503,6 +483,7 @@ DENY_LIST = {
     "set_basic.py",
     "set_clear.py",
     "set_comprehension.py",
+    "set_iter_of_iter.py",
     "slots_bool_len.py",
     "special_comparisons.py",
     "special_comparisons2.py",
@@ -517,14 +498,13 @@ DENY_LIST = {
     "string_format_cp310.py",
     "string_format_error.py",
     "string_format_intbig.py",
+    "string_format_modulo.py",
     "string_format_sep.py",
     "string_fstring_debug.py",
-    "string_istest.py",
     "string_join.py",
     "string_replace.py",
     "string_repr.py",
     "string_rfind.py",
-    "string_slice.py",
     "string_startswith.py",
     "try_finally_break2.py",
     "try_finally_continue.py",
@@ -538,5 +518,6 @@ DENY_LIST = {
     "tuple_slice.py",
     "with_break.py",
     "with_continue.py",
+    "with_raise.py",
     "with_return.py",
 }

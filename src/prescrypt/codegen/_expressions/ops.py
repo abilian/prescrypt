@@ -24,6 +24,12 @@ def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
     # Generate the base expression
     base_name = unify(codegen.gen_expr(value_node))
 
+    # Wrap numeric literals in parentheses for method calls: 10.to_bytes() -> (10).to_bytes()
+    if isinstance(value_node, ast.Constant) and isinstance(
+        value_node.value, (int, float)
+    ):
+        base_name = f"({base_name})"
+
     # Double underscore name mangling (for private attributes)
     if attr.startswith("__") and not attr.endswith("__") and base_name == "this":
         # Find enclosing class in the namespace stack

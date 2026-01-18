@@ -5,6 +5,7 @@ from prescrypt.codegen.type_utils import get_type, is_primitive
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
+from prescrypt.front.passes.types import Bool
 
 from .constructors import function_str
 
@@ -110,9 +111,11 @@ def function_print(codegen: CodeGen, args, kwargs):
     js_args = []
     for arg in args:
         arg_type = get_type(arg)
-        if is_primitive(arg_type):
-            # Primitive types: console.log handles them natively
-            # For strings, use directly; for numbers/bools, JS converts automatically
+        if arg_type is Bool:
+            # Booleans need _pyfunc_str for Python-style True/False capitalization
+            js_arg = codegen.call_std_function("str", [arg])
+        elif is_primitive(arg_type):
+            # Numbers and strings: console.log handles them natively
             js_arg = unify(codegen.gen_expr(arg))
         else:
             # Unknown or complex types: use _pyfunc_str for Python-style output

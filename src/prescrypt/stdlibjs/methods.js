@@ -907,3 +907,57 @@ export const zfill = function (width) {
 };
 
 // ---
+
+// method: to_bytes
+export const to_bytes = function (length, byteorder, signed) {
+  // nargs: 2 3
+  // int.to_bytes(length, byteorder, *, signed=False)
+  // Converts an integer to a bytes object
+  let n = typeof this === "number" ? this : Number(this);
+  signed = signed === true || signed === "true";
+
+  // Check for negative length
+  if (length < 0) {
+    throw FUNCTION_PREFIXop_error("ValueError", "length argument must be non-negative");
+  }
+
+  // Check for negative numbers when unsigned
+  if (!signed && n < 0) {
+    throw FUNCTION_PREFIXop_error("OverflowError", "can't convert negative int to unsigned");
+  }
+
+  // Special case: 0 can always be represented in 0 bytes
+  if (length === 0) {
+    if (n === 0) {
+      return new Uint8Array(0);
+    } else {
+      throw FUNCTION_PREFIXop_error("OverflowError", "int too big to convert");
+    }
+  }
+
+  // Calculate max value for given length
+  let maxVal = signed ? Math.pow(2, length * 8 - 1) - 1 : Math.pow(2, length * 8) - 1;
+  let minVal = signed ? -Math.pow(2, length * 8 - 1) : 0;
+
+  if (n > maxVal || n < minVal) {
+    throw FUNCTION_PREFIXop_error("OverflowError", "int too big to convert");
+  }
+
+  // Handle signed negative numbers (two's complement)
+  if (signed && n < 0) {
+    n = Math.pow(2, length * 8) + n;
+  }
+
+  let bytes = new Uint8Array(length);
+  let isLittle = byteorder === "little";
+
+  for (let i = 0; i < length; i++) {
+    let idx = isLittle ? i : length - 1 - i;
+    bytes[idx] = n & 0xff;
+    n = Math.floor(n / 256);
+  }
+
+  return bytes;
+};
+
+// ---

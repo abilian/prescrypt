@@ -203,6 +203,22 @@ export const dict = function (x) {
 
 // ---
 
+// function: iter
+export const iter = function (x) {
+  // nargs: 1
+  // Returns an iterator for the given iterable
+  if (typeof x[Symbol.iterator] === "function") {
+    return x[Symbol.iterator]();
+  }
+  // Handle plain objects by iterating over keys
+  if (typeof x === "object" && x !== null) {
+    return Object.keys(x)[Symbol.iterator]();
+  }
+  throw FUNCTION_PREFIXop_error("TypeError", "'" + typeof x + "' object is not iterable");
+};
+
+// ---
+
 // function: list
 export const list = function (x) {
   // Handle iterators/generators using spread
@@ -401,6 +417,10 @@ export const str = function (x) {
   if (typeof x === "boolean") {
     return x ? "True" : "False";
   }
+  // Handle bytes (Uint8Array) - output like b'...'
+  if (x instanceof Uint8Array) {
+    return FUNCTION_PREFIXbytes_repr(x);
+  }
   if (Array.isArray(x)) {
     if (x.length == 0) {
       return "[]";
@@ -443,15 +463,91 @@ export const str = function (x) {
 
 // ---
 
+// function: bytes_repr
+export const bytes_repr = function (bytes) {
+  // nargs: 1
+  // Return Python-style repr for bytes: b'...'
+  let result = "b'";
+  for (let i = 0; i < bytes.length; i++) {
+    let b = bytes[i];
+    if (b === 92) {  // backslash
+      result += "\\\\";
+    } else if (b === 39) {  // single quote
+      result += "\\'";
+    } else if (b === 10) {  // newline
+      result += "\\n";
+    } else if (b === 13) {  // carriage return
+      result += "\\r";
+    } else if (b === 9) {  // tab
+      result += "\\t";
+    } else if (b >= 32 && b < 127) {
+      // Printable ASCII
+      result += String.fromCharCode(b);
+    } else {
+      // Non-printable: use \xNN format
+      result += "\\x" + b.toString(16).padStart(2, "0");
+    }
+  }
+  result += "'";
+  return result;
+};
+
+// ---
+
 // function: str_decode
 export const str_decode = function (bytes, encoding) {
   // nargs: 2
   // Decode bytes/bytearray to string using specified encoding
   // Convert to Uint8Array if needed (handles both Array and TypedArray)
   let arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  // Use TextDecoder for proper encoding support
-  let decoder = new TextDecoder(encoding || "utf-8");
-  return decoder.decode(arr);
+  let enc = (encoding || "utf-8").toLowerCase().replace("-", "");
+  // Use TextDecoder if available
+  if (typeof TextDecoder !== "undefined") {
+    let decoder = new TextDecoder(enc);
+    return decoder.decode(arr);
+  }
+  // Fallback: manual UTF-8 decoding for QuickJS
+  if (enc === "utf8" || enc === "utf-8") {
+    let result = "";
+    let i = 0;
+    while (i < arr.length) {
+      let b = arr[i];
+      if (b < 0x80) {
+        result += String.fromCharCode(b);
+        i++;
+      } else if ((b & 0xe0) === 0xc0) {
+        result += String.fromCharCode(((b & 0x1f) << 6) | (arr[i + 1] & 0x3f));
+        i += 2;
+      } else if ((b & 0xf0) === 0xe0) {
+        result += String.fromCharCode(
+          ((b & 0x0f) << 12) | ((arr[i + 1] & 0x3f) << 6) | (arr[i + 2] & 0x3f),
+        );
+        i += 3;
+      } else if ((b & 0xf8) === 0xf0) {
+        // 4-byte sequence (surrogate pairs for chars > 0xFFFF)
+        let cp =
+          ((b & 0x07) << 18) |
+          ((arr[i + 1] & 0x3f) << 12) |
+          ((arr[i + 2] & 0x3f) << 6) |
+          (arr[i + 3] & 0x3f);
+        cp -= 0x10000;
+        result += String.fromCharCode(0xd800 + (cp >> 10), 0xdc00 + (cp & 0x3ff));
+        i += 4;
+      } else {
+        i++;
+      }
+    }
+    return result;
+  }
+  // ASCII/latin-1
+  if (enc === "ascii" || enc === "latin1" || enc === "iso88591") {
+    let result = "";
+    for (let i = 0; i < arr.length; i++) {
+      result += String.fromCharCode(arr[i]);
+    }
+    return result;
+  }
+  throw FUNCTION_PREFIXop_error("LookupError", "unknown encoding: " + encoding);
 };
 
 // ---
@@ -461,6 +557,133 @@ export const str_error_args = function () {
   // nargs: 0+
   // Called when str() has too many arguments - raises TypeError at runtime
   throw FUNCTION_PREFIXop_error("TypeError", "str() takes at most 3 arguments");
+};
+
+// ---
+
+// function: bytes
+export const bytes = function (source) {
+  // nargs: 0 1
+  // bytes() constructor - single argument form
+  // - bytes(int) -> n zero bytes
+  // - bytes(iterable) -> bytes from iterable of ints
+  // - bytes(bytes) -> copy of bytes
+  if (source === undefined) {
+    return new Uint8Array();
+  }
+  // If it's a string without encoding, raise TypeError (like Python)
+  if (typeof source === "string") {
+    throw FUNCTION_PREFIXop_error("TypeError", "string argument without an encoding");
+  }
+  // If it's a number, create zero-filled bytes
+  if (typeof source === "number") {
+    if (source < 0) {
+      throw FUNCTION_PREFIXop_error("ValueError", "negative count");
+    }
+    return new Uint8Array(source);
+  }
+  // If it's already a Uint8Array, copy it
+  if (source instanceof Uint8Array) {
+    return new Uint8Array(source);
+  }
+  // If it's an array or iterable, convert to bytes
+  if (Array.isArray(source)) {
+    return new Uint8Array(source);
+  }
+  // Handle iterators/generators
+  if (typeof source[Symbol.iterator] === "function") {
+    return new Uint8Array([...source]);
+  }
+  throw FUNCTION_PREFIXop_error("TypeError", "cannot convert '" + typeof source + "' object to bytes");
+};
+
+// ---
+
+// function: bytes_encode
+export const bytes_encode = function (string, encoding) {
+  // nargs: 2
+  // Encode string to bytes using specified encoding
+  let enc = (encoding || "utf-8").toLowerCase().replace("-", "");
+  // Use TextEncoder if available
+  if (typeof TextEncoder !== "undefined") {
+    let encoder = new TextEncoder();
+    return encoder.encode(string);
+  }
+  // Fallback: manual UTF-8 encoding for QuickJS
+  if (enc === "utf8" || enc === "utf-8") {
+    let bytes = [];
+    for (let i = 0; i < string.length; i++) {
+      let cp = string.codePointAt(i);
+      if (cp < 0x80) {
+        bytes.push(cp);
+      } else if (cp < 0x800) {
+        bytes.push(0xc0 | (cp >> 6));
+        bytes.push(0x80 | (cp & 0x3f));
+      } else if (cp < 0x10000) {
+        bytes.push(0xe0 | (cp >> 12));
+        bytes.push(0x80 | ((cp >> 6) & 0x3f));
+        bytes.push(0x80 | (cp & 0x3f));
+      } else {
+        bytes.push(0xf0 | (cp >> 18));
+        bytes.push(0x80 | ((cp >> 12) & 0x3f));
+        bytes.push(0x80 | ((cp >> 6) & 0x3f));
+        bytes.push(0x80 | (cp & 0x3f));
+        i++; // Skip surrogate pair
+      }
+    }
+    return new Uint8Array(bytes);
+  }
+  // ASCII/latin-1
+  if (enc === "ascii" || enc === "latin1" || enc === "iso88591") {
+    let bytes = new Uint8Array(string.length);
+    for (let i = 0; i < string.length; i++) {
+      bytes[i] = string.charCodeAt(i);
+    }
+    return bytes;
+  }
+  throw FUNCTION_PREFIXop_error("LookupError", "unknown encoding: " + encoding);
+};
+
+// ---
+
+// function: bytes_error_args
+export const bytes_error_args = function () {
+  // nargs: 0+
+  // Called when bytes() has too many arguments - raises TypeError at runtime
+  throw FUNCTION_PREFIXop_error("TypeError", "bytes() takes at most 3 arguments");
+};
+
+// ---
+
+// function: int_from_bytes
+export const int_from_bytes = function (bytes, byteorder, signed) {
+  // nargs: 2 3
+  // int.from_bytes(bytes, byteorder, *, signed=False)
+  // Converts bytes to an integer
+  signed = signed === true || signed === "true";
+  let isLittle = byteorder === "little";
+
+  // Convert to array if needed
+  let arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let length = arr.length;
+
+  if (length === 0) {
+    return 0;
+  }
+
+  // Build the integer value
+  let result = 0;
+  for (let i = 0; i < length; i++) {
+    let idx = isLittle ? length - 1 - i : i;
+    result = result * 256 + arr[idx];
+  }
+
+  // Handle signed conversion (two's complement)
+  if (signed && arr[isLittle ? length - 1 : 0] >= 128) {
+    result = result - Math.pow(2, length * 8);
+  }
+
+  return result;
 };
 
 // ---
@@ -476,6 +699,10 @@ export const repr = function (x) {
   // Handle booleans with Python-style capitalization
   if (typeof x === "boolean") {
     return x ? "True" : "False";
+  }
+  // Handle bytes (Uint8Array)
+  if (x instanceof Uint8Array) {
+    return FUNCTION_PREFIXbytes_repr(x);
   }
   // Handle strings - use single quotes like Python
   if (typeof x === "string") {
@@ -745,8 +972,8 @@ export const op_getitem = function op_getitem(obj, key) {
   if (typeof obj.__getitem__ === 'function') {
     return obj.__getitem__(key);
   }
-  // Handle negative indices for arrays and strings
-  if (typeof key === 'number' && key < 0 && (Array.isArray(obj) || typeof obj === 'string')) {
+  // Handle negative indices for arrays, strings, and typed arrays (bytes)
+  if (typeof key === 'number' && key < 0 && (Array.isArray(obj) || typeof obj === 'string' || obj instanceof Uint8Array)) {
     key = obj.length + key;
   }
   return obj[key];
@@ -851,6 +1078,13 @@ export const op_add = function (a, b) {
   // nargs: 2
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.concat(b);
+  }
+  // Handle bytes (Uint8Array) concatenation
+  if (a instanceof Uint8Array && b instanceof Uint8Array) {
+    let result = new Uint8Array(a.length + b.length);
+    result.set(a, 0);
+    result.set(b, a.length);
+    return result;
   }
   return a + b;
 };

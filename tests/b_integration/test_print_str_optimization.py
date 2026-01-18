@@ -70,7 +70,7 @@ print(get_price())
         assert "_pyfunc_str" not in result
 
     def test_print_typed_bool_variable(self):
-        """print() with typed bool variable should skip wrapper."""
+        """print() with typed bool variable needs _pyfunc_str for Python-style True/False."""
         code = """
 def is_ready() -> bool:
     return True
@@ -78,8 +78,8 @@ def is_ready() -> bool:
 print(is_ready())
 """
         result = js(code)
-        assert "console.log(is_ready())" in result
-        assert "_pyfunc_str" not in result
+        # Booleans need _pyfunc_str() wrapper to output "True"/"False" instead of "true"/"false"
+        assert "_pyfunc_str(is_ready())" in result
 
     def test_print_multiple_typed_args(self):
         """print() with multiple typed args should use concatenation."""
