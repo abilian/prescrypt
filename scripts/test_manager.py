@@ -1333,40 +1333,106 @@ def cmd_report(args, config: Config, db: TestDatabase):
 
         elif r["status"] == Status.COMPILE_FAIL:
             # Extract error type from compile error
-            if ":" in error_msg:
-                err_type = error_msg.split(":")[0].strip()
-                compile_errors[err_type].append((path, error_msg))
-            else:
-                compile_errors["other"].append((path, error_msg))
+            # Skip line:column: prefix (e.g., "3:22: error: ...")
+            err_type = "other"
+
+            # Try to extract the actual error message after "error:"
+            if "error:" in error_msg.lower():
+                # Find the position after "error:" and extract what follows
+                idx = error_msg.lower().find("error:")
+                err_text = error_msg[idx + 6 :].strip()
+                # Take the first meaningful phrase as error type
+                if err_text:
+                    # Truncate at reasonable length for grouping
+                    err_type = err_text[:60].strip()
+                    if len(err_text) > 60:
+                        err_type += "..."
+            elif "gen_expr not implemented" in error_msg:
+                match = re.search(r"gen_expr not implemented for <(\w+)", error_msg)
+                err_type = (
+                    f"gen_expr not implemented: {match.group(1)}"
+                    if match
+                    else "gen_expr not implemented"
+                )
+            elif "gen_stmt not implemented" in error_msg:
+                match = re.search(r"gen_stmt not implemented for <(\w+)", error_msg)
+                err_type = (
+                    f"gen_stmt not implemented: {match.group(1)}"
+                    if match
+                    else "gen_stmt not implemented"
+                )
+            elif ":" in error_msg:
+                # Skip leading line:col: patterns
+                parts = error_msg.split(":")
+                for part in parts:
+                    stripped = part.strip()
+                    # Skip if it's a number (line/col) or empty
+                    if stripped and not stripped.isdigit():
+                        err_type = stripped[:60]
+                        break
+
+            compile_errors[err_type].append((path, error_msg))
 
         elif r["status"] == Status.RUNTIME_FAIL:
             expected = (r["cpython_output"] or "").strip()
             actual = (r["js_output"] or "").strip()
             output_mismatches.append((path, expected[:200], actual[:200]))
 
-    # Generate HTML report
-    html_content = generate_html_report(
-        run=dict(run),
-        by_status=by_status,
-        reference_errors=reference_errors,
-        type_errors=type_errors,
-        syntax_errors=syntax_errors,
-        compile_errors=compile_errors,
-        output_mismatches=output_mismatches,
-    )
+    # Get format and filter options
+    output_format = getattr(args, "format", "html")
+    filter_pattern = getattr(args, "filter", None)
+    output_path = getattr(args, "output", None)
 
-    # Write report
     report_dir = DATA_DIR / "reports"
     report_dir.mkdir(parents=True, exist_ok=True)
-    report_path = report_dir / f"run-{run_id:03d}.html"
-    report_path.write_text(html_content)
 
-    # Also write as latest.html
-    latest_path = report_dir / "latest.html"
-    latest_path.write_text(html_content)
+    # Generate HTML report
+    if output_format in ("html", "both"):
+        html_content = generate_html_report(
+            run=dict(run),
+            by_status=by_status,
+            reference_errors=reference_errors,
+            type_errors=type_errors,
+            syntax_errors=syntax_errors,
+            compile_errors=compile_errors,
+            output_mismatches=output_mismatches,
+        )
 
-    print(f"Report generated: {report_path}")
-    print(f"Also available at: {latest_path}")
+        report_path = report_dir / f"run-{run_id:03d}.html"
+        report_path.write_text(html_content)
+
+        # Also write as latest.html
+        latest_path = report_dir / "latest.html"
+        latest_path.write_text(html_content)
+
+        print(f"HTML report: {report_path}")
+        print(f"Also available at: {latest_path}")
+
+    # Generate Markdown report
+    if output_format in ("markdown", "both"):
+        md_content = generate_markdown_report(
+            run=dict(run),
+            by_status=by_status,
+            reference_errors=reference_errors,
+            type_errors=type_errors,
+            syntax_errors=syntax_errors,
+            compile_errors=compile_errors,
+            output_mismatches=output_mismatches,
+            filter_pattern=filter_pattern,
+        )
+
+        if output_path:
+            # Write to specified file
+            Path(output_path).write_text(md_content)
+            print(f"Markdown report: {output_path}")
+        elif output_format == "markdown":
+            # Print to stdout if markdown-only and no output file
+            print(md_content)
+        else:
+            # Write to default location for "both" format
+            md_path = report_dir / f"run-{run_id:03d}.md"
+            md_path.write_text(md_content)
+            print(f"Markdown report: {md_path}")
 
 
 def generate_html_report(
@@ -1612,6 +1678,41 @@ def generate_html_report(
         .priority-high {{ background: #fee2e2; color: #dc2626; }}
         .priority-medium {{ background: #fef3c7; color: #d97706; }}
         .priority-low {{ background: #e0e7ff; color: #4f46e5; }}
+
+        /* Error item details */
+        .error-item {{
+            margin: 0.25rem 0;
+        }}
+        .error-item summary {{
+            padding: 0.375rem 0.5rem;
+            font-size: 0.8125rem;
+        }}
+        .error-details {{
+            padding: 0.75rem;
+            background: var(--bg-color);
+            border-radius: 0 0 4px 4px;
+        }}
+        .error-message {{
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.75rem;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }}
+        .path-list {{
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: var(--bg-color);
+            border-radius: 4px;
+            font-size: 0.8125rem;
+            line-height: 1.8;
+        }}
     </style>
 </head>
 <body>
@@ -1709,7 +1810,7 @@ def generate_html_report(
         <p class="action-description">
             These tests compile and run, but produce different output than Python. Often the hardest to fix.
         </p>
-        {generate_output_mismatch_section(output_mismatches[:50])}
+        {generate_output_mismatch_section(output_mismatches)}
 
     </div>
 </body>
@@ -1738,11 +1839,10 @@ def generate_missing_names_rows(ref_errors_sorted: list, total: int) -> str:
             priority = '<span class="priority priority-low">LOW</span>'
             impact_class = "impact-low"
 
-        examples = ", ".join(
-            f"<code>{html.escape(p.split('/')[-1])}</code>" for p in paths[:3]
+        # Show all affected programs in an expandable list
+        all_paths = "<br>".join(
+            f"<code>programs/{html.escape(p)}</code>" for p in sorted(paths)
         )
-        if len(paths) > 3:
-            examples += f" +{len(paths) - 3} more"
 
         rows.append(f"""
             <tr>
@@ -1750,7 +1850,12 @@ def generate_missing_names_rows(ref_errors_sorted: list, total: int) -> str:
                 <td><code>{html.escape(name)}</code></td>
                 <td class="{impact_class}">{count}</td>
                 <td class="{impact_class}">{impact_pct:.1f}%</td>
-                <td>{examples}</td>
+                <td>
+                    <details>
+                        <summary>Show {count} affected programs</summary>
+                        <div class="path-list">{all_paths}</div>
+                    </details>
+                </td>
             </tr>
         """)
     return "\n".join(rows)
@@ -1766,21 +1871,24 @@ def generate_compile_errors_section(compile_errors: dict) -> str:
     sections = []
     for error_type, items in sorted(compile_errors.items(), key=lambda x: -len(x[1])):
         count = len(items)
-        examples_html = []
-        for path, msg in items[:5]:
-            short_msg = msg[:100] + "..." if len(msg) > 100 else msg
-            examples_html.append(
-                f"<li><code>{html.escape(path.split('/')[-1])}</code>: {html.escape(short_msg)}</li>"
-            )
-
-        if len(items) > 5:
-            examples_html.append(f"<li><em>...and {len(items) - 5} more</em></li>")
+        # Show ALL items with full details
+        items_html = []
+        for path, msg in sorted(items, key=lambda x: x[0]):
+            full_path = f"programs/{path}"
+            items_html.append(f"""
+                <details class="error-item">
+                    <summary><code>{html.escape(full_path)}</code></summary>
+                    <div class="error-details">
+                        <pre class="error-message">{html.escape(msg)}</pre>
+                    </div>
+                </details>
+            """)
 
         sections.append(f"""
         <details>
             <summary><strong>{html.escape(error_type)}</strong> ({count} programs)</summary>
             <div class="detail-content">
-                <ul>{"".join(examples_html)}</ul>
+                {"".join(items_html)}
             </div>
         </details>
         """)
@@ -1798,21 +1906,24 @@ def generate_type_errors_section(type_errors: dict) -> str:
     sections = []
     for error_type, items in sorted(type_errors.items(), key=lambda x: -len(x[1])):
         count = len(items)
-        examples_html = []
-        for path, msg in items[:5]:
-            short_msg = msg[:80] + "..." if len(msg) > 80 else msg
-            examples_html.append(
-                f"<li><code>{html.escape(path.split('/')[-1])}</code>: {html.escape(short_msg)}</li>"
-            )
-
-        if len(items) > 5:
-            examples_html.append(f"<li><em>...and {len(items) - 5} more</em></li>")
+        # Show ALL items with full details
+        items_html = []
+        for path, msg in sorted(items, key=lambda x: x[0]):
+            full_path = f"programs/{path}"
+            items_html.append(f"""
+                <details class="error-item">
+                    <summary><code>{html.escape(full_path)}</code></summary>
+                    <div class="error-details">
+                        <pre class="error-message">{html.escape(msg)}</pre>
+                    </div>
+                </details>
+            """)
 
         sections.append(f"""
         <details>
             <summary><strong>{html.escape(error_type)}</strong> ({count} programs)</summary>
             <div class="detail-content">
-                <ul>{"".join(examples_html)}</ul>
+                {"".join(items_html)}
             </div>
         </details>
         """)
@@ -1830,18 +1941,24 @@ def generate_syntax_errors_section(syntax_errors: dict) -> str:
     sections = []
     for error_type, items in sorted(syntax_errors.items(), key=lambda x: -len(x[1])):
         count = len(items)
-        examples_html = []
-        for path, msg in items[:5]:
-            short_msg = msg[:80] + "..." if len(msg) > 80 else msg
-            examples_html.append(
-                f"<li><code>{html.escape(path.split('/')[-1])}</code>: {html.escape(short_msg)}</li>"
-            )
+        # Show ALL items with full details
+        items_html = []
+        for path, msg in sorted(items, key=lambda x: x[0]):
+            full_path = f"programs/{path}"
+            items_html.append(f"""
+                <details class="error-item">
+                    <summary><code>{html.escape(full_path)}</code></summary>
+                    <div class="error-details">
+                        <pre class="error-message">{html.escape(msg)}</pre>
+                    </div>
+                </details>
+            """)
 
         sections.append(f"""
         <details>
             <summary><strong>{html.escape(error_type)}</strong> ({count} programs)</summary>
             <div class="detail-content">
-                <ul>{"".join(examples_html)}</ul>
+                {"".join(items_html)}
             </div>
         </details>
         """)
@@ -1896,13 +2013,14 @@ def generate_output_mismatch_section(mismatches: list) -> str:
     if not mismatches:
         return '<div class="action-section"><p>No output mismatches! 🎉</p></div>'
 
+    # Show ALL mismatches with full paths
     items = []
-    for path, expected, actual in mismatches[:30]:
-        filename = path.split("/")[-1]
+    for path, expected, actual in sorted(mismatches, key=lambda x: x[0]):
+        full_path = f"programs/{path}"
         diff_html = generate_unified_diff(expected, actual)
         items.append(f"""
         <details>
-            <summary><code>{html.escape(filename)}</code></summary>
+            <summary><code>{html.escape(full_path)}</code></summary>
             <div class="detail-content">
                 {diff_html}
             </div>
@@ -1910,6 +2028,230 @@ def generate_output_mismatch_section(mismatches: list) -> str:
         """)
 
     return f'<div class="action-section">{chr(10).join(items)}</div>'
+
+
+def generate_markdown_report(
+    run: dict,
+    by_status: dict,
+    reference_errors: dict,
+    type_errors: dict,
+    syntax_errors: dict,
+    compile_errors: dict,
+    output_mismatches: list,
+    filter_pattern: str | None = None,
+) -> str:
+    """Generate a Markdown report."""
+    import difflib
+    import re
+
+    lines = []
+
+    total = run.get("total_programs", 0)
+    passed = len(by_status.get(Status.RUNTIME_PASS, []))
+    failed = len(by_status.get(Status.RUNTIME_FAIL, []))
+    errors = len(by_status.get(Status.RUNTIME_ERROR, []))
+    compile_fail = len(by_status.get(Status.COMPILE_FAIL, []))
+    pass_rate = (100 * passed / total) if total > 0 else 0
+
+    # Header
+    lines.append(f"# Prescrypt Test Report - Run #{run.get('id')}")
+    lines.append("")
+    lines.append(
+        f"**Branch:** {run.get('git_branch', 'unknown')} @ {run.get('git_commit', 'unknown')[:8] if run.get('git_commit') else 'unknown'}"
+    )
+    lines.append(f"**Date:** {run.get('started_at', 'unknown')}")
+    if filter_pattern:
+        lines.append(f"**Filter:** `{filter_pattern}`")
+    lines.append("")
+
+    # Summary
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| Metric | Count | Percentage |")
+    lines.append("|--------|-------|------------|")
+    lines.append(f"| Total Tests | {total} | 100% |")
+    lines.append(f"| Passing | {passed} | {pass_rate:.1f}% |")
+    lines.append(
+        f"| Output Mismatch | {failed} | {100 * failed / total if total else 0:.1f}% |"
+    )
+    lines.append(
+        f"| Runtime Error | {errors} | {100 * errors / total if total else 0:.1f}% |"
+    )
+    lines.append(
+        f"| Compile Fail | {compile_fail} | {100 * compile_fail / total if total else 0:.1f}% |"
+    )
+    lines.append("")
+
+    # Helper to check if item matches filter
+    def matches_filter(text: str) -> bool:
+        if not filter_pattern:
+            return True
+        try:
+            return bool(re.search(filter_pattern, text, re.IGNORECASE))
+        except re.error:
+            return filter_pattern.lower() in text.lower()
+
+    # Missing Names (Reference Errors)
+    filtered_ref_errors = {
+        name: paths
+        for name, paths in reference_errors.items()
+        if name != "_other_" and matches_filter(name)
+    }
+    if filtered_ref_errors:
+        lines.append("## Missing Names (ReferenceError)")
+        lines.append("")
+        for name, paths in sorted(
+            filtered_ref_errors.items(), key=lambda x: -len(x[1])
+        ):
+            lines.append(f"### `{name}` ({len(paths)} tests)")
+            lines.append("")
+            for path in sorted(paths):
+                lines.append(f"- `programs/{path}`")
+            lines.append("")
+
+    # Compile Errors
+    filtered_compile = {
+        err_type: items
+        for err_type, items in compile_errors.items()
+        if any(
+            matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
+            for path, msg in items
+        )
+    }
+    if filtered_compile:
+        lines.append("## Compilation Errors")
+        lines.append("")
+        for err_type, items in sorted(
+            filtered_compile.items(), key=lambda x: -len(x[1])
+        ):
+            # Filter items within this error type
+            filtered_items = [
+                (path, msg)
+                for path, msg in items
+                if matches_filter(err_type)
+                or matches_filter(path)
+                or matches_filter(msg)
+            ]
+            if not filtered_items:
+                continue
+            lines.append(f"### {err_type} ({len(filtered_items)} programs)")
+            lines.append("")
+            for path, msg in sorted(filtered_items, key=lambda x: x[0]):
+                lines.append(f"#### `programs/{path}`")
+                lines.append("")
+                lines.append("```")
+                lines.append(msg)
+                lines.append("```")
+                lines.append("")
+
+    # Type Errors
+    filtered_type = {
+        err_type: items
+        for err_type, items in type_errors.items()
+        if any(
+            matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
+            for path, msg in items
+        )
+    }
+    if filtered_type:
+        lines.append("## Type Errors")
+        lines.append("")
+        for err_type, items in sorted(filtered_type.items(), key=lambda x: -len(x[1])):
+            filtered_items = [
+                (path, msg)
+                for path, msg in items
+                if matches_filter(err_type)
+                or matches_filter(path)
+                or matches_filter(msg)
+            ]
+            if not filtered_items:
+                continue
+            lines.append(f"### {err_type} ({len(filtered_items)} programs)")
+            lines.append("")
+            for path, msg in sorted(filtered_items, key=lambda x: x[0]):
+                lines.append(f"#### `programs/{path}`")
+                lines.append("")
+                lines.append("```")
+                lines.append(msg)
+                lines.append("```")
+                lines.append("")
+
+    # Syntax Errors
+    filtered_syntax = {
+        err_type: items
+        for err_type, items in syntax_errors.items()
+        if any(
+            matches_filter(err_type) or matches_filter(path) or matches_filter(msg)
+            for path, msg in items
+        )
+    }
+    if filtered_syntax:
+        lines.append("## Syntax Errors")
+        lines.append("")
+        for err_type, items in sorted(
+            filtered_syntax.items(), key=lambda x: -len(x[1])
+        ):
+            filtered_items = [
+                (path, msg)
+                for path, msg in items
+                if matches_filter(err_type)
+                or matches_filter(path)
+                or matches_filter(msg)
+            ]
+            if not filtered_items:
+                continue
+            lines.append(f"### {err_type} ({len(filtered_items)} programs)")
+            lines.append("")
+            for path, msg in sorted(filtered_items, key=lambda x: x[0]):
+                lines.append(f"#### `programs/{path}`")
+                lines.append("")
+                lines.append("```")
+                lines.append(msg)
+                lines.append("```")
+                lines.append("")
+
+    # Output Mismatches
+    filtered_mismatches = [
+        (path, expected, actual)
+        for path, expected, actual in output_mismatches
+        if matches_filter(path) or matches_filter(expected) or matches_filter(actual)
+    ]
+    if filtered_mismatches:
+        lines.append(f"## Output Mismatches ({len(filtered_mismatches)} tests)")
+        lines.append("")
+        for path, expected, actual in sorted(filtered_mismatches, key=lambda x: x[0]):
+            lines.append(f"### `programs/{path}`")
+            lines.append("")
+            # Generate unified diff
+            expected_lines = expected.splitlines(keepends=True)
+            actual_lines = actual.splitlines(keepends=True)
+            diff = list(
+                difflib.unified_diff(
+                    expected_lines,
+                    actual_lines,
+                    fromfile="expected (Python)",
+                    tofile="actual (JavaScript)",
+                    lineterm="",
+                )
+            )
+            if diff:
+                lines.append("```diff")
+                for line in diff:
+                    lines.append(line.rstrip("\n"))
+                lines.append("```")
+            else:
+                lines.append("**Expected (Python):**")
+                lines.append("```")
+                lines.append(expected or "(empty)")
+                lines.append("```")
+                lines.append("")
+                lines.append("**Actual (JavaScript):**")
+                lines.append("```")
+                lines.append(actual or "(empty)")
+                lines.append("```")
+            lines.append("")
+
+    return "\n".join(lines)
 
 
 def cmd_classify(args, config: Config, db: TestDatabase):
@@ -2000,9 +2342,26 @@ def main():
     )
 
     # report
-    report_parser = subparsers.add_parser("report", help="Generate HTML report")
+    report_parser = subparsers.add_parser("report", help="Generate test report")
     report_parser.add_argument(
         "--run", type=int, help="Run ID to report on (default: latest)"
+    )
+    report_parser.add_argument(
+        "--format",
+        choices=["html", "markdown", "both"],
+        default="html",
+        help="Output format (default: html)",
+    )
+    report_parser.add_argument(
+        "--filter",
+        type=str,
+        help="Regex pattern to filter errors (e.g., 'Base classes')",
+    )
+    report_parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        help="Output file path (for markdown, prints to stdout if not specified)",
     )
 
     args = parser.parse_args()
