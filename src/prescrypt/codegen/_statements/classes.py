@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import re
+
 from prescrypt.codegen.main import CodeGen, gen_stmt
 from prescrypt.codegen.utils import flatten, js_repr
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
+
+# Regex to match valid JavaScript identifier (allows underscores and dots for namespaced names)
+_VALID_BASE_CLASS_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_.]*$")
 
 
 @gen_stmt.register
@@ -26,7 +31,7 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     base_class = "Object"
     if base_nodes:
         base_class = flatten(codegen.gen_expr(base_nodes[0]))
-    if not base_class.replace(".", "_").isalnum():
+    if not _VALID_BASE_CLASS_RE.match(base_class):
         msg = "Base classes must be simple names"
         raise JSError(msg, base_nodes[0])
     if base_class.lower() == "object":  # maybe Python "object"
