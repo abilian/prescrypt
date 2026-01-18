@@ -3,6 +3,267 @@ export const Ellipsis = Symbol.for('Ellipsis')
 
 // ---
 
+// function: NotImplemented
+export const NotImplemented = Symbol.for('NotImplemented');
+
+// ---
+
+// function: type_int
+// Type identifiers - used for isinstance() and subclassing
+export const type_int = Number;
+
+// ---
+
+// function: type_float
+export const type_float = Number;
+
+// ---
+
+// function: type_str
+export const type_str = String;
+
+// ---
+
+// function: type_bool
+export const type_bool = Boolean;
+
+// ---
+
+// function: type_list
+export const type_list = Array;
+
+// ---
+
+// function: type_tuple
+export const type_tuple = Array;
+
+// ---
+
+// function: type_dict
+export const type_dict = Object;
+
+// ---
+
+// function: type_set
+export const type_set = Set;
+
+// ---
+
+// function: type_bytes
+export const type_bytes = Uint8Array;
+
+// ---
+
+// function: type_object
+// Base object class - all objects inherit from this
+export const type_object = Object;
+
+// ---
+
+// function: type_type
+// type() builtin - returns the type of an object
+export const type_type = function (x) {
+  // nargs: 1
+  if (x === null) return "NoneType";
+  if (x === undefined) return "NoneType";
+  if (typeof x === "boolean") return FUNCTION_PREFIXtype_bool;
+  if (typeof x === "number") {
+    return Number.isInteger(x) ? FUNCTION_PREFIXtype_int : FUNCTION_PREFIXtype_float;
+  }
+  if (typeof x === "string") return FUNCTION_PREFIXtype_str;
+  if (Array.isArray(x)) return FUNCTION_PREFIXtype_list;
+  if (x instanceof Uint8Array) return FUNCTION_PREFIXtype_bytes;
+  if (x instanceof Set) return FUNCTION_PREFIXtype_set;
+  if (x instanceof Map) return FUNCTION_PREFIXtype_dict;
+  if (typeof x === "function") return "function";
+  if (typeof x === "object") {
+    // Check for class instances
+    if (x.constructor && x.constructor !== Object) {
+      return x.constructor;
+    }
+    return FUNCTION_PREFIXtype_dict;
+  }
+  return typeof x;
+};
+
+// ---
+
+// function: BaseException
+// Exception types - using closure pattern to create proper exception classes
+export const BaseException = (function() {
+  // nargs: 0 1
+  function BaseException(message) {
+    if (!(this instanceof BaseException)) {
+      return new BaseException(message);
+    }
+    Error.call(this, message);
+    this.name = "BaseException";
+    this.message = message || "";
+    this.args = message !== undefined ? [message] : [];
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, BaseException);
+    }
+  }
+  BaseException.prototype = Object.create(Error.prototype);
+  BaseException.prototype.constructor = BaseException;
+  return BaseException;
+})();
+
+// ---
+
+// function: Exception
+export const Exception = (function() {
+  // nargs: 0 1
+  function Exception(message) {
+    if (!(this instanceof Exception)) {
+      return new Exception(message);
+    }
+    FUNCTION_PREFIXBaseException.call(this, message);
+    this.name = "Exception";
+  }
+  Exception.prototype = Object.create(FUNCTION_PREFIXBaseException.prototype);
+  Exception.prototype.constructor = Exception;
+  return Exception;
+})();
+
+// ---
+
+// function: StopIteration
+export const StopIteration = (function() {
+  // nargs: 0 1
+  function StopIteration(message) {
+    if (!(this instanceof StopIteration)) {
+      return new StopIteration(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "StopIteration";
+  }
+  StopIteration.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  StopIteration.prototype.constructor = StopIteration;
+  return StopIteration;
+})();
+
+// ---
+
+// function: ValueError
+export const ValueError = (function() {
+  // nargs: 0 1
+  function ValueError(message) {
+    if (!(this instanceof ValueError)) {
+      return new ValueError(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "ValueError";
+  }
+  ValueError.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  ValueError.prototype.constructor = ValueError;
+  return ValueError;
+})();
+
+// ---
+
+// function: IndexError
+export const IndexError = (function() {
+  // nargs: 0 1
+  function IndexError(message) {
+    if (!(this instanceof IndexError)) {
+      return new IndexError(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "IndexError";
+  }
+  IndexError.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  IndexError.prototype.constructor = IndexError;
+  return IndexError;
+})();
+
+// ---
+
+// function: TypeError_py
+export const TypeError_py = (function() {
+  // nargs: 0 1
+  function TypeError_py(message) {
+    if (!(this instanceof TypeError_py)) {
+      return new TypeError_py(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "TypeError";
+  }
+  TypeError_py.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  TypeError_py.prototype.constructor = TypeError_py;
+  return TypeError_py;
+})();
+
+// ---
+
+// function: KeyError
+export const KeyError = (function() {
+  // nargs: 0 1
+  function KeyError(message) {
+    if (!(this instanceof KeyError)) {
+      return new KeyError(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "KeyError";
+  }
+  KeyError.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  KeyError.prototype.constructor = KeyError;
+  return KeyError;
+})();
+
+// ---
+
+// function: AttributeError
+export const AttributeError = (function() {
+  // nargs: 0 1
+  function AttributeError(message) {
+    if (!(this instanceof AttributeError)) {
+      return new AttributeError(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "AttributeError";
+  }
+  AttributeError.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  AttributeError.prototype.constructor = AttributeError;
+  return AttributeError;
+})();
+
+// ---
+
+// function: RuntimeError
+export const RuntimeError = (function() {
+  // nargs: 0 1
+  function RuntimeError(message) {
+    if (!(this instanceof RuntimeError)) {
+      return new RuntimeError(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "RuntimeError";
+  }
+  RuntimeError.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  RuntimeError.prototype.constructor = RuntimeError;
+  return RuntimeError;
+})();
+
+// ---
+
+// function: NameError
+export const NameError = (function() {
+  // nargs: 0 1
+  function NameError(message) {
+    if (!(this instanceof NameError)) {
+      return new NameError(message);
+    }
+    FUNCTION_PREFIXException.call(this, message);
+    this.name = "NameError";
+  }
+  NameError.prototype = Object.create(FUNCTION_PREFIXException.prototype);
+  NameError.prototype.constructor = NameError;
+  return NameError;
+})();
+
+// ---
+
 // function: perf_counter
 export const perf_counter = function () {
   // nargs: 0
@@ -219,6 +480,92 @@ export const iter = function (x) {
 
 // ---
 
+// function: next
+export const next = function (iterator, defaultValue) {
+  // nargs: 1 2
+  // Get next item from iterator
+  let result = iterator.next();
+  if (result.done) {
+    if (arguments.length >= 2) {
+      return defaultValue;
+    }
+    throw FUNCTION_PREFIXop_error("StopIteration", "");
+  }
+  return result.value;
+};
+
+// ---
+
+// function: zip
+export const zip = function (...iterables) {
+  // nargs: 0+
+  // Zip iterables together, yielding tuples
+  if (iterables.length === 0) {
+    return [];
+  }
+  // Convert all to arrays for simplicity
+  let arrays = iterables.map(it => {
+    if (Array.isArray(it)) return it;
+    if (typeof it[Symbol.iterator] === "function") return [...it];
+    return Array.from(it);
+  });
+  let minLen = Math.min(...arrays.map(a => a.length));
+  let result = [];
+  for (let i = 0; i < minLen; i++) {
+    result.push(arrays.map(a => a[i]));
+  }
+  return result;
+};
+
+// ---
+
+// function: map
+export const map = function (func, ...iterables) {
+  // nargs: 1+
+  // Map function over iterable(s)
+  if (iterables.length === 0) {
+    throw FUNCTION_PREFIXop_error("TypeError", "map() must have at least two arguments");
+  }
+  if (iterables.length === 1) {
+    // Single iterable - simple case
+    let arr = iterables[0];
+    if (!Array.isArray(arr)) {
+      if (typeof arr[Symbol.iterator] === "function") {
+        arr = [...arr];
+      } else {
+        arr = Array.from(arr);
+      }
+    }
+    return arr.map(x => func(x));
+  }
+  // Multiple iterables - zip and apply
+  let zipped = FUNCTION_PREFIXzip(...iterables);
+  return zipped.map(args => func(...args));
+};
+
+// ---
+
+// function: filter
+export const filter = function (func, iterable) {
+  // nargs: 2
+  // Filter iterable by function
+  let arr = iterable;
+  if (!Array.isArray(arr)) {
+    if (typeof arr[Symbol.iterator] === "function") {
+      arr = [...arr];
+    } else {
+      arr = Array.from(arr);
+    }
+  }
+  if (func === null || func === undefined) {
+    // filter(None, iterable) filters out falsy values
+    return arr.filter(x => FUNCTION_PREFIXtruthy(x));
+  }
+  return arr.filter(x => func(x));
+};
+
+// ---
+
 // function: list
 export const list = function (x) {
   // Handle iterators/generators using spread
@@ -386,6 +733,164 @@ export const round = function (x, ndigits) {
   }
   const factor = Math.pow(10, ndigits);
   return Math.round(x * factor) / factor;
+};
+
+// ---
+
+// function: hex
+export const hex = function (x) {
+  // nargs: 1
+  // Convert integer to hexadecimal string with 0x prefix
+  if (typeof x !== "number" || !Number.isInteger(x)) {
+    if (typeof x.__index__ === "function") {
+      x = x.__index__();
+    } else {
+      throw FUNCTION_PREFIXop_error("TypeError", "'float' object cannot be interpreted as an integer");
+    }
+  }
+  if (x < 0) {
+    return "-0x" + (-x).toString(16);
+  }
+  return "0x" + x.toString(16);
+};
+
+// ---
+
+// function: bin
+export const bin = function (x) {
+  // nargs: 1
+  // Convert integer to binary string with 0b prefix
+  if (typeof x !== "number" || !Number.isInteger(x)) {
+    if (typeof x.__index__ === "function") {
+      x = x.__index__();
+    } else {
+      throw FUNCTION_PREFIXop_error("TypeError", "'float' object cannot be interpreted as an integer");
+    }
+  }
+  if (x < 0) {
+    return "-0b" + (-x).toString(2);
+  }
+  return "0b" + x.toString(2);
+};
+
+// ---
+
+// function: oct
+export const oct = function (x) {
+  // nargs: 1
+  // Convert integer to octal string with 0o prefix
+  if (typeof x !== "number" || !Number.isInteger(x)) {
+    if (typeof x.__index__ === "function") {
+      x = x.__index__();
+    } else {
+      throw FUNCTION_PREFIXop_error("TypeError", "'float' object cannot be interpreted as an integer");
+    }
+  }
+  if (x < 0) {
+    return "-0o" + (-x).toString(8);
+  }
+  return "0o" + x.toString(8);
+};
+
+// ---
+
+// function: abs
+export const abs = function (x) {
+  // nargs: 1
+  // Return absolute value
+  if (typeof x.__abs__ === "function") {
+    return x.__abs__();
+  }
+  return Math.abs(x);
+};
+
+// ---
+
+// function: hash
+export const hash = function (x) {
+  // nargs: 1
+  // Return hash value of object
+  if (typeof x.__hash__ === "function") {
+    return x.__hash__();
+  }
+  if (x === null || x === undefined) {
+    throw FUNCTION_PREFIXop_error("TypeError", "unhashable type: 'NoneType'");
+  }
+  if (typeof x === "number") {
+    // For integers, hash is the integer itself (for small ints)
+    if (Number.isInteger(x)) {
+      return x;
+    }
+    // For floats, use a simple hash
+    return Math.floor(x * 1000000) | 0;
+  }
+  if (typeof x === "string") {
+    // Simple string hash (djb2 algorithm)
+    let hash = 5381;
+    for (let i = 0; i < x.length; i++) {
+      hash = ((hash << 5) + hash) + x.charCodeAt(i);
+      hash = hash | 0; // Convert to 32-bit integer
+    }
+    return hash;
+  }
+  if (typeof x === "boolean") {
+    return x ? 1 : 0;
+  }
+  if (x instanceof Uint8Array) {
+    // Hash bytes
+    let hash = 5381;
+    for (let i = 0; i < x.length; i++) {
+      hash = ((hash << 5) + hash) + x[i];
+      hash = hash | 0;
+    }
+    return hash;
+  }
+  // For objects, check if they're hashable
+  if (Array.isArray(x)) {
+    throw FUNCTION_PREFIXop_error("TypeError", "unhashable type: 'list'");
+  }
+  if (typeof x === "object" && x.constructor === Object) {
+    throw FUNCTION_PREFIXop_error("TypeError", "unhashable type: 'dict'");
+  }
+  if (x instanceof Set) {
+    throw FUNCTION_PREFIXop_error("TypeError", "unhashable type: 'set'");
+  }
+  // For other objects, use a unique id approach
+  return FUNCTION_PREFIXid(x);
+};
+
+// ---
+
+// function: id
+export const id = function (x) {
+  // nargs: 1
+  // Return unique identity for object
+  // Use a WeakMap to assign unique IDs to objects
+  if (typeof x !== "object" || x === null) {
+    // For primitives, use a simple hash approach
+    if (typeof x === "number") return x | 0;
+    if (typeof x === "string") {
+      // Simple string hash (inline to avoid circular dep with hash())
+      let h = 5381;
+      for (let i = 0; i < x.length; i++) {
+        h = ((h << 5) + h) + x.charCodeAt(i);
+        h = h | 0;
+      }
+      return h;
+    }
+    if (typeof x === "boolean") return x ? 1 : 0;
+    if (x === undefined) return 0;
+    return 0;
+  }
+  // For objects, use WeakMap to track IDs
+  if (!FUNCTION_PREFIXid._map) {
+    FUNCTION_PREFIXid._map = new WeakMap();
+    FUNCTION_PREFIXid._counter = 1;
+  }
+  if (!FUNCTION_PREFIXid._map.has(x)) {
+    FUNCTION_PREFIXid._map.set(x, FUNCTION_PREFIXid._counter++);
+  }
+  return FUNCTION_PREFIXid._map.get(x);
 };
 
 // ---
@@ -958,6 +1463,154 @@ export const op_len = function op_len(obj) {
     return Object.keys(obj).length;
   }
   throw new TypeError("object has no len()");
+};
+
+// ---
+
+// function: getattr
+export const getattr = function (obj, name, defaultValue) {
+  // nargs: 2 3
+  // Get attribute from object
+  if (obj == null) {
+    if (arguments.length >= 3) {
+      return defaultValue;
+    }
+    throw FUNCTION_PREFIXop_error("AttributeError", "'NoneType' object has no attribute '" + name + "'");
+  }
+  // Check for __getattr__ first
+  if (typeof obj.__getattr__ === "function") {
+    try {
+      return obj.__getattr__(name);
+    } catch (e) {
+      if (arguments.length >= 3 && e.name === "AttributeError") {
+        return defaultValue;
+      }
+      throw e;
+    }
+  }
+  // Direct property access
+  if (name in obj) {
+    return obj[name];
+  }
+  // Check prototype chain
+  if (obj[name] !== undefined) {
+    return obj[name];
+  }
+  if (arguments.length >= 3) {
+    return defaultValue;
+  }
+  let typeName = obj.constructor ? obj.constructor.name : typeof obj;
+  throw FUNCTION_PREFIXop_error("AttributeError", "'" + typeName + "' object has no attribute '" + name + "'");
+};
+
+// ---
+
+// function: hasattr
+export const hasattr = function (obj, name) {
+  // nargs: 2
+  // Check if object has attribute
+  if (obj == null) {
+    return false;
+  }
+  // Check for __getattr__
+  if (typeof obj.__getattr__ === "function") {
+    try {
+      obj.__getattr__(name);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  return name in obj || obj[name] !== undefined;
+};
+
+// ---
+
+// function: setattr
+export const setattr = function (obj, name, value) {
+  // nargs: 3
+  // Set attribute on object
+  if (obj == null) {
+    throw FUNCTION_PREFIXop_error("AttributeError", "'NoneType' object has no attribute '" + name + "'");
+  }
+  // Check for __setattr__
+  if (typeof obj.__setattr__ === "function") {
+    obj.__setattr__(name, value);
+  } else {
+    obj[name] = value;
+  }
+};
+
+// ---
+
+// function: delattr
+export const delattr = function (obj, name) {
+  // nargs: 2
+  // Delete attribute from object
+  if (obj == null) {
+    throw FUNCTION_PREFIXop_error("AttributeError", "'NoneType' object has no attribute '" + name + "'");
+  }
+  // Check for __delattr__
+  if (typeof obj.__delattr__ === "function") {
+    obj.__delattr__(name);
+  } else if (name in obj) {
+    delete obj[name];
+  } else {
+    let typeName = obj.constructor ? obj.constructor.name : typeof obj;
+    throw FUNCTION_PREFIXop_error("AttributeError", "'" + typeName + "' object has no attribute '" + name + "'");
+  }
+};
+
+// ---
+
+// function: dir
+export const dir = function (obj) {
+  // nargs: 0 1
+  // Return list of names in scope or object attributes
+  if (obj === undefined) {
+    // Without argument, return names in current scope
+    // This is hard to do correctly in JS, return empty list
+    return [];
+  }
+  let names = new Set();
+  // Add own properties
+  if (typeof obj === "object" && obj !== null) {
+    for (let key of Object.keys(obj)) {
+      names.add(key);
+    }
+    // Add prototype properties
+    let proto = Object.getPrototypeOf(obj);
+    while (proto && proto !== Object.prototype) {
+      for (let key of Object.getOwnPropertyNames(proto)) {
+        if (!key.startsWith("_") || key.startsWith("__")) {
+          names.add(key);
+        }
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+  }
+  // For primitives, add type methods
+  if (typeof obj === "string") {
+    names.add("upper");
+    names.add("lower");
+    names.add("strip");
+    names.add("split");
+    // ... add more as needed
+  }
+  // Check for __dir__ method
+  if (obj && typeof obj.__dir__ === "function") {
+    return obj.__dir__();
+  }
+  return Array.from(names).sort();
+};
+
+// ---
+
+// function: callable
+export const callable = function (obj) {
+  // nargs: 1
+  // Return True if object is callable
+  return typeof obj === "function" || (typeof obj === "object" && obj !== null && typeof obj.__call__ === "function");
 };
 
 // ---

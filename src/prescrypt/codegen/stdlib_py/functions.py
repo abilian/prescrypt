@@ -19,9 +19,6 @@ def function_isinstance(codegen: CodeGen, args, kwargs):
         raise JSError(msg)
 
     ob = unify(codegen.gen_expr(args[0]))
-    cls = unify(codegen.gen_expr(args[1]))
-    if cls[0] in "\"'":
-        cls = cls[1:-1]  # remove quotes
 
     BASIC_TYPES = (
         "number",
@@ -49,6 +46,17 @@ def function_isinstance(codegen: CodeGen, args, kwargs):
         "[tuple, list]": "array",
         "dict": "object",
     }
+
+    # Check if the type argument is a simple Name that we recognize
+    # We need to check the AST node BEFORE generating the expression
+    # because gen_expr will translate "int" to "_pyfunc_type_int"
+    type_arg = args[1]
+    if isinstance(type_arg, ast.Name) and type_arg.id in MAP:
+        cls = type_arg.id
+    else:
+        cls = unify(codegen.gen_expr(type_arg))
+        if cls[0] in "\"'":
+            cls = cls[1:-1]  # remove quotes
 
     cmp = MAP.get(cls, cls)
 

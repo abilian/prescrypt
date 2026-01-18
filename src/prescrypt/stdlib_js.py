@@ -141,6 +141,51 @@ class StdlibJs:
 
         return all_funcs, all_methods
 
+    def _topological_sort(
+        self, names: set[str], deps: dict[str, set[str]]
+    ) -> list[str]:
+        """Sort names so that dependencies come before their dependents.
+
+        Uses Kahn's algorithm for topological sorting. Falls back to
+        alphabetical order for names with no dependencies between them.
+        """
+        names = set(names)  # Make a copy
+        result = []
+
+        # Build in-degree count (how many deps each name has within our set)
+        in_degree = {}
+        for name in names:
+            in_degree[name] = 0
+
+        for name in names:
+            for dep in deps.get(name, set()):
+                if dep in names:
+                    in_degree[name] += 1
+
+        # Start with nodes that have no dependencies (in-degree 0)
+        # Sort alphabetically for deterministic output
+        ready = sorted([n for n in names if in_degree[n] == 0])
+
+        while ready:
+            # Take the first ready node (alphabetically)
+            name = ready.pop(0)
+            result.append(name)
+
+            # Reduce in-degree for nodes that depend on this one
+            for other in names:
+                if name in deps.get(other, set()):
+                    in_degree[other] -= 1
+                    if in_degree[other] == 0:
+                        # Insert in sorted position
+                        ready.append(other)
+                        ready.sort()
+
+        # If there's a cycle, add remaining nodes alphabetically
+        remaining = sorted(names - set(result))
+        result.extend(remaining)
+
+        return result
+
     def get_full_std_lib(self, indent=0):
         """Get the code for the full Prescrypt standard library.
 
@@ -163,7 +208,10 @@ class StdlibJs:
         method_prefix = "var " + self.method_prefix
         lines = []
 
-        for name in sorted(func_names):
+        # Sort functions in dependency order (dependencies first)
+        sorted_funcs = self._topological_sort(func_names, self.function_deps)
+
+        for name in sorted_funcs:
             code = self.functions[name].strip()
             if "\n" not in code:
                 code = code.rsplit("//", 1)[0].rstrip()  # strip comment from one-liners

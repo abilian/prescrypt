@@ -1,28 +1,470 @@
+var _pyfunc_BaseException = (function() {
+  // nargs: 0 1
+  function BaseException(message) {
+    if (!(this instanceof BaseException)) {
+      return new BaseException(message);
+    }
+    Error.call(this, message);
+    this.name = "BaseException";
+    this.message = message || "";
+    this.args = message !== undefined ? [message] : [];
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, BaseException);
+    }
+  }
+  BaseException.prototype = Object.create(Error.prototype);
+  BaseException.prototype.constructor = BaseException;
+  return BaseException;
+})();
 var _pyfunc_Ellipsis = Symbol.for('Ellipsis');
+var _pyfunc_Exception = (function() {
+  // nargs: 0 1
+  function Exception(message) {
+    if (!(this instanceof Exception)) {
+      return new Exception(message);
+    }
+    _pyfunc_BaseException.call(this, message);
+    this.name = "Exception";
+  }
+  Exception.prototype = Object.create(_pyfunc_BaseException.prototype);
+  Exception.prototype.constructor = Exception;
+  return Exception;
+})();
+var _pyfunc_AttributeError = (function() {
+  // nargs: 0 1
+  function AttributeError(message) {
+    if (!(this instanceof AttributeError)) {
+      return new AttributeError(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "AttributeError";
+  }
+  AttributeError.prototype = Object.create(_pyfunc_Exception.prototype);
+  AttributeError.prototype.constructor = AttributeError;
+  return AttributeError;
+})();
+var _pyfunc_IndexError = (function() {
+  // nargs: 0 1
+  function IndexError(message) {
+    if (!(this instanceof IndexError)) {
+      return new IndexError(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "IndexError";
+  }
+  IndexError.prototype = Object.create(_pyfunc_Exception.prototype);
+  IndexError.prototype.constructor = IndexError;
+  return IndexError;
+})();
+var _pyfunc_KeyError = (function() {
+  // nargs: 0 1
+  function KeyError(message) {
+    if (!(this instanceof KeyError)) {
+      return new KeyError(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "KeyError";
+  }
+  KeyError.prototype = Object.create(_pyfunc_Exception.prototype);
+  KeyError.prototype.constructor = KeyError;
+  return KeyError;
+})();
+var _pyfunc_NameError = (function() {
+  // nargs: 0 1
+  function NameError(message) {
+    if (!(this instanceof NameError)) {
+      return new NameError(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "NameError";
+  }
+  NameError.prototype = Object.create(_pyfunc_Exception.prototype);
+  NameError.prototype.constructor = NameError;
+  return NameError;
+})();
+var _pyfunc_NotImplemented = Symbol.for('NotImplemented');
+var _pyfunc_RuntimeError = (function() {
+  // nargs: 0 1
+  function RuntimeError(message) {
+    if (!(this instanceof RuntimeError)) {
+      return new RuntimeError(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "RuntimeError";
+  }
+  RuntimeError.prototype = Object.create(_pyfunc_Exception.prototype);
+  RuntimeError.prototype.constructor = RuntimeError;
+  return RuntimeError;
+})();
+var _pyfunc_StopIteration = (function() {
+  // nargs: 0 1
+  function StopIteration(message) {
+    if (!(this instanceof StopIteration)) {
+      return new StopIteration(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "StopIteration";
+  }
+  StopIteration.prototype = Object.create(_pyfunc_Exception.prototype);
+  StopIteration.prototype.constructor = StopIteration;
+  return StopIteration;
+})();
+var _pyfunc_TypeError_py = (function() {
+  // nargs: 0 1
+  function TypeError_py(message) {
+    if (!(this instanceof TypeError_py)) {
+      return new TypeError_py(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "TypeError";
+  }
+  TypeError_py.prototype = Object.create(_pyfunc_Exception.prototype);
+  TypeError_py.prototype.constructor = TypeError_py;
+  return TypeError_py;
+})();
+var _pyfunc_ValueError = (function() {
+  // nargs: 0 1
+  function ValueError(message) {
+    if (!(this instanceof ValueError)) {
+      return new ValueError(message);
+    }
+    _pyfunc_Exception.call(this, message);
+    this.name = "ValueError";
+  }
+  ValueError.prototype = Object.create(_pyfunc_Exception.prototype);
+  ValueError.prototype.constructor = ValueError;
+  return ValueError;
+})();
 var _pyfunc_abs = Math.abs;;
-var _pyfunc_all = function (x) {
+var _pyfunc_bytes_repr = function (bytes) {
   // nargs: 1
-  // Use for...of to handle both arrays and iterators/generators
-  for (const item of x) {
-    if (!_pyfunc_truthy(item)) {
+  // Return Python-style repr for bytes: b'...'
+  let result = "b'";
+  for (let i = 0; i < bytes.length; i++) {
+    let b = bytes[i];
+    if (b === 92) {  // backslash
+      result += "\\\\";
+    } else if (b === 39) {  // single quote
+      result += "\\'";
+    } else if (b === 10) {  // newline
+      result += "\\n";
+    } else if (b === 13) {  // carriage return
+      result += "\\r";
+    } else if (b === 9) {  // tab
+      result += "\\t";
+    } else if (b >= 32 && b < 127) {
+      // Printable ASCII
+      result += String.fromCharCode(b);
+    } else {
+      // Non-printable: use \xNN format
+      result += "\\x" + b.toString(16).padStart(2, "0");
+    }
+  }
+  result += "'";
+  return result;
+};
+var _pyfunc_callable = function (obj) {
+  // nargs: 1
+  // Return True if object is callable
+  return typeof obj === "function" || (typeof obj === "object" && obj !== null && typeof obj.__call__ === "function");
+};
+var _pyfunc_create_dict = function () {
+  const d = {};
+  for (let i = 0; i < arguments.length; i += 2) {
+    d[arguments[i]] = arguments[i + 1];
+  }
+  return d;
+};
+var _pyfunc_dict = function (x) {
+  const res = {};
+  if (Array.isArray(x)) {
+    for (let i = 0; i < x.length; i++) {
+      let t = x[i];
+      res[t[0]] = t[1];
+    }
+  } else {
+    const keys = Object.keys(x);
+    for (let i = 0; i < keys.length; i++) {
+      let t = keys[i];
+      res[t] = x[t];
+    }
+  }
+  return res;
+};
+var _pyfunc_dir = function (obj) {
+  // nargs: 0 1
+  // Return list of names in scope or object attributes
+  if (obj === undefined) {
+    // Without argument, return names in current scope
+    // This is hard to do correctly in JS, return empty list
+    return [];
+  }
+  let names = new Set();
+  // Add own properties
+  if (typeof obj === "object" && obj !== null) {
+    for (let key of Object.keys(obj)) {
+      names.add(key);
+    }
+    // Add prototype properties
+    let proto = Object.getPrototypeOf(obj);
+    while (proto && proto !== Object.prototype) {
+      for (let key of Object.getOwnPropertyNames(proto)) {
+        if (!key.startsWith("_") || key.startsWith("__")) {
+          names.add(key);
+        }
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+  }
+  // For primitives, add type methods
+  if (typeof obj === "string") {
+    names.add("upper");
+    names.add("lower");
+    names.add("strip");
+    names.add("split");
+    // ... add more as needed
+  }
+  // Check for __dir__ method
+  if (obj && typeof obj.__dir__ === "function") {
+    return obj.__dir__();
+  }
+  return Array.from(names).sort();
+};
+var _pyfunc_divmod = function (x, y) {
+  // nargs: 2
+  const m = x % y;
+  return [(x - m) / y, m];
+};
+var _pyfunc_enumerate = function (iter) {
+  // nargs: 1
+  const res = [];
+  // Handle iterators/generators
+  if (!Array.isArray(iter) && typeof iter[Symbol.iterator] === 'function') {
+    let i = 0;
+    for (const item of iter) {
+      res.push([i++, item]);
+    }
+    return res;
+  }
+  // Handle plain objects
+  if (typeof iter === "object" && !Array.isArray(iter)) {
+    iter = Object.keys(iter);
+  }
+  for (let i = 0; i < iter.length; i++) {
+    res.push([i, iter[i]]);
+  }
+  return res;
+};
+var _pyfunc_filter = function (func, iter) {
+  // nargs: 2
+  if (typeof func === "undefined" || func === null) {
+    func = function (x) {
+      return x;
+    };
+  }
+  if (typeof iter === "object" && !Array.isArray(iter)) {
+    iter = Object.keys(iter);
+  }
+  return iter.filter(func);
+};
+var _pyfunc_float = Number;;
+var _pyfunc_hasattr = function (obj, name) {
+  // nargs: 2
+  // Check if object has attribute
+  if (obj == null) {
+    return false;
+  }
+  // Check for __getattr__
+  if (typeof obj.__getattr__ === "function") {
+    try {
+      obj.__getattr__(name);
+      return true;
+    } catch (e) {
       return false;
     }
   }
-  return true;
+  return name in obj || obj[name] !== undefined;
 };
-var _pyfunc_any = function (x) {
-  // nargs: 1
-  // Use for...of to handle both arrays and iterators/generators
-  for (const item of x) {
-    if (_pyfunc_truthy(item)) {
-      return true;
+var _pyfunc_int = function (x, base) {
+  // nargs: 1 2
+  if (base !== undefined) {
+    return parseInt(x, base);
+  }
+  return x < 0 ? Math.ceil(x) : Math.floor(x);
+};
+var _pyfunc_int_from_bytes = function (bytes, byteorder, signed) {
+  // nargs: 2 3
+  // int.from_bytes(bytes, byteorder, *, signed=False)
+  // Converts bytes to an integer
+  signed = signed === true || signed === "true";
+  let isLittle = byteorder === "little";
+
+  // Convert to array if needed
+  let arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let length = arr.length;
+
+  if (length === 0) {
+    return 0;
+  }
+
+  // Build the integer value
+  let result = 0;
+  for (let i = 0; i < length; i++) {
+    let idx = isLittle ? length - 1 - i : i;
+    result = result * 256 + arr[idx];
+  }
+
+  // Handle signed conversion (two's complement)
+  if (signed && arr[isLittle ? length - 1 : 0] >= 128) {
+    result = result - Math.pow(2, length * 8);
+  }
+
+  return result;
+};
+var _pyfunc_list = function (x) {
+  // Handle iterators/generators using spread
+  if (typeof x[Symbol.iterator] === 'function') {
+    return [...x];
+  }
+  // Handle plain objects by converting to array of keys
+  if (typeof x === "object" && !Array.isArray(x)) {
+    return Object.keys(x);
+  }
+  // Fallback for array-like objects
+  const res = [];
+  for (let i = 0; i < x.length; i++) {
+    res.push(x[i]);
+  }
+  return res;
+};
+var _pyfunc_map = function (func, iter) {
+  // nargs: 2
+  if (typeof func === "undefined" || func === null) {
+    func = function (x) {
+      return x;
+    };
+  }
+  if (typeof iter === "object" && !Array.isArray(iter)) {
+    iter = Object.keys(iter);
+  }
+  return iter.map(func);
+};
+var _pyfunc_merge_dicts = function () {
+  const res = {};
+  for (let i = 0; i < arguments.length; i++) {
+    const d = arguments[i];
+    const keys = Object.keys(d);
+    for (let j = 0; j < keys.length; j++) {
+      let key = keys[j];
+      res[key] = d[key];
     }
   }
-  return false;
+  return res;
 };
-var _pyfunc_bool = function (x) {
+var _pyfunc_op_add = function (a, b) {
+  // nargs: 2
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.concat(b);
+  }
+  // Handle bytes (Uint8Array) concatenation
+  if (a instanceof Uint8Array && b instanceof Uint8Array) {
+    let result = new Uint8Array(a.length + b.length);
+    result.set(a, 0);
+    result.set(b, a.length);
+    return result;
+  }
+  return a + b;
+};
+var _pyfunc_op_equals = function op_equals(a, b) {
+  // nargs: 2
+  let a_type = typeof a;
+  // If a (or b actually) is of type string, number or boolean, we don't need
+  // to do all the other type checking below.
+  if (a_type === "string" || a_type === "boolean" || a_type === "number") {
+    return a == b;
+  }
+
+  if (a == null || b == null) {
+    return a == b;
+  }
+
+  // Check for __eq__ method on either object
+  if (typeof a.__eq__ === 'function') {
+    return a.__eq__(b);
+  }
+  if (typeof b.__eq__ === 'function') {
+    return b.__eq__(a);
+  }
+
+  if (Array.isArray(a) && Array.isArray(b)) {
+    let i = 0,
+      iseq = a.length == b.length;
+    while (iseq && i < a.length) {
+      iseq = op_equals(a[i], b[i]);
+      i += 1;
+    }
+    return iseq;
+  }
+
+  if (a.constructor === Object && b.constructor === Object) {
+    const akeys = Object.keys(a),
+      bkeys = Object.keys(b);
+    akeys.sort();
+    bkeys.sort();
+    let i = 0,
+      iseq = op_equals(akeys, bkeys);
+    while (iseq && i < akeys.length) {
+      const k = akeys[i];
+      iseq = op_equals(a[k], b[k]);
+      i += 1;
+    }
+    return iseq;
+  }
+
+  return a == b;
+};
+var _pyfunc_op_contains = function op_contains(a, b) {
+  // nargs: 2
+  if (b == null) {
+  } else if (Array.isArray(b)) {
+    for (let i = 0; i < b.length; i++) {
+      if (_pyfunc_op_equals(a, b[i])) return true;
+    }
+    return false;
+  } else if (b.constructor === Object) {
+    for (let k in b) {
+      if (a == k) return true;
+    }
+    return false;
+  } else if (b.constructor == String) {
+    return b.indexOf(a) >= 0;
+  }
+  let e = Error("Not a container: " + b);
+  e.name = "TypeError";
+  throw e;
+};
+var _pyfunc_op_error = function (etype, ...args) {
+  // nargs: 1+
+  let msg = args.join(", ");
+  let e = new Error(etype + ": " + msg);
+  e.name = etype;
+  e.args = args;  // Store args for repr()
+  return e;
+};
+var _pyfunc_bin = function (x) {
   // nargs: 1
-  return Boolean(_pyfunc_truthy(x));
+  // Convert integer to binary string with 0b prefix
+  if (typeof x !== "number" || !Number.isInteger(x)) {
+    if (typeof x.__index__ === "function") {
+      x = x.__index__();
+    } else {
+      throw _pyfunc_op_error("TypeError", "'float' object cannot be interpreted as an integer");
+    }
+  }
+  if (x < 0) {
+    return "-0b" + (-x).toString(2);
+  }
+  return "0b" + x.toString(2);
 };
 var _pyfunc_bytes = function (source) {
   // nargs: 0 1
@@ -106,98 +548,542 @@ var _pyfunc_bytes_error_args = function () {
   // Called when bytes() has too many arguments - raises TypeError at runtime
   throw _pyfunc_op_error("TypeError", "bytes() takes at most 3 arguments");
 };
-var _pyfunc_bytes_repr = function (bytes) {
-  // nargs: 1
-  // Return Python-style repr for bytes: b'...'
-  let result = "b'";
-  for (let i = 0; i < bytes.length; i++) {
-    let b = bytes[i];
-    if (b === 92) {  // backslash
-      result += "\\\\";
-    } else if (b === 39) {  // single quote
-      result += "\\'";
-    } else if (b === 10) {  // newline
-      result += "\\n";
-    } else if (b === 13) {  // carriage return
-      result += "\\r";
-    } else if (b === 9) {  // tab
-      result += "\\t";
-    } else if (b >= 32 && b < 127) {
-      // Printable ASCII
-      result += String.fromCharCode(b);
-    } else {
-      // Non-printable: use \xNN format
-      result += "\\x" + b.toString(16).padStart(2, "0");
+var _pyfunc_delattr = function (obj, name) {
+  // nargs: 2
+  // Delete attribute from object
+  if (obj == null) {
+    throw _pyfunc_op_error("AttributeError", "'NoneType' object has no attribute '" + name + "'");
+  }
+  // Check for __delattr__
+  if (typeof obj.__delattr__ === "function") {
+    obj.__delattr__(name);
+  } else if (name in obj) {
+    delete obj[name];
+  } else {
+    let typeName = obj.constructor ? obj.constructor.name : typeof obj;
+    throw _pyfunc_op_error("AttributeError", "'" + typeName + "' object has no attribute '" + name + "'");
+  }
+};
+var _pyfunc_getattr = function (obj, name, defaultValue) {
+  // nargs: 2 3
+  // Get attribute from object
+  if (obj == null) {
+    if (arguments.length >= 3) {
+      return defaultValue;
+    }
+    throw _pyfunc_op_error("AttributeError", "'NoneType' object has no attribute '" + name + "'");
+  }
+  // Check for __getattr__ first
+  if (typeof obj.__getattr__ === "function") {
+    try {
+      return obj.__getattr__(name);
+    } catch (e) {
+      if (arguments.length >= 3 && e.name === "AttributeError") {
+        return defaultValue;
+      }
+      throw e;
     }
   }
-  result += "'";
-  return result;
-};
-var _pyfunc_create_dict = function () {
-  const d = {};
-  for (let i = 0; i < arguments.length; i += 2) {
-    d[arguments[i]] = arguments[i + 1];
+  // Direct property access
+  if (name in obj) {
+    return obj[name];
   }
-  return d;
+  // Check prototype chain
+  if (obj[name] !== undefined) {
+    return obj[name];
+  }
+  if (arguments.length >= 3) {
+    return defaultValue;
+  }
+  let typeName = obj.constructor ? obj.constructor.name : typeof obj;
+  throw _pyfunc_op_error("AttributeError", "'" + typeName + "' object has no attribute '" + name + "'");
 };
-var _pyfunc_delattr = function (ob, name) {
+var _pyfunc_hex = function (x) {
+  // nargs: 1
+  // Convert integer to hexadecimal string with 0x prefix
+  if (typeof x !== "number" || !Number.isInteger(x)) {
+    if (typeof x.__index__ === "function") {
+      x = x.__index__();
+    } else {
+      throw _pyfunc_op_error("TypeError", "'float' object cannot be interpreted as an integer");
+    }
+  }
+  if (x < 0) {
+    return "-0x" + (-x).toString(16);
+  }
+  return "0x" + x.toString(16);
+};
+var _pyfunc_iter = function (x) {
+  // nargs: 1
+  // Returns an iterator for the given iterable
+  if (typeof x[Symbol.iterator] === "function") {
+    return x[Symbol.iterator]();
+  }
+  // Handle plain objects by iterating over keys
+  if (typeof x === "object" && x !== null) {
+    return Object.keys(x)[Symbol.iterator]();
+  }
+  throw _pyfunc_op_error("TypeError", "'" + typeof x + "' object is not iterable");
+};
+var _pyfunc_next = function (iterator, defaultValue) {
+  // nargs: 1 2
+  // Get next item from iterator
+  let result = iterator.next();
+  if (result.done) {
+    if (arguments.length >= 2) {
+      return defaultValue;
+    }
+    throw _pyfunc_op_error("StopIteration", "");
+  }
+  return result.value;
+};
+var _pyfunc_oct = function (x) {
+  // nargs: 1
+  // Convert integer to octal string with 0o prefix
+  if (typeof x !== "number" || !Number.isInteger(x)) {
+    if (typeof x.__index__ === "function") {
+      x = x.__index__();
+    } else {
+      throw _pyfunc_op_error("TypeError", "'float' object cannot be interpreted as an integer");
+    }
+  }
+  if (x < 0) {
+    return "-0o" + (-x).toString(8);
+  }
+  return "0o" + x.toString(8);
+};
+var _pyfunc_op_getitem = function op_getitem(obj, key) {
   // nargs: 2
-  delete ob[name];
+  // Python obj[key] - checks for __getitem__ method first
+  if (obj == null) {
+    throw new TypeError("'NoneType' object is not subscriptable");
+  }
+  if (typeof obj.__getitem__ === 'function') {
+    return obj.__getitem__(key);
+  }
+  // Handle negative indices for arrays, strings, and typed arrays (bytes)
+  if (typeof key === 'number' && key < 0 && (Array.isArray(obj) || typeof obj === 'string' || obj instanceof Uint8Array)) {
+    key = obj.length + key;
+  }
+  return obj[key];
 };
-var _pyfunc_dict = function (x) {
-  const res = {};
-  if (Array.isArray(x)) {
-    for (let i = 0; i < x.length; i++) {
-      let t = x[i];
-      res[t[0]] = t[1];
+var _pyfunc_op_instantiate = function (ob, args) {
+  // nargs: 2
+  if (
+    typeof ob === "undefined" ||
+    (typeof window !== "undefined" && window === ob) ||
+    (typeof global !== "undefined" && global === ob)
+  ) {
+    throw "Class constructor is called as a function.";
+  }
+  for (let name in ob) {
+    if (
+      Object[name] === undefined &&
+      typeof ob[name] === "function" &&
+      !ob[name].nobind
+    ) {
+      ob[name] = ob[name].bind(ob);
+      ob[name].__name__ = name;
+    }
+  }
+  if (ob.__init__) {
+    ob.__init__.apply(ob, args);
+  }
+};
+var _pyfunc_op_len = function op_len(obj) {
+  // nargs: 1
+  // Python len() - checks for __len__ method first, then falls back to .length
+  if (obj == null) {
+    throw new TypeError("object of type 'NoneType' has no len()");
+  }
+  if (typeof obj.__len__ === 'function') {
+    return obj.__len__();
+  }
+  if (obj.length !== undefined) {
+    return obj.length;
+  }
+  // JavaScript Set and Map use .size instead of .length
+  if (obj.size !== undefined) {
+    return obj.size;
+  }
+  if (obj.constructor === Object) {
+    return Object.keys(obj).length;
+  }
+  throw new TypeError("object has no len()");
+};
+var _pyfunc_op_matmul = function (a, b) {
+  // nargs: 2
+  // Matrix multiplication operator @
+  // Delegates to __matmul__ method if available
+  if (typeof a.__matmul__ === 'function') {
+    return a.__matmul__(b);
+  }
+  if (typeof b.__rmatmul__ === 'function') {
+    return b.__rmatmul__(a);
+  }
+  throw new TypeError("unsupported operand type(s) for @");
+};
+var _pyfunc_op_mul = function (a, b) {
+  // nargs: 2
+  if ((typeof a === "number") + (typeof b === "number") === 1) {
+    if (a.constructor === String) return _pymeth_repeat.call(a, b);
+    if (b.constructor === String) return _pymeth_repeat.call(b, a);
+    if (Array.isArray(b)) {
+      let t = a;
+      a = b;
+      b = t;
+    }
+    if (Array.isArray(a)) {
+      let res = [];
+      for (let i = 0; i < b; i++) res = res.concat(a);
+      return res;
+    }
+  }
+  return a * b;
+};
+var _pyfunc_op_parse_kwargs = function (
+  arg_names,
+  arg_values,
+  kwargs,
+  strict
+) {
+  // nargs: 3
+  for (let i = 0; i < arg_values.length; i++) {
+    let name = arg_names[i];
+    if (kwargs[name] !== undefined) {
+      arg_values[i] = kwargs[name];
+      delete kwargs[name];
+    }
+  }
+  if (strict && Object.keys(kwargs).length > 0) {
+    throw _pyfunc_op_error(
+      "TypeError",
+      "Function " + strict + " does not accept **kwargs."
+    );
+  }
+  return kwargs;
+};
+var _pyfunc_op_setitem = function op_setitem(obj, key, value) {
+  // nargs: 3
+  // Python obj[key] = value - checks for __setitem__ method first
+  if (obj == null) {
+    throw new TypeError("'NoneType' object does not support item assignment");
+  }
+  if (typeof obj.__setitem__ === 'function') {
+    obj.__setitem__(key, value);
+  } else {
+    obj[key] = value;
+  }
+};
+var _pyfunc_perf_counter = function () {
+  // nargs: 0
+  if (typeof process === "undefined") {
+    return performance.now() * 1e-3;
+  } else {
+    const t = process.hrtime();
+    return t[0] + t[1] * 1e-9;
+  }
+};
+var _pyfunc_pow = Math.pow;;
+var _pyfunc_range = function (start, end, step) {
+  const res = [];
+  let val = start;
+  let n = (end - start) / step;
+  for (let i = 0; i < n; i++) {
+    res.push(val);
+    val += step;
+  }
+  return res;
+};
+var _pyfunc_reversed = function (iter) {
+  // nargs: 1
+  if (typeof iter === "object" && !Array.isArray(iter)) {
+    iter = Object.keys(iter);
+  }
+  return iter.slice().reverse();
+};
+var _pyfunc_round = function (x, ndigits) {
+  // nargs: 1 2
+  if (ndigits === undefined || ndigits === 0) {
+    return Math.round(x);
+  }
+  const factor = Math.pow(10, ndigits);
+  return Math.round(x * factor) / factor;
+};
+var _pyfunc_setattr = function (obj, name, value) {
+  // nargs: 3
+  // Set attribute on object
+  if (obj == null) {
+    throw _pyfunc_op_error("AttributeError", "'NoneType' object has no attribute '" + name + "'");
+  }
+  // Check for __setattr__
+  if (typeof obj.__setattr__ === "function") {
+    obj.__setattr__(name, value);
+  } else {
+    obj[name] = value;
+  }
+};
+var _pyfunc_slice = function (obj, start, stop, step) {
+  // nargs: 4
+  // Slice with step: handles a[::2], a[::-1], a[1:5:2], etc.
+  const len = obj.length;
+
+  // Normalize step
+  if (step === 0) {
+    throw new ValueError("slice step cannot be zero");
+  }
+
+  // Normalize start
+  if (start === null) {
+    start = step < 0 ? len - 1 : 0;
+  } else if (start < 0) {
+    start = Math.max(0, len + start);
+  } else {
+    start = Math.min(start, step < 0 ? len - 1 : len);
+  }
+
+  // Normalize stop
+  if (stop === null) {
+    stop = step < 0 ? -1 : len;
+  } else if (stop < 0) {
+    stop = Math.max(-1, len + stop);
+  } else {
+    stop = Math.min(stop, len);
+  }
+
+  // Collect elements
+  const result = [];
+  if (step > 0) {
+    for (let i = start; i < stop; i += step) {
+      result.push(obj[i]);
     }
   } else {
-    const keys = Object.keys(x);
-    for (let i = 0; i < keys.length; i++) {
-      let t = keys[i];
-      res[t] = x[t];
+    for (let i = start; i > stop; i += step) {
+      result.push(obj[i]);
     }
   }
-  return res;
-};
-var _pyfunc_divmod = function (x, y) {
-  // nargs: 2
-  const m = x % y;
-  return [(x - m) / y, m];
-};
-var _pyfunc_enumerate = function (iter) {
-  // nargs: 1
-  const res = [];
-  // Handle iterators/generators
-  if (!Array.isArray(iter) && typeof iter[Symbol.iterator] === 'function') {
-    let i = 0;
-    for (const item of iter) {
-      res.push([i++, item]);
-    }
-    return res;
+
+  // Return same type as input
+  if (typeof obj === "string") {
+    return result.join("");
   }
-  // Handle plain objects
+  return result;
+};
+var _pyfunc_sorted = function (iter, key, reverse) {
+  // nargs: 1 2 3
   if (typeof iter === "object" && !Array.isArray(iter)) {
     iter = Object.keys(iter);
   }
-  for (let i = 0; i < iter.length; i++) {
-    res.push([i, iter[i]]);
-  }
-  return res;
-};
-var _pyfunc_filter = function (func, iter) {
-  // nargs: 2
-  if (typeof func === "undefined" || func === null) {
-    func = function (x) {
-      return x;
+  let comp;
+  if (key) {
+    // Custom key function provided
+    comp = function (a, b) {
+      a = key(a);
+      b = key(b);
+      if (a < b) return -1;
+      if (a > b) return 1;
+      return 0;
+    };
+  } else {
+    // Default comparison - Python-like behavior (works correctly for numbers and strings)
+    comp = function (a, b) {
+      if (a < b) return -1;
+      if (a > b) return 1;
+      return 0;
     };
   }
-  if (typeof iter === "object" && !Array.isArray(iter)) {
-    iter = Object.keys(iter);
-  }
-  return iter.filter(func);
+  iter = iter.slice().sort(comp);
+  if (reverse) iter.reverse();
+  return iter;
 };
-var _pyfunc_float = Number;;
+var _pyfunc_str_decode = function (bytes, encoding) {
+  // nargs: 2
+  // Decode bytes/bytearray to string using specified encoding
+  // Convert to Uint8Array if needed (handles both Array and TypedArray)
+  let arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let enc = (encoding || "utf-8").toLowerCase().replace("-", "");
+  // Use TextDecoder if available
+  if (typeof TextDecoder !== "undefined") {
+    let decoder = new TextDecoder(enc);
+    return decoder.decode(arr);
+  }
+  // Fallback: manual UTF-8 decoding for QuickJS
+  if (enc === "utf8" || enc === "utf-8") {
+    let result = "";
+    let i = 0;
+    while (i < arr.length) {
+      let b = arr[i];
+      if (b < 0x80) {
+        result += String.fromCharCode(b);
+        i++;
+      } else if ((b & 0xe0) === 0xc0) {
+        result += String.fromCharCode(((b & 0x1f) << 6) | (arr[i + 1] & 0x3f));
+        i += 2;
+      } else if ((b & 0xf0) === 0xe0) {
+        result += String.fromCharCode(
+          ((b & 0x0f) << 12) | ((arr[i + 1] & 0x3f) << 6) | (arr[i + 2] & 0x3f),
+        );
+        i += 3;
+      } else if ((b & 0xf8) === 0xf0) {
+        // 4-byte sequence (surrogate pairs for chars > 0xFFFF)
+        let cp =
+          ((b & 0x07) << 18) |
+          ((arr[i + 1] & 0x3f) << 12) |
+          ((arr[i + 2] & 0x3f) << 6) |
+          (arr[i + 3] & 0x3f);
+        cp -= 0x10000;
+        result += String.fromCharCode(0xd800 + (cp >> 10), 0xdc00 + (cp & 0x3ff));
+        i += 4;
+      } else {
+        i++;
+      }
+    }
+    return result;
+  }
+  // ASCII/latin-1
+  if (enc === "ascii" || enc === "latin1" || enc === "iso88591") {
+    let result = "";
+    for (let i = 0; i < arr.length; i++) {
+      result += String.fromCharCode(arr[i]);
+    }
+    return result;
+  }
+  throw _pyfunc_op_error("LookupError", "unknown encoding: " + encoding);
+};
+var _pyfunc_str_error_args = function () {
+  // nargs: 0+
+  // Called when str() has too many arguments - raises TypeError at runtime
+  throw _pyfunc_op_error("TypeError", "str() takes at most 3 arguments");
+};
+var _pyfunc_sum = function (x) {
+  // nargs: 1
+  // Convert iterators/generators to array first
+  if (!Array.isArray(x) && typeof x[Symbol.iterator] === 'function') {
+    x = [...x];
+  }
+  return x.reduce(function (a, b) {
+    return a + b;
+  }, 0);
+};
+var _pyfunc_super_proxy = function (self, classProto) {
+  // nargs: 2
+  // Creates a proxy object for super() that accesses parent class methods/attributes
+  // and binds methods to the current instance.
+  // classProto is the prototype of the class where super() is called from (not the instance's class)
+  // This is needed for multi-level inheritance to work correctly.
+  var base = classProto ? classProto._base_class : self._base_class;
+  if (!base) {
+    throw new TypeError("super(): no base class");
+  }
+  return new Proxy({}, {
+    get: function(target, prop) {
+      if (prop in base) {
+        var val = base[prop];
+        if (typeof val === 'function') {
+          return val.bind(self);
+        }
+        return val;
+      }
+      return undefined;
+    }
+  });
+};
+var _pyfunc_time = function () {
+  return Date.now() / 1000;
+}; // nargs: 0;
+var _pyfunc_truthy = function (v) {
+  if (v === null || typeof v !== "object") {
+    return v;
+  } else if (v.length !== undefined) {
+    return v.length ? v : false;
+  } else if (v.byteLength !== undefined) {
+    return v.byteLength ? v : false;
+  } else if (v.constructor !== Object) {
+    return true;
+  } else {
+    return Object.getOwnPropertyNames(v).length ? v : false;
+  }
+};
+var _pyfunc_all = function (x) {
+  // nargs: 1
+  // Use for...of to handle both arrays and iterators/generators
+  for (const item of x) {
+    if (!_pyfunc_truthy(item)) {
+      return false;
+    }
+  }
+  return true;
+};
+var _pyfunc_any = function (x) {
+  // nargs: 1
+  // Use for...of to handle both arrays and iterators/generators
+  for (const item of x) {
+    if (_pyfunc_truthy(item)) {
+      return true;
+    }
+  }
+  return false;
+};
+var _pyfunc_bool = function (x) {
+  // nargs: 1
+  return Boolean(_pyfunc_truthy(x));
+};
+var _pyfunc_type_bool = Boolean;
+var _pyfunc_type_bytes = Uint8Array;
+var _pyfunc_type_dict = Object;
+var _pyfunc_type_float = Number;
+var _pyfunc_type_int = Number;
+var _pyfunc_type_list = Array;
+var _pyfunc_type_object = Object;
+var _pyfunc_type_set = Set;
+var _pyfunc_type_str = String;
+var _pyfunc_type_tuple = Array;
+var _pyfunc_type_type = function (x) {
+  // nargs: 1
+  if (x === null) return "NoneType";
+  if (x === undefined) return "NoneType";
+  if (typeof x === "boolean") return _pyfunc_type_bool;
+  if (typeof x === "number") {
+    return Number.isInteger(x) ? _pyfunc_type_int : _pyfunc_type_float;
+  }
+  if (typeof x === "string") return _pyfunc_type_str;
+  if (Array.isArray(x)) return _pyfunc_type_list;
+  if (x instanceof Uint8Array) return _pyfunc_type_bytes;
+  if (x instanceof Set) return _pyfunc_type_set;
+  if (x instanceof Map) return _pyfunc_type_dict;
+  if (typeof x === "function") return "function";
+  if (typeof x === "object") {
+    // Check for class instances
+    if (x.constructor && x.constructor !== Object) {
+      return x.constructor;
+    }
+    return _pyfunc_type_dict;
+  }
+  return typeof x;
+};
+var _pyfunc_zip = function () {
+  // nargs: 2 3 4 5 6 7 8 9
+  let len = 1e20;
+  const args = [],
+    res = [];
+
+  for (let i = 0; i < arguments.length; i++) {
+    let arg = arguments[i];
+    if (typeof arg === "object" && !Array.isArray(arg)) {
+      arg = Object.keys(arg);
+    }
+    args.push(arg);
+    len = Math.min(len, arg.length);
+  }
+  for (let j = 0; j < len; j++) {
+    const tup = [];
+    for (let i = 0; i < args.length; i++) {
+      tup.push(args[i][j]);
+    }
+    res.push(tup);
+  }
+  return res;
+};
 var _pyfunc_format = function (v, fmt) {
   // nargs: 1 2
   if (fmt === undefined) {
@@ -431,271 +1317,86 @@ var _pyfunc_format_value = function (value, type, flags, width, precision) {
 
   return result;
 };
-var _pyfunc_getattr = function (ob, name, deflt) {
-  // nargs: 2 3
-  let has_attr = ob !== undefined && ob !== null && ob[name] !== undefined;
-  if (has_attr) {
-    return ob[name];
-  } else if (arguments.length == 3) {
-    return deflt;
-  } else {
-    let e = Error(name);
-    e.name = "AttributeError";
-    throw e;
+var _pyfunc_hash = function (x) {
+  // nargs: 1
+  // Return hash value of object
+  if (typeof x.__hash__ === "function") {
+    return x.__hash__();
   }
-};
-var _pyfunc_hasattr = function (ob, name) {
-  // nargs: 2
-  return ob !== undefined && ob !== null && ob[name] !== undefined;
-};
-var _pyfunc_int = function (x, base) {
-  // nargs: 1 2
-  if (base !== undefined) {
-    return parseInt(x, base);
+  if (x === null || x === undefined) {
+    throw _pyfunc_op_error("TypeError", "unhashable type: 'NoneType'");
   }
-  return x < 0 ? Math.ceil(x) : Math.floor(x);
+  if (typeof x === "number") {
+    // For integers, hash is the integer itself (for small ints)
+    if (Number.isInteger(x)) {
+      return x;
+    }
+    // For floats, use a simple hash
+    return Math.floor(x * 1000000) | 0;
+  }
+  if (typeof x === "string") {
+    // Simple string hash (djb2 algorithm)
+    let hash = 5381;
+    for (let i = 0; i < x.length; i++) {
+      hash = ((hash << 5) + hash) + x.charCodeAt(i);
+      hash = hash | 0; // Convert to 32-bit integer
+    }
+    return hash;
+  }
+  if (typeof x === "boolean") {
+    return x ? 1 : 0;
+  }
+  if (x instanceof Uint8Array) {
+    // Hash bytes
+    let hash = 5381;
+    for (let i = 0; i < x.length; i++) {
+      hash = ((hash << 5) + hash) + x[i];
+      hash = hash | 0;
+    }
+    return hash;
+  }
+  // For objects, check if they're hashable
+  if (Array.isArray(x)) {
+    throw _pyfunc_op_error("TypeError", "unhashable type: 'list'");
+  }
+  if (typeof x === "object" && x.constructor === Object) {
+    throw _pyfunc_op_error("TypeError", "unhashable type: 'dict'");
+  }
+  if (x instanceof Set) {
+    throw _pyfunc_op_error("TypeError", "unhashable type: 'set'");
+  }
+  // For other objects, use a unique id approach
+  return _pyfunc_id(x);
 };
-var _pyfunc_int_from_bytes = function (bytes, byteorder, signed) {
-  // nargs: 2 3
-  // int.from_bytes(bytes, byteorder, *, signed=False)
-  // Converts bytes to an integer
-  signed = signed === true || signed === "true";
-  let isLittle = byteorder === "little";
-
-  // Convert to array if needed
-  let arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  let length = arr.length;
-
-  if (length === 0) {
+var _pyfunc_id = function (x) {
+  // nargs: 1
+  // Return unique identity for object
+  // Use a WeakMap to assign unique IDs to objects
+  if (typeof x !== "object" || x === null) {
+    // For primitives, use a simple hash approach
+    if (typeof x === "number") return x | 0;
+    if (typeof x === "string") {
+      // Simple string hash (inline to avoid circular dep with hash())
+      let h = 5381;
+      for (let i = 0; i < x.length; i++) {
+        h = ((h << 5) + h) + x.charCodeAt(i);
+        h = h | 0;
+      }
+      return h;
+    }
+    if (typeof x === "boolean") return x ? 1 : 0;
+    if (x === undefined) return 0;
     return 0;
   }
-
-  // Build the integer value
-  let result = 0;
-  for (let i = 0; i < length; i++) {
-    let idx = isLittle ? length - 1 - i : i;
-    result = result * 256 + arr[idx];
+  // For objects, use WeakMap to track IDs
+  if (!_pyfunc_id._map) {
+    _pyfunc_id._map = new WeakMap();
+    _pyfunc_id._counter = 1;
   }
-
-  // Handle signed conversion (two's complement)
-  if (signed && arr[isLittle ? length - 1 : 0] >= 128) {
-    result = result - Math.pow(2, length * 8);
+  if (!_pyfunc_id._map.has(x)) {
+    _pyfunc_id._map.set(x, _pyfunc_id._counter++);
   }
-
-  return result;
-};
-var _pyfunc_iter = function (x) {
-  // nargs: 1
-  // Returns an iterator for the given iterable
-  if (typeof x[Symbol.iterator] === "function") {
-    return x[Symbol.iterator]();
-  }
-  // Handle plain objects by iterating over keys
-  if (typeof x === "object" && x !== null) {
-    return Object.keys(x)[Symbol.iterator]();
-  }
-  throw _pyfunc_op_error("TypeError", "'" + typeof x + "' object is not iterable");
-};
-var _pyfunc_list = function (x) {
-  // Handle iterators/generators using spread
-  if (typeof x[Symbol.iterator] === 'function') {
-    return [...x];
-  }
-  // Handle plain objects by converting to array of keys
-  if (typeof x === "object" && !Array.isArray(x)) {
-    return Object.keys(x);
-  }
-  // Fallback for array-like objects
-  const res = [];
-  for (let i = 0; i < x.length; i++) {
-    res.push(x[i]);
-  }
-  return res;
-};
-var _pyfunc_map = function (func, iter) {
-  // nargs: 2
-  if (typeof func === "undefined" || func === null) {
-    func = function (x) {
-      return x;
-    };
-  }
-  if (typeof iter === "object" && !Array.isArray(iter)) {
-    iter = Object.keys(iter);
-  }
-  return iter.map(func);
-};
-var _pyfunc_merge_dicts = function () {
-  const res = {};
-  for (let i = 0; i < arguments.length; i++) {
-    const d = arguments[i];
-    const keys = Object.keys(d);
-    for (let j = 0; j < keys.length; j++) {
-      let key = keys[j];
-      res[key] = d[key];
-    }
-  }
-  return res;
-};
-var _pyfunc_op_add = function (a, b) {
-  // nargs: 2
-  if (Array.isArray(a) && Array.isArray(b)) {
-    return a.concat(b);
-  }
-  // Handle bytes (Uint8Array) concatenation
-  if (a instanceof Uint8Array && b instanceof Uint8Array) {
-    let result = new Uint8Array(a.length + b.length);
-    result.set(a, 0);
-    result.set(b, a.length);
-    return result;
-  }
-  return a + b;
-};
-var _pyfunc_op_contains = function op_contains(a, b) {
-  // nargs: 2
-  if (b == null) {
-  } else if (Array.isArray(b)) {
-    for (let i = 0; i < b.length; i++) {
-      if (_pyfunc_op_equals(a, b[i])) return true;
-    }
-    return false;
-  } else if (b.constructor === Object) {
-    for (let k in b) {
-      if (a == k) return true;
-    }
-    return false;
-  } else if (b.constructor == String) {
-    return b.indexOf(a) >= 0;
-  }
-  let e = Error("Not a container: " + b);
-  e.name = "TypeError";
-  throw e;
-};
-var _pyfunc_op_equals = function op_equals(a, b) {
-  // nargs: 2
-  let a_type = typeof a;
-  // If a (or b actually) is of type string, number or boolean, we don't need
-  // to do all the other type checking below.
-  if (a_type === "string" || a_type === "boolean" || a_type === "number") {
-    return a == b;
-  }
-
-  if (a == null || b == null) {
-    return a == b;
-  }
-
-  // Check for __eq__ method on either object
-  if (typeof a.__eq__ === 'function') {
-    return a.__eq__(b);
-  }
-  if (typeof b.__eq__ === 'function') {
-    return b.__eq__(a);
-  }
-
-  if (Array.isArray(a) && Array.isArray(b)) {
-    let i = 0,
-      iseq = a.length == b.length;
-    while (iseq && i < a.length) {
-      iseq = op_equals(a[i], b[i]);
-      i += 1;
-    }
-    return iseq;
-  }
-
-  if (a.constructor === Object && b.constructor === Object) {
-    const akeys = Object.keys(a),
-      bkeys = Object.keys(b);
-    akeys.sort();
-    bkeys.sort();
-    let i = 0,
-      iseq = op_equals(akeys, bkeys);
-    while (iseq && i < akeys.length) {
-      const k = akeys[i];
-      iseq = op_equals(a[k], b[k]);
-      i += 1;
-    }
-    return iseq;
-  }
-
-  return a == b;
-};
-var _pyfunc_op_error = function (etype, ...args) {
-  // nargs: 1+
-  let msg = args.join(", ");
-  let e = new Error(etype + ": " + msg);
-  e.name = etype;
-  e.args = args;  // Store args for repr()
-  return e;
-};
-var _pyfunc_op_getitem = function op_getitem(obj, key) {
-  // nargs: 2
-  // Python obj[key] - checks for __getitem__ method first
-  if (obj == null) {
-    throw new TypeError("'NoneType' object is not subscriptable");
-  }
-  if (typeof obj.__getitem__ === 'function') {
-    return obj.__getitem__(key);
-  }
-  // Handle negative indices for arrays, strings, and typed arrays (bytes)
-  if (typeof key === 'number' && key < 0 && (Array.isArray(obj) || typeof obj === 'string' || obj instanceof Uint8Array)) {
-    key = obj.length + key;
-  }
-  return obj[key];
-};
-var _pyfunc_op_instantiate = function (ob, args) {
-  // nargs: 2
-  if (
-    typeof ob === "undefined" ||
-    (typeof window !== "undefined" && window === ob) ||
-    (typeof global !== "undefined" && global === ob)
-  ) {
-    throw "Class constructor is called as a function.";
-  }
-  for (let name in ob) {
-    if (
-      Object[name] === undefined &&
-      typeof ob[name] === "function" &&
-      !ob[name].nobind
-    ) {
-      ob[name] = ob[name].bind(ob);
-      ob[name].__name__ = name;
-    }
-  }
-  if (ob.__init__) {
-    ob.__init__.apply(ob, args);
-  }
-};
-var _pyfunc_op_len = function op_len(obj) {
-  // nargs: 1
-  // Python len() - checks for __len__ method first, then falls back to .length
-  if (obj == null) {
-    throw new TypeError("object of type 'NoneType' has no len()");
-  }
-  if (typeof obj.__len__ === 'function') {
-    return obj.__len__();
-  }
-  if (obj.length !== undefined) {
-    return obj.length;
-  }
-  // JavaScript Set and Map use .size instead of .length
-  if (obj.size !== undefined) {
-    return obj.size;
-  }
-  if (obj.constructor === Object) {
-    return Object.keys(obj).length;
-  }
-  throw new TypeError("object has no len()");
-};
-var _pyfunc_op_matmul = function (a, b) {
-  // nargs: 2
-  // Matrix multiplication operator @
-  // Delegates to __matmul__ method if available
-  if (typeof a.__matmul__ === 'function') {
-    return a.__matmul__(b);
-  }
-  if (typeof b.__rmatmul__ === 'function') {
-    return b.__rmatmul__(a);
-  }
-  throw new TypeError("unsupported operand type(s) for @");
+  return _pyfunc_id._map.get(x);
 };
 var _pyfunc_op_mod = function (left, right) {
   // nargs: 2
@@ -706,78 +1407,6 @@ var _pyfunc_op_mod = function (left, right) {
     return _pyfunc_string_mod(left, right);
   }
   return left % right;
-};
-var _pyfunc_op_mul = function (a, b) {
-  // nargs: 2
-  if ((typeof a === "number") + (typeof b === "number") === 1) {
-    if (a.constructor === String) return _pymeth_repeat.call(a, b);
-    if (b.constructor === String) return _pymeth_repeat.call(b, a);
-    if (Array.isArray(b)) {
-      let t = a;
-      a = b;
-      b = t;
-    }
-    if (Array.isArray(a)) {
-      let res = [];
-      for (let i = 0; i < b; i++) res = res.concat(a);
-      return res;
-    }
-  }
-  return a * b;
-};
-var _pyfunc_op_parse_kwargs = function (
-  arg_names,
-  arg_values,
-  kwargs,
-  strict
-) {
-  // nargs: 3
-  for (let i = 0; i < arg_values.length; i++) {
-    let name = arg_names[i];
-    if (kwargs[name] !== undefined) {
-      arg_values[i] = kwargs[name];
-      delete kwargs[name];
-    }
-  }
-  if (strict && Object.keys(kwargs).length > 0) {
-    throw _pyfunc_op_error(
-      "TypeError",
-      "Function " + strict + " does not accept **kwargs."
-    );
-  }
-  return kwargs;
-};
-var _pyfunc_op_setitem = function op_setitem(obj, key, value) {
-  // nargs: 3
-  // Python obj[key] = value - checks for __setitem__ method first
-  if (obj == null) {
-    throw new TypeError("'NoneType' object does not support item assignment");
-  }
-  if (typeof obj.__setitem__ === 'function') {
-    obj.__setitem__(key, value);
-  } else {
-    obj[key] = value;
-  }
-};
-var _pyfunc_perf_counter = function () {
-  // nargs: 0
-  if (typeof process === "undefined") {
-    return performance.now() * 1e-3;
-  } else {
-    const t = process.hrtime();
-    return t[0] + t[1] * 1e-9;
-  }
-};
-var _pyfunc_pow = Math.pow;;
-var _pyfunc_range = function (start, end, step) {
-  const res = [];
-  let val = start;
-  let n = (end - start) / step;
-  for (let i = 0; i < n; i++) {
-    res.push(val);
-    val += step;
-  }
-  return res;
 };
 var _pyfunc_repr = function (x) {
   // nargs: 1
@@ -832,98 +1461,6 @@ var _pyfunc_repr = function (x) {
   }
   return res;
 };
-var _pyfunc_reversed = function (iter) {
-  // nargs: 1
-  if (typeof iter === "object" && !Array.isArray(iter)) {
-    iter = Object.keys(iter);
-  }
-  return iter.slice().reverse();
-};
-var _pyfunc_round = function (x, ndigits) {
-  // nargs: 1 2
-  if (ndigits === undefined || ndigits === 0) {
-    return Math.round(x);
-  }
-  const factor = Math.pow(10, ndigits);
-  return Math.round(x * factor) / factor;
-};
-var _pyfunc_setattr = function (ob, name, value) {
-  // nargs: 3
-  ob[name] = value;
-};
-var _pyfunc_slice = function (obj, start, stop, step) {
-  // nargs: 4
-  // Slice with step: handles a[::2], a[::-1], a[1:5:2], etc.
-  const len = obj.length;
-
-  // Normalize step
-  if (step === 0) {
-    throw new ValueError("slice step cannot be zero");
-  }
-
-  // Normalize start
-  if (start === null) {
-    start = step < 0 ? len - 1 : 0;
-  } else if (start < 0) {
-    start = Math.max(0, len + start);
-  } else {
-    start = Math.min(start, step < 0 ? len - 1 : len);
-  }
-
-  // Normalize stop
-  if (stop === null) {
-    stop = step < 0 ? -1 : len;
-  } else if (stop < 0) {
-    stop = Math.max(-1, len + stop);
-  } else {
-    stop = Math.min(stop, len);
-  }
-
-  // Collect elements
-  const result = [];
-  if (step > 0) {
-    for (let i = start; i < stop; i += step) {
-      result.push(obj[i]);
-    }
-  } else {
-    for (let i = start; i > stop; i += step) {
-      result.push(obj[i]);
-    }
-  }
-
-  // Return same type as input
-  if (typeof obj === "string") {
-    return result.join("");
-  }
-  return result;
-};
-var _pyfunc_sorted = function (iter, key, reverse) {
-  // nargs: 1 2 3
-  if (typeof iter === "object" && !Array.isArray(iter)) {
-    iter = Object.keys(iter);
-  }
-  let comp;
-  if (key) {
-    // Custom key function provided
-    comp = function (a, b) {
-      a = key(a);
-      b = key(b);
-      if (a < b) return -1;
-      if (a > b) return 1;
-      return 0;
-    };
-  } else {
-    // Default comparison - Python-like behavior (works correctly for numbers and strings)
-    comp = function (a, b) {
-      if (a < b) return -1;
-      if (a > b) return 1;
-      return 0;
-    };
-  }
-  iter = iter.slice().sort(comp);
-  if (reverse) iter.reverse();
-  return iter;
-};
 var _pyfunc_str = function (x) {
   // nargs: 0 1;
   if (x === undefined) {
@@ -975,65 +1512,6 @@ var _pyfunc_str = function (x) {
   }
   // Default
   return JSON.stringify(x);
-};
-var _pyfunc_str_decode = function (bytes, encoding) {
-  // nargs: 2
-  // Decode bytes/bytearray to string using specified encoding
-  // Convert to Uint8Array if needed (handles both Array and TypedArray)
-  let arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  let enc = (encoding || "utf-8").toLowerCase().replace("-", "");
-  // Use TextDecoder if available
-  if (typeof TextDecoder !== "undefined") {
-    let decoder = new TextDecoder(enc);
-    return decoder.decode(arr);
-  }
-  // Fallback: manual UTF-8 decoding for QuickJS
-  if (enc === "utf8" || enc === "utf-8") {
-    let result = "";
-    let i = 0;
-    while (i < arr.length) {
-      let b = arr[i];
-      if (b < 0x80) {
-        result += String.fromCharCode(b);
-        i++;
-      } else if ((b & 0xe0) === 0xc0) {
-        result += String.fromCharCode(((b & 0x1f) << 6) | (arr[i + 1] & 0x3f));
-        i += 2;
-      } else if ((b & 0xf0) === 0xe0) {
-        result += String.fromCharCode(
-          ((b & 0x0f) << 12) | ((arr[i + 1] & 0x3f) << 6) | (arr[i + 2] & 0x3f),
-        );
-        i += 3;
-      } else if ((b & 0xf8) === 0xf0) {
-        // 4-byte sequence (surrogate pairs for chars > 0xFFFF)
-        let cp =
-          ((b & 0x07) << 18) |
-          ((arr[i + 1] & 0x3f) << 12) |
-          ((arr[i + 2] & 0x3f) << 6) |
-          (arr[i + 3] & 0x3f);
-        cp -= 0x10000;
-        result += String.fromCharCode(0xd800 + (cp >> 10), 0xdc00 + (cp & 0x3ff));
-        i += 4;
-      } else {
-        i++;
-      }
-    }
-    return result;
-  }
-  // ASCII/latin-1
-  if (enc === "ascii" || enc === "latin1" || enc === "iso88591") {
-    let result = "";
-    for (let i = 0; i < arr.length; i++) {
-      result += String.fromCharCode(arr[i]);
-    }
-    return result;
-  }
-  throw _pyfunc_op_error("LookupError", "unknown encoding: " + encoding);
-};
-var _pyfunc_str_error_args = function () {
-  // nargs: 0+
-  // Called when str() has too many arguments - raises TypeError at runtime
-  throw _pyfunc_op_error("TypeError", "str() takes at most 3 arguments");
 };
 var _pyfunc_string_mod = function (format_str, args) {
   // nargs: 2
@@ -1126,78 +1604,6 @@ var _pyfunc_string_mod = function (format_str, args) {
       return _pyfunc_format_value(value, type, flags, actualWidth, actualPrecision);
     }
   );
-};
-var _pyfunc_sum = function (x) {
-  // nargs: 1
-  // Convert iterators/generators to array first
-  if (!Array.isArray(x) && typeof x[Symbol.iterator] === 'function') {
-    x = [...x];
-  }
-  return x.reduce(function (a, b) {
-    return a + b;
-  }, 0);
-};
-var _pyfunc_super_proxy = function (self, classProto) {
-  // nargs: 2
-  // Creates a proxy object for super() that accesses parent class methods/attributes
-  // and binds methods to the current instance.
-  // classProto is the prototype of the class where super() is called from (not the instance's class)
-  // This is needed for multi-level inheritance to work correctly.
-  var base = classProto ? classProto._base_class : self._base_class;
-  if (!base) {
-    throw new TypeError("super(): no base class");
-  }
-  return new Proxy({}, {
-    get: function(target, prop) {
-      if (prop in base) {
-        var val = base[prop];
-        if (typeof val === 'function') {
-          return val.bind(self);
-        }
-        return val;
-      }
-      return undefined;
-    }
-  });
-};
-var _pyfunc_time = function () {
-  return Date.now() / 1000;
-}; // nargs: 0;
-var _pyfunc_truthy = function (v) {
-  if (v === null || typeof v !== "object") {
-    return v;
-  } else if (v.length !== undefined) {
-    return v.length ? v : false;
-  } else if (v.byteLength !== undefined) {
-    return v.byteLength ? v : false;
-  } else if (v.constructor !== Object) {
-    return true;
-  } else {
-    return Object.getOwnPropertyNames(v).length ? v : false;
-  }
-};
-var _pyfunc_zip = function () {
-  // nargs: 2 3 4 5 6 7 8 9
-  let len = 1e20;
-  const args = [],
-    res = [];
-
-  for (let i = 0; i < arguments.length; i++) {
-    let arg = arguments[i];
-    if (typeof arg === "object" && !Array.isArray(arg)) {
-      arg = Object.keys(arg);
-    }
-    args.push(arg);
-    len = Math.min(len, arg.length);
-  }
-  for (let j = 0; j < len; j++) {
-    const tup = [];
-    for (let i = 0; i < args.length; i++) {
-      tup.push(args[i][j]);
-    }
-    res.push(tup);
-  }
-  return res;
 };
 var _pymeth_append = function (x) {
   // nargs: 1

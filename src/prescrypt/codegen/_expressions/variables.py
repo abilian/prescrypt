@@ -5,6 +5,58 @@ from prescrypt.constants import JS_RESERVED_NAMES
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
+# Type identifiers - map Python type names to stdlib type functions
+TYPE_IDENTIFIERS = {
+    "int": "type_int",
+    "float": "type_float",
+    "str": "type_str",
+    "bool": "type_bool",
+    "list": "type_list",
+    "tuple": "type_tuple",
+    "dict": "type_dict",
+    "set": "type_set",
+    "bytes": "type_bytes",
+    "object": "type_object",
+    "type": "type_type",
+}
+
+# Exception types - map Python exception names to stdlib exception functions
+EXCEPTION_TYPES = {
+    "BaseException": "BaseException",
+    "Exception": "Exception",
+    "StopIteration": "StopIteration",
+    "ValueError": "ValueError",
+    "IndexError": "IndexError",
+    "KeyError": "KeyError",
+    "AttributeError": "AttributeError",
+    "TypeError": "TypeError_py",  # Avoid conflict with JS TypeError
+    "RuntimeError": "RuntimeError",
+    "NameError": "NameError",
+}
+
+# Builtin names - map Python builtin names to stdlib functions
+BUILTIN_NAMES = {
+    "NotImplemented": "NotImplemented",
+    "len": "op_len",
+    "hex": "hex",
+    "bin": "bin",
+    "oct": "oct",
+    "abs": "abs",
+    "hash": "hash",
+    "id": "id",
+    "next": "next",
+    "zip": "zip",
+    "map": "map",
+    "filter": "filter",
+    "iter": "iter",
+    "getattr": "getattr",
+    "hasattr": "hasattr",
+    "setattr": "setattr",
+    "delattr": "delattr",
+    "dir": "dir",
+    "callable": "callable",
+}
+
 
 @gen_expr.register
 def gen_name(node: ast.Name, codegen: CodeGen) -> str:
@@ -18,6 +70,24 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
     if name == "Ellipsis":
         codegen._used_std_functions.add("Ellipsis")
         return codegen.function_prefix + "Ellipsis"
+
+    # Handle type identifiers (int, str, list, etc.)
+    if name in TYPE_IDENTIFIERS:
+        stdlib_name = TYPE_IDENTIFIERS[name]
+        codegen._used_std_functions.add(stdlib_name)
+        return codegen.function_prefix + stdlib_name
+
+    # Handle exception types
+    if name in EXCEPTION_TYPES:
+        stdlib_name = EXCEPTION_TYPES[name]
+        codegen._used_std_functions.add(stdlib_name)
+        return codegen.function_prefix + stdlib_name
+
+    # Handle builtin names
+    if name in BUILTIN_NAMES:
+        stdlib_name = BUILTIN_NAMES[name]
+        codegen._used_std_functions.add(stdlib_name)
+        return codegen.function_prefix + stdlib_name
 
     if name in JS_RESERVED_NAMES:
         msg = f"Cannot use reserved name '{name}' as a variable name"

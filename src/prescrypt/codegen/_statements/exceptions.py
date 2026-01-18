@@ -177,11 +177,26 @@ def gen_excepthandler(node: ast.ExceptHandler, codegen: CodeGen):
 
     # Set up the catch
     code = []
-    err_type = unify(codegen.gen_expr(type_node)) if type_node else ""
+
+    # Get the exception type name for the check
+    # We need the original Python name (e.g., "ValueError"), not the JS identifier
+    if type_node:
+        if isinstance(type_node, ast.Name):
+            # Simple name like ValueError, TypeError, etc.
+            exc_name = type_node.id
+        else:
+            # For more complex expressions, fall back to generated code
+            exc_name = unify(codegen.gen_expr(type_node))
+    else:
+        exc_name = ""
+
     # Note: err_type is a string like "Exception", not a variable to discard
-    if err_type and err_type != "Exception":
+    if exc_name and exc_name != "Exception":
+        # Check both name property (for op_error exceptions) and instanceof (for class-based exceptions)
+        # Also generate the JS identifier for the isinstance check
+        js_exc_type = unify(codegen.gen_expr(type_node)) if type_node else ""
         code.append(
-            f'if ({err_name} instanceof Error && {err_name}.name === "{err_type}") {{'
+            f'if ({err_name} instanceof Error && ({err_name}.name === "{exc_name}" || {err_name} instanceof {js_exc_type})) {{'
         )
     else:
         code.append("{")
