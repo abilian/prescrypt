@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 for n in range(20):
     print('testing dict with {} items'.format(n))
     for i in range(n):

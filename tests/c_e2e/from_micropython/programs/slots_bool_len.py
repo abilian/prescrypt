@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class A:
     def __bool__(self):
         print('__bool__')

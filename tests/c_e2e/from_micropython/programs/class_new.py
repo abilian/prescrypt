@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 try:
     # If we don't expose object.__new__ (small ports), there's
     # nothing to test.

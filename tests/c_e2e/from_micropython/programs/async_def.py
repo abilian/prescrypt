@@ -1,6 +1,4 @@
 # test async def
-from __future__ import annotations
-
 
 def dec(f):
     print('decorator')

@@ -1,6 +1,4 @@
 # test use of return with try-except
-from __future__ import annotations
-
 
 def f():
     try:

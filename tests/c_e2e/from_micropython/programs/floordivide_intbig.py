@@ -1,5 +1,4 @@
 # check modulo matches python definition
-from __future__ import annotations
 
 a = 987654321987987987987987987987
 b = 19

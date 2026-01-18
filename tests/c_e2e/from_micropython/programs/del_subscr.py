@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 l = [1, 2, 3]
 print(l)
 del l[0]

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 print("hello world".rindex("ll"))
 print("hello world".rindex("ll", None))
 print("hello world".rindex("ll", 1))

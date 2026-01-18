@@ -1,6 +1,4 @@
 # test the builtin reverse() function
-from __future__ import annotations
-
 try:
     reversed
 except:

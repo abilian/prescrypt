@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 i = 'init'
 for i in range(0):
     pass

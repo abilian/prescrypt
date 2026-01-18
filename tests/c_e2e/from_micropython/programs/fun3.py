@@ -1,6 +1,4 @@
 # function with large number of arguments
-from __future__ import annotations
-
 
 def fun(a, b, c, d, e, f, g):
     return a + b + c * d + e * f * g

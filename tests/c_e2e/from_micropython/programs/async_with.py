@@ -1,6 +1,4 @@
 # test simple async with execution
-from __future__ import annotations
-
 
 class AContext:
     async def __aenter__(self):

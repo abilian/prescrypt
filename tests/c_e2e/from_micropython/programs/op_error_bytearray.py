@@ -1,8 +1,6 @@
 # test errors from bad operations (unary, binary, etc)
 
 # unsupported unary operators
-from __future__ import annotations
-
 try:
     ~bytearray()
 except TypeError:

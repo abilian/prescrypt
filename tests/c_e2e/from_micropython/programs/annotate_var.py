@@ -1,5 +1,4 @@
 # test PEP 526, variable annotations
-from __future__ import annotations
 
 x: int
 print("x" in globals())
@@ -17,12 +16,10 @@ def f():
         print(x)
     except NameError:
         print("NameError")
-
 f()
 
 # here, "x" should remain a global
 def f():
     x.y: int
     print(x)
-
 f()

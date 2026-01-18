@@ -1,5 +1,4 @@
 # test the __globals__ attribute of a function
-from __future__ import annotations
 
 
 def foo():

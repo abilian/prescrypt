@@ -1,6 +1,4 @@
 # test builtin min and max functions
-from __future__ import annotations
-
 try:
     min
     max

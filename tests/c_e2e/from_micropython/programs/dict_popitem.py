@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 els = []
 d = {1:2,3:4}
 a = d.popitem()

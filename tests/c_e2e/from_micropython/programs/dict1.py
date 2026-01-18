@@ -1,5 +1,4 @@
 # basic dictionary
-from __future__ import annotations
 
 d = {}
 print(d)

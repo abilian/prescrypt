@@ -2,9 +2,6 @@
 # only inactive finally's should be executed, and only once
 
 # basic nested finally's, the print should only be executed once
-from __future__ import annotations
-
-
 def f():
     try:
         raise TypeError

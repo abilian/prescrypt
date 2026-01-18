@@ -1,5 +1,4 @@
 # dict constructor
-from __future__ import annotations
 
 d = dict()
 print(d)

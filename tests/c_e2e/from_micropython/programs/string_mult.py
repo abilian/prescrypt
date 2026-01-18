@@ -1,6 +1,4 @@
 # basic multiplication
-from __future__ import annotations
-
 print('0' * 5)
 
 # check negative, 0, positive; lhs and rhs multiplication

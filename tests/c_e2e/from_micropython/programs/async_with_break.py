@@ -1,6 +1,4 @@
 # test async with, escaped by a break
-from __future__ import annotations
-
 
 class AContext:
     async def __aenter__(self):

@@ -1,8 +1,6 @@
 # test builtin callable
 
 # primitives should not be callable
-from __future__ import annotations
-
 print(callable(None))
 print(callable(1))
 print(callable([]))
@@ -10,7 +8,6 @@ print(callable("dfsd"))
 
 # modules should not be callabe
 import sys
-
 print(callable(sys))
 
 # builtins should be callable

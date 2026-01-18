@@ -1,6 +1,4 @@
 # test __name__ on generator functions
-from __future__ import annotations
-
 
 def Fun():
     yield

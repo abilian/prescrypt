@@ -1,5 +1,4 @@
 # test syntax errors using async
-from __future__ import annotations
 
 try:
     exec

@@ -1,5 +1,4 @@
 # basic sets
-from __future__ import annotations
 
 try:
     frozenset

@@ -1,6 +1,4 @@
 # test MicroPython-specific features of array.array
-from __future__ import annotations
-
 try:
     import array
 except ImportError:

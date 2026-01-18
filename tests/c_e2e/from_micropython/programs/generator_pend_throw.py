@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def gen():
     i = 0
     while 1:

@@ -1,5 +1,4 @@
 # test compile builtin
-from __future__ import annotations
 
 try:
     compile
@@ -29,6 +28,9 @@ def test():
     exec(compile("if 1: 10 + 1\n", "file", "single"))
     exec(compile("print(10 + 2)", "file", "single"))
     print(eval(compile("10 + 3", "file", "eval")))
+
+    # test accessing a function's globals from within a compile
+    exec(compile("def func():pass\nprint('x', func.__globals__['x'])", "file", "exec"))
 
     # bad mode
     try:

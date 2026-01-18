@@ -1,6 +1,4 @@
 # testing default args to a function
-from __future__ import annotations
-
 
 def fun1(val=5):
     print(val)

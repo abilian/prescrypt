@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class C1:
     def __call__(self, val):
         print('call', val)

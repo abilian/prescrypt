@@ -1,7 +1,4 @@
 # Test proper handling of exceptions within generator across yield
-from __future__ import annotations
-
-
 def gen():
     try:
         yield 1

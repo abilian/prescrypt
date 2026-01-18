@@ -1,6 +1,5 @@
 # test builtin pow() with integral values
 # 3 arg version
-from __future__ import annotations
 
 try:
     print(pow(3, 4, 7))
@@ -21,3 +20,8 @@ print(hex(pow(2, x-1, x))) # Should be 1, since x is prime
 print(hex(pow(y, x-1, x))) # Should be 1, since x is prime
 print(hex(pow(y, y-1, x))) # Should be a 'big value'
 print(hex(pow(y, y-1, y))) # Should be a 'big value'
+
+try:
+    print(pow(1, 2, 0))
+except ValueError:
+    print("ValueError")

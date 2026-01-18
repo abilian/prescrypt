@@ -1,6 +1,4 @@
 # test deep unwind via break from nested try-except (22 of them)
-from __future__ import annotations
-
 while True:
  print(1)
  try:

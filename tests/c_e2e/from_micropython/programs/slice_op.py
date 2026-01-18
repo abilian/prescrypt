@@ -1,4 +1,5 @@
-from __future__ import annotations
+# Test slice unary operations.
+# CPython allows hashing slices, but MicroPython does not.
 
 try:
     t = [][:]

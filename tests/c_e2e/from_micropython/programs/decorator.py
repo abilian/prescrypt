@@ -1,6 +1,4 @@
 # test decorators
-from __future__ import annotations
-
 
 def dec(f):
     print('dec')

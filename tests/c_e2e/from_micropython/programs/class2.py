@@ -1,6 +1,4 @@
 # class with __init__
-from __future__ import annotations
-
 
 class C1:
     def __init__(self):

@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class C:
     def f():
         pass
@@ -38,5 +35,5 @@ except AttributeError:
 try:
     del int.to_bytes
 except (AttributeError, TypeError):
-    # uPy raises AttributeError, CPython raises TypeError
+    # MicroPython raises AttributeError, CPython raises TypeError
     print('AttributeError/TypeError')

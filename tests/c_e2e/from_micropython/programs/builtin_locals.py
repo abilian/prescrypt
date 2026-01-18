@@ -1,5 +1,4 @@
 # test builtin locals()
-from __future__ import annotations
 
 x = 123
 print(locals()['x'])

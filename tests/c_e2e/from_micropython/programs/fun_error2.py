@@ -1,6 +1,4 @@
 # test errors from bad function calls
-from __future__ import annotations
-
 try:
     enumerate
 except:

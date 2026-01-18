@@ -1,6 +1,4 @@
 # test errors from bad operations (unary, binary, etc)
-from __future__ import annotations
-
 try:
     memoryview
 except:

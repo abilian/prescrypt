@@ -1,5 +1,4 @@
 # test subclassing a native exception
-from __future__ import annotations
 
 
 class MyExc(Exception):

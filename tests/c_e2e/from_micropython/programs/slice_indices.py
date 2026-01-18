@@ -1,9 +1,6 @@
 # Test builtin slice indices resolution
 
 # A class that returns an item key
-from __future__ import annotations
-
-
 class A:
     def __getitem__(self, idx):
         return idx
@@ -28,3 +25,8 @@ print(A()[2:7:2].indices(5))
 print(A()[2:7:-2].indices(5))
 print(A()[7:2:2].indices(5))
 print(A()[7:2:-2].indices(5))
+
+try:
+    print(A()[::].indices(None))
+except TypeError:
+    print("TypeError")

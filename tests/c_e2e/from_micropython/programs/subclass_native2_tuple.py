@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class Base1:
     def __init__(self, *args):
         print("Base1.__init__", args)

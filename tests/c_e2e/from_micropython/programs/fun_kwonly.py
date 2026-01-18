@@ -1,9 +1,6 @@
 # to test keyword-only arguments
 
 # simplest case
-from __future__ import annotations
-
-
 def f(*, a):
     print(a)
 

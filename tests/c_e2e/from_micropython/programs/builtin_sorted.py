@@ -1,6 +1,4 @@
 # test builtin sorted
-from __future__ import annotations
-
 try:
     sorted
     set

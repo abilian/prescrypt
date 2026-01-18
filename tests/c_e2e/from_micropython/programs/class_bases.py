@@ -1,5 +1,4 @@
 # test for type.__bases__ implementation
-from __future__ import annotations
 
 if not hasattr(object, '__bases__'):
     print("SKIP")

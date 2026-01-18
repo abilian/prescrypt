@@ -1,5 +1,4 @@
 # test builtin divmod
-from __future__ import annotations
 
 try:
     divmod(1 << 65, 0)

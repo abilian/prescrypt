@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class MyGen:
 
     def __init__(self):

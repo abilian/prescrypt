@@ -1,6 +1,4 @@
 # basic for loop
-from __future__ import annotations
-
 
 def f():
     for x in range(2):

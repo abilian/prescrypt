@@ -1,5 +1,4 @@
 # test nested whiles within a try-except
-from __future__ import annotations
 
 while 1:
     print(1)

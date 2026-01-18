@@ -1,9 +1,6 @@
 # test break within (nested) finally
 
 # basic case with break in finally
-from __future__ import annotations
-
-
 def f():
     for _ in range(2):
         print(1)

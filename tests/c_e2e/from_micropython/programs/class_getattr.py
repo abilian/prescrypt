@@ -1,7 +1,4 @@
 # test that __getattr__ and instance members don't override builtins
-from __future__ import annotations
-
-
 class C:
     def __init__(self):
         self.__add__ = lambda: print('member __add__')

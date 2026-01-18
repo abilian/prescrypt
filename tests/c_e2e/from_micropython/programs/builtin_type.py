@@ -1,5 +1,4 @@
 # test builtin type
-from __future__ import annotations
 
 print(type(int))
 

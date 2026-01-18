@@ -1,5 +1,4 @@
 # test builtin ord (whether or not we support unicode)
-from __future__ import annotations
 
 print(ord('a'))
 

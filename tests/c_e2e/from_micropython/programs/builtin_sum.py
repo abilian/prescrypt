@@ -1,5 +1,4 @@
 # test builtin "sum"
-from __future__ import annotations
 
 tests = (
     (),

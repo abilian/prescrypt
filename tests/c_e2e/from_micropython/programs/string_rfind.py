@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 print("hello world".rfind("ll"))
 print("hello world".rfind("ll", None))
 print("hello world".rfind("ll", 1))

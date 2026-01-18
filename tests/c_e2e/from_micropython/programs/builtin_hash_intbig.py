@@ -1,5 +1,4 @@
 # test builtin hash function
-from __future__ import annotations
 
 print({1 << 66:1}) # hash big int
 print({-(1 << 66):2}) # hash negative big int

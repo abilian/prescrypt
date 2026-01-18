@@ -1,6 +1,4 @@
 # test continue within exception handler
-from __future__ import annotations
-
 
 def f():
     lst = [1, 2, 3]

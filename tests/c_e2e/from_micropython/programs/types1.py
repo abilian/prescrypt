@@ -1,6 +1,5 @@
 # basic types
 # similar test for set type is done in set_type.py
-from __future__ import annotations
 
 print(bool)
 print(int)

@@ -1,6 +1,4 @@
 # test closure with default args
-from __future__ import annotations
-
 
 def f():
     a = 1

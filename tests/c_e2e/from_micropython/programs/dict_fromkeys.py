@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 d = dict.fromkeys([1, 2, 3, 4])
 l = list(d.keys())
 l.sort()

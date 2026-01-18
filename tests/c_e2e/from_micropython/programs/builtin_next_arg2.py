@@ -1,5 +1,4 @@
 # test next(iter, default)
-from __future__ import annotations
 
 try:
     next(iter([]), 42)

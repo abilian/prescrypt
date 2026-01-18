@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 try:
     1 // 0
 except ZeroDivisionError:

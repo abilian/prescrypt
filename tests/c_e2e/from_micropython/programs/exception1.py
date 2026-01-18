@@ -1,5 +1,4 @@
 # test basic properties of exceptions
-from __future__ import annotations
 
 print(repr(IndexError()))
 print(str(IndexError()))

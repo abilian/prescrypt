@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 i = iter(iter((1, 2, 3)))
 print(list(i))
 i = iter(iter([1, 2, 3]))

@@ -1,6 +1,4 @@
 # test out-of-memory with malloc
-from __future__ import annotations
-
 l = list(range(1000))
 try:
     1000000000 * l

@@ -1,9 +1,6 @@
 # test implicit scoping rules
 
 # implicit nonlocal, with variable defined after closure
-from __future__ import annotations
-
-
 def f():
     def g():
         return x # implicit nonlocal

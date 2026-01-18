@@ -1,5 +1,4 @@
 # using strings as keys in dict
-from __future__ import annotations
 
 d = {'1': 1, '2': 2}
 print(d['1'], d['2'])

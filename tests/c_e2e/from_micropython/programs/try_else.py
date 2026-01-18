@@ -1,8 +1,6 @@
 # test try-else statement
 
 # base case
-from __future__ import annotations
-
 try:
     print(1)
 except:

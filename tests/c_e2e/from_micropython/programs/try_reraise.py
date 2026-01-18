@@ -1,6 +1,4 @@
 # Reraising last exception with raise w/o args
-from __future__ import annotations
-
 
 def f():
     try:

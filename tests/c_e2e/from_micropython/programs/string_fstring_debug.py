@@ -1,5 +1,4 @@
 # test f-string debug feature {x=}
-from __future__ import annotations
 
 
 def f():

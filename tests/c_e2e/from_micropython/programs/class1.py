@@ -1,6 +1,4 @@
 # basic class
-from __future__ import annotations
-
 
 def go():
     class C:

@@ -5,8 +5,6 @@
 # '^'
 # OK:  1 | (2 ^ 3) = 1 | 1 = 1
 # BAD: (1 | 2) ^ 3 = 3 ^ 3 = 0
-from __future__ import annotations
-
 print(1 | 2 ^ 3)
 
 # '&'

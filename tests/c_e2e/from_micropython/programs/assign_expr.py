@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 (x := 4)
 print(x)
 

@@ -2,8 +2,6 @@
 # these raise a SyntaxWarning in CPython; see https://bugs.python.org/issue15248
 
 # unsupported subscription
-from __future__ import annotations
-
 try:
     1[0]
 except TypeError:

@@ -1,6 +1,4 @@
 # yielding from an already executing generator is not allowed
-from __future__ import annotations
-
 
 def f():
     yield 1

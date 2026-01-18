@@ -1,8 +1,6 @@
 """
 1
 """
-from __future__ import annotations
-
 
 def _f(): pass
 FunctionType = type(_f)

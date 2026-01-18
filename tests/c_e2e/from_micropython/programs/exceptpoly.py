@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 try:
     raise ArithmeticError
 except Exception:

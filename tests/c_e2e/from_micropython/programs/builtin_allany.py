@@ -1,5 +1,4 @@
 # test builtin "all" and "any"
-from __future__ import annotations
 
 tests = (
     (),

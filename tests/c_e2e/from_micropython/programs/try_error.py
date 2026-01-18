@@ -1,5 +1,4 @@
 # test bad exception match
-from __future__ import annotations
 
 try:
     try:

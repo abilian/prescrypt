@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class CtxMgr:
     def __init__(self, id):
         self.id = id

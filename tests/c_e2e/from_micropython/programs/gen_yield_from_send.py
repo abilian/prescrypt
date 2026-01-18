@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def gen():
     print("sent:", (yield 1))
     yield 2

@@ -1,5 +1,4 @@
 # dict object with special methods
-from __future__ import annotations
 
 d = {}
 d.__setitem__('2', 'two')

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 d = {1: 2, 3: 4}
 print(d.pop(3), d)
 print(d)

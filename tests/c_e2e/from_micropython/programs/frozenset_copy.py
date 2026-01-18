@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 try:
     frozenset
 except NameError:

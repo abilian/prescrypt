@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def foo(x):
     for i in range(x):
         for j in range(x):

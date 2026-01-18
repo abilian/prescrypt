@@ -1,9 +1,6 @@
 # test scoping rules that involve a class
 
 # the inner A.method should be independent to the local function called method
-from __future__ import annotations
-
-
 def test1():
     def method():
         pass

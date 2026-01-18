@@ -1,5 +1,4 @@
 # test builtin abs
-from __future__ import annotations
 
 print(abs(False))
 print(abs(True))

@@ -1,5 +1,4 @@
 # test passing a string object as the key for a keyword argument
-from __future__ import annotations
 
 try:
     exec

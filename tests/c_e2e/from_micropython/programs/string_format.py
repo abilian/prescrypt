@@ -1,6 +1,4 @@
 # basic functionality test for {} format string
-from __future__ import annotations
-
 
 def test(fmt, *args):
     print('{:8s}'.format(fmt) + '>' +  fmt.format(*args) + '<')
@@ -24,7 +22,17 @@ test("{:4o}", 123)
 test("{:4x}", 123)
 test("{:4X}", 123)
 
+test("{:4,d}", 1)
+test("{:4_d}", 1)
+test("{:4_o}", 1)
+test("{:4_b}", 1)
+test("{:4_x}", 1)
+
 test("{:4,d}", 12345678)
+test("{:4_d}", 12345678)
+test("{:4_o}", 12345678)
+test("{:4_b}", 12345678)
+test("{:4_x}", 12345678)
 
 test("{:#4b}", 10)
 test("{:#4o}", 123)

@@ -1,6 +1,4 @@
 # test array + array
-from __future__ import annotations
-
 try:
     import array
 except ImportError:
@@ -15,4 +13,10 @@ a1 += array.array('I', [3, 4])
 print(a1)
 
 a1.extend(array.array('I', [5]))
+print(a1)
+
+a1.extend([6, 7])
+print(a1)
+
+a1.extend(i for i in (8, 9))
 print(a1)

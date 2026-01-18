@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class A:
 
     var = 132
@@ -24,5 +21,5 @@ except TypeError:
 try:
     setattr(int, 'to_bytes', 1)
 except (AttributeError, TypeError):
-    # uPy raises AttributeError, CPython raises TypeError
+    # MicroPython raises AttributeError, CPython raises TypeError
     print('AttributeError/TypeError')

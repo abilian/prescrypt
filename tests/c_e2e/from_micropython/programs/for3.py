@@ -1,6 +1,4 @@
 # test assigning to iterator within the loop
-from __future__ import annotations
-
 for i in range(2):
     print(i)
     i = 2

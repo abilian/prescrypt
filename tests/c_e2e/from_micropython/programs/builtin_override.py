@@ -1,5 +1,4 @@
 # test overriding builtins
-from __future__ import annotations
 
 import builtins
 
@@ -33,6 +32,5 @@ import a
 import a.b
 from a import a
 from a.b import a, b
-
-from ..a import a, b
 from .a import a
+from ..a import a, b

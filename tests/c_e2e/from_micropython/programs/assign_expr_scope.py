@@ -1,9 +1,6 @@
 # Test scoping rules for assignment expression :=.
 
 # Test that var is closed over (assigned to in the scope of scope0).
-from __future__ import annotations
-
-
 def scope0():
     any((var0 := i) for i in range(2))
     return var0

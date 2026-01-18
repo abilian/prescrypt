@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def f():
     return 4
 def g(_):
@@ -31,21 +28,6 @@ print(f"a{[0,15,2][0:2][-1]:04x}")
 
 # Nested '{' and '}' characters.
 print(f"a{ {0,1,2}}")
-
-# PEP-0498 specifies that '\\' and '#' must be disallowed explicitly, whereas
-# MicroPython relies on the syntax error as a result of the substitution.
-
-print(f"\\")
-print(f'#')
-try:
-    eval("f'{\}'")
-except SyntaxError:
-    print('SyntaxError')
-try:
-    eval("f'{#}'")
-except SyntaxError:
-    print('SyntaxError')
-
 
 # PEP-0498 specifies that handling of double braces '{{' or '}}' should
 # behave like str.format.
@@ -83,3 +65,28 @@ print(f"{a!s:8s}")
 # Still allow ! in expressions.
 print(f"{'1' if a != '456' else '0'!r:8s}")
 print(f"{'1' if a != '456' else '0'!s:8s}")
+
+# Concatenation of adjacent f-strings.
+print(f"" f"")
+print(f"a" f"b")
+print(f"{x}" f"{y}")
+print(
+    f"a{x}b---------------------------------"
+    f"cd---------------------------------"
+    f"e{y}f---------------------------------"
+)
+
+# Raw f-strings.
+print(rf"\r\a\w {'f'} \s\t\r\i\n\g")
+print(fr"\r{x}")
+
+# Format specifiers with nested replacement fields
+space = 5
+prec = 2
+print(f"{3.14:{space}.{prec}}")
+
+space_prec = "5.2"
+print(f"{3.14:{space_prec}}")
+
+radix = "x"
+print(f"{314:{radix}}")

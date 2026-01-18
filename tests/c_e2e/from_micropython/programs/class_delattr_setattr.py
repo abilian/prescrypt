@@ -1,8 +1,6 @@
 # test __delattr__ and __setattr__
 
 # feature test for __setattr__/__delattr__
-from __future__ import annotations
-
 try:
     class Test():
         def __delattr__(self, attr): pass

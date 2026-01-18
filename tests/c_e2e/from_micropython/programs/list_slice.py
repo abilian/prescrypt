@@ -1,5 +1,4 @@
 # test list slices, getting values
-from __future__ import annotations
 
 x = list(range(10))
 

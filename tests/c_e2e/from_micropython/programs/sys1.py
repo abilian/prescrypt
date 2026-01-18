@@ -1,8 +1,6 @@
 # test sys module
-from __future__ import annotations
 
 import sys
-
 print(sys.__name__)
 print(type(sys.path))
 print(type(sys.argv))
@@ -25,3 +23,30 @@ if hasattr(sys.implementation, '_mpy'):
 else:
     # Effectively skip subtests
     print(int)
+
+if hasattr(sys.implementation, '_build'):
+    print(type(sys.implementation._build))
+else:
+    # Effectively skip subtests
+    print(str)
+
+if hasattr(sys.implementation, '_thread'):
+    print(sys.implementation._thread in ("GIL", "unsafe"))
+else:
+    # Effectively skip subtests
+    print(True)
+
+try:
+    print(sys.intern('micropython') == 'micropython')
+    has_intern = True
+except AttributeError:
+    has_intern = False
+    print(True)
+
+if has_intern:
+    try:
+        print(sys.intern(0))
+    except TypeError:
+        print(True)
+else:
+    print(True)

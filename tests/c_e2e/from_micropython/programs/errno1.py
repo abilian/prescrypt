@@ -1,5 +1,4 @@
 # test errno's and errno module
-from __future__ import annotations
 
 try:
     import errno

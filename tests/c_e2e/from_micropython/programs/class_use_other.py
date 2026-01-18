@@ -1,6 +1,4 @@
 # check that we can use an instance of B in a method of A
-from __future__ import annotations
-
 
 class A:
     def store(a, b):

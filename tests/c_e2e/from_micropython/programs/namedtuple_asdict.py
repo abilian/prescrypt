@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 try:
     from collections import namedtuple
 except ImportError:

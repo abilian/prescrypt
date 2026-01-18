@@ -1,6 +1,4 @@
 # test that no-arg super() works when self is closed over
-from __future__ import annotations
-
 
 class A:
     def __init__(self):

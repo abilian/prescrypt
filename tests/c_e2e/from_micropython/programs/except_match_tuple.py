@@ -1,5 +1,4 @@
 # test exception matching against a tuple
-from __future__ import annotations
 
 try:
     fail

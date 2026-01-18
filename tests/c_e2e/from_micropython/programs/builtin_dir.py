@@ -1,13 +1,10 @@
 # test builtin dir
 
 # dir of locals
-from __future__ import annotations
-
 print('__name__' in dir())
 
 # dir of module
 import sys
-
 print('version' in dir(sys))
 
 # dir of type

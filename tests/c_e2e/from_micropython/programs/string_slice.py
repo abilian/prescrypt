@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 print("123"[0:1])
 
 print("123"[0:2])

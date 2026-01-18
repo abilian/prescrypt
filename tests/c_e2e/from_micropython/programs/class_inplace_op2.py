@@ -1,5 +1,4 @@
 # Test inplace special methods enabled by MICROPY_PY_ALL_INPLACE_SPECIAL_METHODS
-from __future__ import annotations
 
 
 class A:

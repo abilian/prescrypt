@@ -1,6 +1,4 @@
 # test slices; only 2 argument version supported by MicroPython at the moment
-from __future__ import annotations
-
 x = list(range(10))
 
 # Assignment

@@ -1,7 +1,5 @@
 # Case 1: Immutable object (e.g. number-like)
 # __iadd__ should not be defined, will be emulated using __add__
-from __future__ import annotations
-
 
 class A:
 

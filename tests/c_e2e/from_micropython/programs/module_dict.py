@@ -1,6 +1,5 @@
 # test __dict__ attribute of a built-in module
 # see import/module_dict.py for the equivalent test on user modules
-from __future__ import annotations
 
 import sys
 

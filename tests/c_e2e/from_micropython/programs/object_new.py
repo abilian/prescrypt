@@ -2,8 +2,6 @@
 # (non-initialized) instance of class.
 # See e.g. http://infohost.nmt.edu/tcc/help/pubs/python/web/new-new-method.html
 # TODO: Find reference in CPython docs
-from __future__ import annotations
-
 try:
     # If we don't expose object.__new__ (small ports), there's
     # nothing to test.

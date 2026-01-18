@@ -1,5 +1,4 @@
 # test while conditions which are optimised by the compiler
-from __future__ import annotations
 
 while 0:
     print(0)

@@ -1,5 +1,4 @@
 # test list.__iadd__ and list.extend (they are equivalent)
-from __future__ import annotations
 
 l = [1, 2]
 l.extend([])

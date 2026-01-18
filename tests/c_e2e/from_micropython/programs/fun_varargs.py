@@ -1,7 +1,4 @@
 # function with just varargs
-from __future__ import annotations
-
-
 def f1(*args):
     print(args)
 

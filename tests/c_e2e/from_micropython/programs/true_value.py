@@ -1,5 +1,4 @@
 # Test true-ish value handling
-from __future__ import annotations
 
 if not False:
     print("False")

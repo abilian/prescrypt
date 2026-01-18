@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 print("".replace("a", "b"))
 print("aaa".replace("b", "c"))
 print("aaa".replace("a", "b", 0))

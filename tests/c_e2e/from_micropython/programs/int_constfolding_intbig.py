@@ -1,8 +1,6 @@
 # tests int constant folding in compiler
 
 # negation
-from __future__ import annotations
-
 print(-0x3fffffff) # 32-bit edge case
 print(-0x3fffffffffffffff) # 64-bit edge case
 print(-(-0x3fffffff - 1)) # 32-bit edge case

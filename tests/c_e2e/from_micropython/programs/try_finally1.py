@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 print("noexc-finally")
 try:
     print("try")

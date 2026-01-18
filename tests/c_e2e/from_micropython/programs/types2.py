@@ -1,6 +1,4 @@
 # Types are hashable
-from __future__ import annotations
-
 print(hash(type) != 0)
 print(hash(int) != 0)
 print(hash(list) != 0)

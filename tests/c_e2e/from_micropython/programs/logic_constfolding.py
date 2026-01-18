@@ -1,6 +1,4 @@
 # tests logical constant folding in parser
-from __future__ import annotations
-
 
 def f_true():
     print('f_true')

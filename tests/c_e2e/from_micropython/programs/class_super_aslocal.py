@@ -1,6 +1,4 @@
 # test using the name "super" as a local variable
-from __future__ import annotations
-
 
 class A:
     def foo(self):

@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def func1():
     try:
         return "it worked"
@@ -73,3 +70,13 @@ def f():
     finally:
         print('finally 1')
 print(f())
+
+# the finally block uses a lot of Python stack and then a local is accessed
+# (tests that the use of the stack doesn't clobber the local)
+def f(x):
+    try:
+        return x
+    finally:
+        print(2, 3, 4, 5, 6)
+        print(x)
+print(f(1))

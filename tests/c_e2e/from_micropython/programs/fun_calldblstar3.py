@@ -1,6 +1,4 @@
 # test passing a user-defined mapping as the argument to **
-from __future__ import annotations
-
 
 def foo(**kw):
     print(sorted(kw.items()))

@@ -1,5 +1,4 @@
 # test MicroPython-specific features of struct
-from __future__ import annotations
 
 try:
     import struct

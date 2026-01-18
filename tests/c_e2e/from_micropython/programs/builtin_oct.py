@@ -1,5 +1,4 @@
 # test builtin oct function
-from __future__ import annotations
 
 print(oct(1))
 print(oct(-1))

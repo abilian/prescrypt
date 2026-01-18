@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class E:
     def __repr__(self):
         return "E"

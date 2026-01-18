@@ -1,5 +1,4 @@
 # test construction of array.array from different objects
-from __future__ import annotations
 
 try:
     from array import array

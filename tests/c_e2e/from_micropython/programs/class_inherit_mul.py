@@ -1,6 +1,4 @@
 # test multiple inheritance of user classes
-from __future__ import annotations
-
 
 class A:
     def __init__(self, x):

@@ -1,6 +1,4 @@
 # test short circuit expressions outside if conditionals
-from __future__ import annotations
-
 print(() or 1)
 print((1,) or 1)
 print(() and 1)

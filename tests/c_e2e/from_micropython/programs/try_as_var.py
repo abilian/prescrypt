@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 try:
     raise ValueError(534)
 except ValueError as e:

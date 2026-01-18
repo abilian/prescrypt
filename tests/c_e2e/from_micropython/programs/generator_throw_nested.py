@@ -1,7 +1,5 @@
 # Tests that the correct nested exception handler is used when
 # throwing into a generator (previously failed on native emitter).
-from __future__ import annotations
-
 
 def gen():
     try:

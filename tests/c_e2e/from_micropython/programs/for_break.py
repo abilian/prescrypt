@@ -1,7 +1,5 @@
 # Testcase for break in a for [within bunch of other code]
 # https://github.com/micropython/micropython/issues/635
-from __future__ import annotations
-
 
 def foo():
     seq = [1, 2, 3]

@@ -626,10 +626,29 @@ export const partition = function (sep) {
 export const replace = function (s1, s2, count) {
   // nargs: 2 3
   if (this.constructor !== String) return this.KEY.apply(this, arguments);
+  count = count === undefined ? 1e20 : count;
+
+  // Special case: empty string replacement inserts between every character
+  if (s1.length === 0) {
+    if (count <= 0) return this;
+    let parts = [];
+    let replacements = 0;
+    for (let i = 0; i <= this.length; i++) {
+      if (replacements < count) {
+        parts.push(s2);
+        replacements++;
+      }
+      if (i < this.length) {
+        parts.push(this[i]);
+      }
+    }
+    return parts.join("");
+  }
+
+  // Normal case: non-empty search string
   let i = 0,
     i2,
     parts = [];
-  count = count === undefined ? 1e20 : count;
   while (count > 0) {
     i2 = this.indexOf(s1, i);
     if (i2 >= 0) {

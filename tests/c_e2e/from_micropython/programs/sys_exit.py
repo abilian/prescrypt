@@ -1,8 +1,6 @@
 # test sys module's exit function
-from __future__ import annotations
 
 import sys
-
 try:
     sys.exit
 except AttributeError:

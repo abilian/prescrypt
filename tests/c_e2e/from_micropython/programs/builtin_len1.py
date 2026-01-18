@@ -1,5 +1,4 @@
 # builtin len
-from __future__ import annotations
 
 print(len(()))
 print(len((1,)))

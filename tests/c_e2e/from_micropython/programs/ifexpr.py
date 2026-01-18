@@ -1,5 +1,4 @@
 # test if-expressions
-from __future__ import annotations
 
 print(1 if 0 else 2)
 print(3 if 1 else 4)

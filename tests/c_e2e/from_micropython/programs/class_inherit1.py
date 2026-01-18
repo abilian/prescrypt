@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class A:
     def __init__(self, x):
         print('A init', x)

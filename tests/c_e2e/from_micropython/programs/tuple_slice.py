@@ -1,5 +1,4 @@
 # tuple slicing
-from __future__ import annotations
 
 x = (1, 2, 3 * 4)
 

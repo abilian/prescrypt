@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 a = {i: 2*i for i in range(100)}
 b = a.copy()
 for i in range(100):

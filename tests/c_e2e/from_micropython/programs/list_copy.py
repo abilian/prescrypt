@@ -1,6 +1,4 @@
 # list copy tests
-from __future__ import annotations
-
 a = [1, 2, []]
 b = a.copy()
 a[-1].append(1)

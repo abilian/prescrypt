@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 d = {1: 2}
 for m in d.items, d.values, d.keys:
     print(m())
@@ -7,6 +5,11 @@ for m in d.items, d.values, d.keys:
 
 # print a view with more than one item
 print({1:1, 2:1}.values())
+
+# `bool` and `len` unary ops
+for d in ({}, {1: 2}, {1: 2, 3: 4}):
+    for op in (bool, len):
+        print(op(d.keys()), op(d.values()), op(d.items()))
 
 # unsupported binary op on a dict values view
 try:

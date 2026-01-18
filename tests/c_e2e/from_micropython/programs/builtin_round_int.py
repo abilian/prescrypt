@@ -1,8 +1,6 @@
 # test round() with integer values and second arg
 
 # rounding integers is an optional feature so test for it
-from __future__ import annotations
-
 try:
     round(1, -1)
 except NotImplementedError:

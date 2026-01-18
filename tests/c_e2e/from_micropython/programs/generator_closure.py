@@ -1,7 +1,4 @@
 # a generator that closes over outer variables
-from __future__ import annotations
-
-
 def f():
     x = 1 # closed over by g
     def g():

@@ -2,9 +2,6 @@
 # it should swallow the exception
 
 # simple case
-from __future__ import annotations
-
-
 def f():
     try:
         raise ValueError()

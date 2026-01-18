@@ -1,8 +1,5 @@
 # check that the Python stack does not overflow when the finally
 # block itself uses more stack than the rest of the function
-from __future__ import annotations
-
-
 def f1(a, b):
     pass
 def test1():

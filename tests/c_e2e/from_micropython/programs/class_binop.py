@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class foo(object):
     def __init__(self, value):
         self.x = value

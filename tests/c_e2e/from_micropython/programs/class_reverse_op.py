@@ -1,9 +1,6 @@
 # Test reverse operators.
 
 # Test user type with integers.
-from __future__ import annotations
-
-
 class A:
     def __init__(self, v):
         self.v = v

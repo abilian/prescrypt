@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 print(id(1) == id(2))
 print(id(None) == id(None))
 # This can't be true per Python semantics, just CPython implementation detail

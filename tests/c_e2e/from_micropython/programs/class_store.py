@@ -1,6 +1,4 @@
 # store to class vs instance
-from __future__ import annotations
-
 
 class C:
     pass

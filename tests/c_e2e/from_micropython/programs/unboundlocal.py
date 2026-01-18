@@ -1,6 +1,4 @@
 # locals referenced before assignment
-from __future__ import annotations
-
 
 def f1():
     print(x)

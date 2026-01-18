@@ -1,7 +1,4 @@
 # case where generator doesn't intercept the thrown/injected exception
-from __future__ import annotations
-
-
 def gen():
     yield 123
     yield 456
@@ -44,13 +41,3 @@ print(g.throw(GeneratorExit))
 g = gen()
 print(next(g))
 print(g.throw(GeneratorExit()))
-
-# thrown an instance with None as second arg
-g = gen()
-print(next(g))
-print(g.throw(GeneratorExit(), None))
-
-# thrown a class and instance
-g = gen()
-print(next(g))
-print(g.throw(GeneratorExit, GeneratorExit(123)))

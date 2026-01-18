@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def gen():
     yield 1
     return 42

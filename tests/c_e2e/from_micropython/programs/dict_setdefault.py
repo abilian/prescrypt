@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 d = {}
 print(d.setdefault(1))
 print(d.setdefault(1))

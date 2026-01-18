@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def f():
     x = 1
     y = 2
