@@ -54,6 +54,8 @@ OPS = [
     ("1 < 1 <= 1", "(1 < 1) && (1 <= 1)"),
     ("1 < 1 >= 1", "(1 < 1) && (1 >= 1)"),
     ("1 < 1 == 1", "(1 < 1) && _pyfunc_op_equals(1, 1)"),
+    # Matrix multiplication
+    ("a @ b", "_pyfunc_op_matmul(a, b)"),
     # Other ops
     ("a[1]", "_pyfunc_op_getitem(a, 1)"),
     ("a.b", "a.b"),

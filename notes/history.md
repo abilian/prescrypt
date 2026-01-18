@@ -411,6 +411,7 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 | 6.7 | 2216 | Source map generation |
 | 6.10 | 2224 | Strict mode fix, MkDocs docs |
 | 7 | 1207 | Type-informed code generation |
+| 8 | 2622 | Language feature completeness (MatMult, Ellipsis, generators) |
 
 **Total lines cleaned:** 330+
 **Coverage:** 83%
@@ -423,3 +424,48 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 4. **Constant Folding:** Compile-time evaluation of constant expressions
 5. **Special Methods:** Runtime dispatch via `op_*` functions in stdlib
 6. **Type-Informed Codegen:** Use native JS operators when types are known, safe fallback to helpers otherwise
+
+---
+
+## Stage 8: Language Feature Completeness
+
+**Goal:** Implement remaining Python language features to increase MicroPython test compatibility.
+
+**Completed:**
+
+- **Priority 1 - Quick Wins:**
+  - **MatMult @ operator** (`codegen/_expressions/ops.py`):
+    - Added `ast.MatMult` case in binary operator handling
+    - Generates `_pyfunc_op_matmul(a, b)` call
+    - Runtime helper checks for `__matmul__` and `__rmatmul__` methods
+    - Tests: `special_methods2.py`, `class_inplace_op2.py`
+
+  - **Ellipsis literal** (`codegen/_expressions/constants.py`, `variables.py`):
+    - `...` compiles to `Symbol.for('Ellipsis')` for identity semantics
+    - `Ellipsis` name references stdlib constant `_pyfunc_Ellipsis`
+    - Added ellipsis type handling in AST converter
+    - Tests: `builtin_ellipsis.py`
+
+  - **Exception chaining** (`codegen/_statements/exceptions.py`):
+    - `raise X from Y` now sets `X.__cause__ = Y` before throwing
+    - Handles both named exceptions (`raise ValueError("msg") from e`)
+    - And variable exceptions (`raise err from cause`)
+    - Tests: `exception_chain.py`
+
+- **Verified existing features:**
+  - **Generator expressions**: Already implemented using JS `function*` and `yield`
+    - `(x for x in items)` → `(function* () { for (let x of items) { yield x; } })()`
+  - **Generators/yield**: Full support for `yield`, `yield from`, iterator protocol
+    - 32+ MicroPython tests passing
+
+**Files Modified:**
+| File | Changes |
+|------|---------|
+| `codegen/_expressions/ops.py` | MatMult operator support |
+| `codegen/_expressions/constants.py` | Ellipsis literal handling |
+| `codegen/_expressions/variables.py` | Ellipsis name handling |
+| `codegen/_statements/exceptions.py` | Raise from (exception chaining) |
+| `front/ast/converter.py` | Ellipsis type in AST |
+| `stdlibjs/functions.js` | `op_matmul`, `Ellipsis` constant |
+
+**Test Results:** 2622 passing (up from 2347)

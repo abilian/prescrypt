@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MatMult operator**: `a @ b` matrix multiplication operator (delegates to `__matmul__`)
 - **Ellipsis literal**: `...` and `Ellipsis` now compile to `Symbol.for('Ellipsis')`
 - **Exception chaining**: `raise X from Y` now sets `__cause__` on the exception
+- **Generator expressions**: `(x for x in items)` compiles to JavaScript generator functions
+- **Generators and yield**: Full `yield` and `yield from` support using JavaScript `function*`
 
 #### Optimizations
 - **Type-informed code generation**: Native operators when types are known

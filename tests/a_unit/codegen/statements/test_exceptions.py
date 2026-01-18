@@ -129,6 +129,39 @@ result
         check_gen_exec(code, "caught")
 
 
+class TestRaiseFrom:
+    """Test raise from (exception chaining) code generation."""
+
+    def test_raise_from_exception(self):
+        """Test raise X from Y exception chaining."""
+        code = """
+result = 'no error'
+try:
+    try:
+        raise ValueError('original')
+    except ValueError as e:
+        raise TypeError('chained') from e
+except TypeError as te:
+    result = 'caught chained'
+    if hasattr(te, '__cause__'):
+        result = 'has cause'
+result
+"""
+        check_gen_exec(code, "has cause")
+
+    def test_raise_from_none(self):
+        """Test raise X from None to suppress context."""
+        code = """
+result = 'no error'
+try:
+    raise ValueError('test') from None
+except ValueError as e:
+    result = 'caught'
+result
+"""
+        check_gen_exec(code, "caught")
+
+
 class TestAssert:
     """Test assert statement code generation."""
 

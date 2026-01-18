@@ -24,7 +24,7 @@ DENY_LIST = {
     "builtin_bin_intbig.py",
     "builtin_callable.py",
     "builtin_dir.py",
-    "builtin_ellipsis.py",
+    "builtin_ellipsis.py",  # Needs type() and hash() functions
     "builtin_getattr.py",
     "builtin_hash_gen.py",
     "builtin_hash_intbig.py",
