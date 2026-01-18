@@ -66,6 +66,7 @@ def validate_cpython(
             text=True,
             timeout=timeout,
             cwd=program_path.parent,
+            check=False,
         )
 
         if result.returncode == 0:

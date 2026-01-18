@@ -90,7 +90,7 @@ def compile_program(
             stderr=subprocess.PIPE,
             text=True,
             start_new_session=True,
-            preexec_fn=_set_memory_limit,
+            preexec_fn=_set_memory_limit,  # noqa: PLW1509
         )
 
         try:
@@ -195,7 +195,7 @@ def run_javascript(
                 return "success", stdout.strip(), "", elapsed_ms
             else:
                 # Extract error message from stderr
-                lines = [l for l in stderr.strip().split("\n") if l.strip()]
+                lines = [ln for ln in stderr.strip().split("\n") if ln.strip()]
                 error = ""
                 for line in lines:
                     if "Error:" in line or "Error " in line:
@@ -228,7 +228,7 @@ def run_program_test(
     source_path = program.full_path
 
     # Step 1: Compile
-    compile_status, js_code, compile_err, compile_tb, compile_time = compile_program(
+    compile_status, js_code, compile_err, _compile_tb, compile_time = compile_program(
         source_path, compile_timeout
     )
 

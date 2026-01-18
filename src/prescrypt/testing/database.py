@@ -10,7 +10,7 @@ import hashlib
 import sqlite3
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .models import Program, TestResult
@@ -131,7 +131,8 @@ class ResultsDatabase:
     ) -> list[Program]:
         """Get programs by CPython status."""
         placeholders = ",".join("?" * len(statuses))
-        query = f"SELECT * FROM programs WHERE cpython_status IN ({placeholders})"
+        # Safe: placeholders are just "?" characters, not user input
+        query = f"SELECT * FROM programs WHERE cpython_status IN ({placeholders})"  # noqa: S608
         if exclude_manual_skip:
             query += " AND manual_skip = FALSE"
         query += " ORDER BY path"
@@ -178,7 +179,11 @@ class ResultsDatabase:
         error: str | None = None,
     ):
         """Update CPython validation status for a program."""
-        output_hash = hashlib.md5(output.encode()).hexdigest() if output else None
+        output_hash = (
+            hashlib.md5(output.encode(), usedforsecurity=False).hexdigest()
+            if output
+            else None
+        )
         self.conn.execute(
             """
             UPDATE programs
@@ -217,7 +222,7 @@ class ResultsDatabase:
             INSERT INTO runs (started_at, git_commit, git_branch, python_version, notes)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (datetime.now(), git_commit, git_branch, python_version, notes),
+            (datetime.now(tz=timezone.utc), git_commit, git_branch, python_version, notes),
         )
         self.conn.commit()
         return cursor.lastrowid
@@ -238,7 +243,7 @@ class ResultsDatabase:
             SET finished_at = ?, total_programs = ?, passed = ?, failed = ?, skipped = ?, errors = ?
             WHERE id = ?
             """,
-            (datetime.now(), total, passed, failed, skipped, errors, run_id),
+            (datetime.now(tz=timezone.utc), total, passed, failed, skipped, errors, run_id),
         )
         self.conn.commit()
 
@@ -256,6 +261,7 @@ class ResultsDatabase:
                 capture_output=True,
                 text=True,
                 cwd=PROJECT_ROOT,
+                check=False,
             )
             return result.stdout.strip()[:12] if result.returncode == 0 else None
         except Exception:
@@ -269,6 +275,7 @@ class ResultsDatabase:
                 capture_output=True,
                 text=True,
                 cwd=PROJECT_ROOT,
+                check=False,
             )
             return result.stdout.strip() if result.returncode == 0 else None
         except Exception:

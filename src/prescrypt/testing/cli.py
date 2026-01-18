@@ -556,6 +556,7 @@ def cmd_export_denylist(args, config: Config, db: ResultsDatabase):
     ]
     placeholders = ",".join("?" * len(failing_statuses))
 
+    # Safe: placeholders are just "?" characters, not user input
     cursor = db.conn.execute(
         f"""
         SELECT DISTINCT p.path
@@ -563,7 +564,7 @@ def cmd_export_denylist(args, config: Config, db: ResultsDatabase):
         JOIN programs p ON r.program_id = p.id
         WHERE r.run_id = ? AND r.runtime = 'node' AND r.status IN ({placeholders})
         ORDER BY p.path
-        """,
+        """,  # noqa: S608
         (run_id, *failing_statuses),
     )
 
