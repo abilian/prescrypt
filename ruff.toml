@@ -102,6 +102,14 @@ lint.extend-ignore = [
     "S102", #  	[ ] exec-builtin
     "TRY003", #	[ ] raise-vanilla-args
     "TRY004", #	[ ] type-check-without-type-error
+    #
+    "PLW1509", #	subprocess-popen-preexec-fn
+    "PT028", #  	pytest-parameter-with-default-argument
+    "E741", #   	ambiguous-variable-name
+    "PLW1510", #	subprocess-run-without-check
+    "EXE001", # 	shebang-not-executable
+    "S110", #   	try-except-pass
+    "TRY300", # 	try-consider-else
 ]
 
 [lint.isort]
