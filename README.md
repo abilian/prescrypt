@@ -21,7 +21,7 @@ Prescrypt converts Python 3.9+ code to ES6+ JavaScript. It prioritizes correctne
 ```bash
 pip install prescrypt
 # or
-poetry add prescrypt
+uv add prescrypt
 ```
 
 ## Quick Start

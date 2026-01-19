@@ -7,7 +7,7 @@ Thank you for your interest in contributing to Prescrypt!
 ### Prerequisites
 
 - Python 3.9+
-- [Poetry](https://python-poetry.org/) for dependency management
+- [uv](https://docs.astral.sh/uv/) for dependency management
 - Node.js 16+ (for running tests)
 - [QuickJS](https://bellard.org/quickjs/) (optional, for faster test execution)
 
@@ -18,7 +18,7 @@ git clone https://git.sr.ht/~sfermigier/prescrypt.git
 cd prescrypt
 
 # Install dependencies
-poetry install
+uv sync
 
 # Install pre-commit hooks
 poetry run pre-commit install
@@ -31,7 +31,7 @@ poetry run pre-commit install
 make test
 
 # Run the CLI
-poetry run py2js --help
+uv run py2js --help
 ```
 
 ## Development Workflow
@@ -42,30 +42,22 @@ poetry run py2js --help
 # Run all tests
 make test
 
-# Run tests in random order
-make test-randomly
-
-# Run specific test file
-poetry run pytest tests/integration/test_expressions.py
-
 # Run tests matching a pattern
-poetry run pytest -k "test_class"
+uv run pytest -k "test_class"
 
 # Run with verbose output
-poetry run pytest -v
+uv run pytest -v
 ```
 
 ### Code Quality
 
 ```bash
-# Lint code
-make lint
+# Lint and typecheck code
+make check
 
 # Format code
 make format
 
-# Type checking (if configured)
-poetry run mypy src/
 ```
 
 ### Building

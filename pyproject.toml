@@ -8,7 +8,7 @@ dependencies = [
     "plum-dispatch<3.0.0,>=2.1.1",
 ]
 name = "prescrypt"
-version = "0.8.0"
+version = "0.9.1"
 description = ""
 readme = "README.md"
 
@@ -55,3 +55,16 @@ doc = [
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]
 build-backend = "uv_build"
+
+[tool.coverage.report]
+exclude = []
+omit = [
+    "src/prescrypt/testing/**/*.py",
+    "src/prescrypt/tools/**/*.py",
+]
+precision = 2
+# ignore_errors = true
+# skip_covered = true
+# skip_empty = true
+# fail_under = 90
+# show_missing = true

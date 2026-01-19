@@ -34,15 +34,21 @@ configure-git:
 # testing & checking
 #
 
-## Run python tests
+## Run python tests fast
 test:
-	@echo "--> Running Python tests"
-	pytest --ff -x -p no:randomly
-	@echo ""
-
-test-randomly:
 	@echo "--> Running Python tests in random order"
 	pytest
+
+## Run python tests fast
+test-fast:
+	@echo "--> Running Python tests"
+	pytest --ff -x
+	@echo ""
+
+## Run python tests with coverage
+test-cov:
+	@echo "--> Running Python tests with coverage"
+	pytest --cov prescrypt --cov-config=pyproject.toml
 
 ## Lint / check typing
 lint:
