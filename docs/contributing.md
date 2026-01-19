@@ -21,7 +21,7 @@ cd prescrypt
 uv sync
 
 # Install pre-commit hooks
-poetry run pre-commit install
+uv run pre-commit install
 ```
 
 ### Verify Installation
@@ -67,10 +67,10 @@ make format
 make build
 
 # Build documentation
-poetry run mkdocs build
+uv run mkdocs build
 
 # Serve documentation locally
-poetry run mkdocs serve
+uv run mkdocs serve
 ```
 
 ## Project Structure

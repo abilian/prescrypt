@@ -73,19 +73,19 @@ cd prescrypt
 ### Install with Poetry
 
 ```bash
-poetry install
+uv sync
 ```
 
 ### Run from Source
 
 ```bash
-poetry run py2js --help
+uv run py2js --help
 ```
 
 ### Run Tests
 
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 Or use make:
