@@ -23,7 +23,8 @@ class TestBasicUnpack:
         """Unpacking from list a, b = [1, 2]"""
         code = "a, b = [1, 2]"
         result = js(code)
-        assert "let [a, b] = [1, 2]" in result
+        # List is marked with _is_list for proper repr()
+        assert "let [a, b] = Object.assign([1, 2], {_is_list: true})" in result
 
     def test_unpack_three(self):
         """Unpack three values"""

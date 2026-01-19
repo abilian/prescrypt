@@ -41,7 +41,8 @@ class TestAnnAssignBasic:
         """Annotated assignment with list."""
         code = "items: list = [1, 2, 3]"
         result = js(code)
-        assert "const items = [1, 2, 3]" in result
+        # List is marked with _is_list for proper repr()
+        assert "const items = Object.assign([1, 2, 3], {_is_list: true})" in result
 
 
 class TestAnnAssignDeclarationOnly:

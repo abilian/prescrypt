@@ -961,3 +961,140 @@ export const to_bytes = function (length, byteorder, signed) {
 };
 
 // ---
+
+// method: send
+export const send = function (value) {
+  // nargs: 1
+  // Python generator.send(value) implementation
+  // - First call must send None (null) or TypeError is raised
+  // - Returns the yielded value (unwraps JS {value, done} object)
+  // - Raises StopIteration when generator is exhausted
+
+  // Check if this is a generator (has .next method)
+  if (typeof this.next !== "function") {
+    throw FUNCTION_PREFIXop_error("AttributeError", "'object' has no attribute 'send'");
+  }
+
+  // Track if generator has been started using a hidden property
+  if (!this._started) {
+    // First call - must be None (null/undefined)
+    if (value !== null && value !== undefined) {
+      throw FUNCTION_PREFIXop_error(
+        "TypeError",
+        "can't send non-None value to a just-started generator"
+      );
+    }
+    this._started = true;
+  }
+
+  // Call the underlying JS generator's .next(value)
+  let result = this.next(value);
+
+  // If generator is done, raise StopIteration
+  if (result.done) {
+    throw FUNCTION_PREFIXop_error("StopIteration", "");
+  }
+
+  return result.value;
+};
+
+// ---
+
+// method: gen_throw
+export const gen_throw = function (type, value, traceback) {
+  // nargs: 1 2 3
+  // Python generator.throw(type[, value[, traceback]]) implementation
+  // Throws an exception at the yield point and returns next yielded value
+
+  // Check if this is a generator (has .throw method)
+  if (typeof this.throw !== "function") {
+    throw FUNCTION_PREFIXop_error("AttributeError", "'generator' object has no attribute 'throw'");
+  }
+
+  // Create the exception to throw
+  let exc;
+  if (type instanceof Error) {
+    // Already an exception instance
+    exc = type;
+  } else if (typeof type === "function") {
+    // Exception class - instantiate it
+    if (value !== undefined) {
+      exc = type(value);
+    } else {
+      exc = type();
+    }
+  } else {
+    // type is the exception value itself
+    exc = type;
+  }
+
+  // Mark generator as started (throw can start a generator)
+  this._started = true;
+
+  // Call the underlying JS generator's .throw(exception)
+  let result;
+  try {
+    result = this.throw(exc);
+  } catch (e) {
+    // Exception was not caught by generator - re-throw
+    throw e;
+  }
+
+  // If generator is done after handling the exception, raise StopIteration
+  if (result.done) {
+    throw FUNCTION_PREFIXop_error("StopIteration", "");
+  }
+
+  return result.value;
+};
+
+// ---
+
+// method: gen_close
+export const gen_close = function () {
+  // nargs: 0
+  // Python generator.close() implementation
+  // Throws GeneratorExit at the yield point
+  // Silently handles StopIteration and GeneratorExit
+  // Raises RuntimeError if generator yields a value
+
+  // Check if this is a generator (has .return method)
+  if (typeof this.return !== "function") {
+    throw FUNCTION_PREFIXop_error("AttributeError", "'generator' object has no attribute 'close'");
+  }
+
+  // If generator hasn't started, just mark it as done
+  if (!this._started) {
+    this._closed = true;
+    return;
+  }
+
+  // Try to close by throwing GeneratorExit
+  try {
+    // Create a GeneratorExit exception
+    let genExit = FUNCTION_PREFIXop_error("GeneratorExit", "");
+
+    // Try using .throw first (more Pythonic)
+    if (typeof this.throw === "function") {
+      let result = this.throw(genExit);
+      // If generator yielded a value instead of exiting, that's an error
+      if (!result.done) {
+        throw FUNCTION_PREFIXop_error("RuntimeError", "generator ignored GeneratorExit");
+      }
+    } else {
+      // Fall back to .return() which terminates the generator
+      this.return();
+    }
+  } catch (e) {
+    // StopIteration and GeneratorExit are expected and should be ignored
+    if (e.name === "StopIteration" || e.name === "GeneratorExit") {
+      return;
+    }
+    // Other exceptions propagate
+    throw e;
+  }
+
+  this._closed = true;
+};
+
+// ---

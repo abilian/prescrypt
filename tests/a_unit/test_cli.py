@@ -114,7 +114,8 @@ class TestCompileFile:
 
             assert success is True
             js_content = dst_file.read_text()
-            assert "export function greet" in js_content
+            # Function is exported via named export (not inline export) to prevent hoisting
+            assert "export { greet }" in js_content
 
     def test_compile_without_stdlib(self):
         """Compile without stdlib preamble."""
@@ -382,6 +383,6 @@ class TestCompileDirectory:
             assert "import { helper } from './utils.js'" in main_js
             assert "export" in main_js
 
-            # Check utils.js has export
+            # Check utils.js has export (via named export to prevent hoisting)
             utils_js = (dst_dir / "utils.js").read_text()
-            assert "export function helper" in utils_js
+            assert "export { helper }" in utils_js

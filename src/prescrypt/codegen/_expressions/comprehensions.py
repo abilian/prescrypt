@@ -11,7 +11,7 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
 
     codegen.push_ns("function", "<listcomp>")
     js_elt = flatten(codegen.gen_expr(elt_node))
-    js_code = ["(function list_comprehension (iter0) {", "const res = [];"]
+    js_code = ["(function list_comprehension (iter0) {", "const res = []; res._is_list = true;"]
 
     for iter, comprehension in enumerate(generator_nodes):
         assert isinstance(comprehension, ast.comprehension)

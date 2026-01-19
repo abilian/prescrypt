@@ -149,9 +149,31 @@ class Binder(Visitor):
         self.add_var(node.arg)
 
     def visit_NamedExpr(self, node: ast.NamedExpr):
-        """Walrus operator (:=) - assigns and returns value."""
-        # The target is always a Name with Store context
-        self.visit(node.target)
+        """Walrus operator (:=) - assigns and returns value.
+
+        Per PEP 572, the walrus operator binds the variable in the enclosing
+        non-comprehension scope, not in the comprehension's scope.
+        """
+        target_name = node.target.id
+
+        # Find the enclosing non-comprehension scope
+        target_scope = self.scope
+        while target_scope and target_scope.type == "comprehension":
+            target_scope = target_scope.parent
+
+        if target_scope:
+            # Add variable to the enclosing non-comprehension scope
+            if target_name in target_scope.vars:
+                target_scope.vars[target_name].is_const = False
+            else:
+                target_scope.vars[target_name] = Variable(
+                    name=target_name, type="variable"
+                )
+        else:
+            # Fallback to current scope
+            self.add_var(target_name)
+
+        # Visit the value expression
         self.visit(node.value)
 
     #

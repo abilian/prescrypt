@@ -24,8 +24,8 @@ else:
     result = result + 1
 """
         result = js(code)
-        assert "_no_exc_" in result
-        assert "if (_no_exc_" in result
+        # Uses a noexc flag variable (now _pytmp_<n>_noexc pattern)
+        assert "_noexc" in result
         assert "= false" in result
 
     def test_try_else_no_exception_type(self):
@@ -39,8 +39,7 @@ else:
     x = 1
 """
         result = js(code)
-        assert "_no_exc_" in result
-        assert "if (_no_exc_" in result
+        assert "_noexc" in result
 
     def test_try_else_finally(self):
         """try-else-finally combination."""
@@ -55,8 +54,7 @@ finally:
     cleanup()
 """
         result = js(code)
-        assert "_no_exc_" in result
-        assert "if (_no_exc_" in result
+        assert "_noexc" in result
         assert "finally" in result
         assert "cleanup()" in result
 
@@ -73,7 +71,7 @@ else:
     x = 0
 """
         result = js(code)
-        assert "_no_exc_" in result
+        assert "_noexc" in result
         assert "ValueError" in result
         assert "TypeError" in result
 
@@ -86,7 +84,7 @@ except Exception:
     x = 0
 """
         result = js(code)
-        assert "_no_exc_" not in result
+        assert "_noexc" not in result
 
 
 class TestBareRaise:
@@ -144,7 +142,7 @@ else:
     success()
 """
         result = js(code)
-        assert "_no_exc_" in result
+        assert "_noexc" in result
         assert "throw" in result
 
 

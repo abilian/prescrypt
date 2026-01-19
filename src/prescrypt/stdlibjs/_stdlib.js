@@ -43,6 +43,19 @@ var _pyfunc_AttributeError = (function() {
   AttributeError.prototype.constructor = AttributeError;
   return AttributeError;
 })();
+var _pyfunc_GeneratorExit = (function() {
+  // nargs: 0 1
+  function GeneratorExit(message) {
+    if (!(this instanceof GeneratorExit)) {
+      return new GeneratorExit(message);
+    }
+    _pyfunc_BaseException.call(this, message);
+    this.name = "GeneratorExit";
+  }
+  GeneratorExit.prototype = Object.create(_pyfunc_BaseException.prototype);
+  GeneratorExit.prototype.constructor = GeneratorExit;
+  return GeneratorExit;
+})();
 var _pyfunc_IndexError = (function() {
   // nargs: 0 1
   function IndexError(message) {
@@ -322,19 +335,24 @@ var _pyfunc_int_from_bytes = function (bytes, byteorder, signed) {
   return result;
 };
 var _pyfunc_list = function (x) {
+  let res;
   // Handle iterators/generators using spread
   if (typeof x[Symbol.iterator] === 'function') {
-    return [...x];
+    res = [...x];
   }
   // Handle plain objects by converting to array of keys
-  if (typeof x === "object" && !Array.isArray(x)) {
-    return Object.keys(x);
+  else if (typeof x === "object" && !Array.isArray(x)) {
+    res = Object.keys(x);
   }
   // Fallback for array-like objects
-  const res = [];
-  for (let i = 0; i < x.length; i++) {
-    res.push(x[i]);
+  else {
+    res = [];
+    for (let i = 0; i < x.length; i++) {
+      res.push(x[i]);
+    }
   }
+  // Mark as list for repr() to display as [] not ()
+  res._is_list = true;
   return res;
 };
 var _pyfunc_map = function (func, iter) {
@@ -628,6 +646,15 @@ var _pyfunc_iter = function (x) {
 var _pyfunc_next = function (iterator, defaultValue) {
   // nargs: 1 2
   // Get next item from iterator
+  // Check if generator was closed
+  if (iterator._closed) {
+    if (arguments.length >= 2) {
+      return defaultValue;
+    }
+    throw _pyfunc_op_error("StopIteration", "");
+  }
+  // Mark generator as started for send/close methods
+  iterator._started = true;
   let result = iterator.next();
   if (result.done) {
     if (arguments.length >= 2) {
@@ -1428,14 +1455,24 @@ var _pyfunc_repr = function (x) {
     // Escape single quotes and backslashes, use single quotes
     return "'" + x.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
   }
-  // Handle null (None in Python)
-  if (x === null) {
+  // Handle null/undefined (None in Python)
+  if (x === null || x === undefined) {
     return "None";
   }
   // Handle arrays (lists/tuples)
   if (Array.isArray(x)) {
     let items = x.map(e => _pyfunc_repr(e));
-    return "[" + items.join(", ") + "]";
+    // Arrays marked with _is_list are lists (use [])
+    // Unmarked arrays are tuples (use ())
+    if (x._is_list) {
+      return "[" + items.join(", ") + "]";
+    } else {
+      // Tuple representation - need trailing comma for single-element tuples
+      if (items.length === 1) {
+        return "(" + items[0] + ",)";
+      }
+      return "(" + items.join(", ") + ")";
+    }
   }
   // Handle dicts (plain objects)
   if (typeof x === "object" && x !== null && x.constructor === Object) {
@@ -1463,8 +1500,12 @@ var _pyfunc_repr = function (x) {
 };
 var _pyfunc_str = function (x) {
   // nargs: 0 1;
-  if (x === undefined) {
+  // str() with no args returns empty string, str(None) returns "None"
+  if (arguments.length === 0) {
     return "";
+  }
+  if (x === null || x === undefined) {
+    return "None";
   }
   // Handle booleans with Python-style capitalization
   if (typeof x === "boolean") {
@@ -1760,6 +1801,97 @@ var _pymeth_format = function () {
   }
   parts.push(this.slice(i));
   return parts.join("");
+};
+var _pymeth_gen_close = function () {
+  // nargs: 0
+  // Python generator.close() implementation
+  // Throws GeneratorExit at the yield point
+  // Silently handles StopIteration and GeneratorExit
+  // Raises RuntimeError if generator yields a value
+
+  // Check if this is a generator (has .return method)
+  if (typeof this.return !== "function") {
+    throw _pyfunc_op_error("AttributeError", "'generator' object has no attribute 'close'");
+  }
+
+  // If generator hasn't started, just mark it as done
+  if (!this._started) {
+    this._closed = true;
+    return;
+  }
+
+  // Try to close by throwing GeneratorExit
+  try {
+    // Create a GeneratorExit exception
+    let genExit = _pyfunc_op_error("GeneratorExit", "");
+
+    // Try using .throw first (more Pythonic)
+    if (typeof this.throw === "function") {
+      let result = this.throw(genExit);
+      // If generator yielded a value instead of exiting, that's an error
+      if (!result.done) {
+        throw _pyfunc_op_error("RuntimeError", "generator ignored GeneratorExit");
+      }
+    } else {
+      // Fall back to .return() which terminates the generator
+      this.return();
+    }
+  } catch (e) {
+    // StopIteration and GeneratorExit are expected and should be ignored
+    if (e.name === "StopIteration" || e.name === "GeneratorExit") {
+      return;
+    }
+    // Other exceptions propagate
+    throw e;
+  }
+
+  this._closed = true;
+};
+var _pymeth_gen_throw = function (type, value, traceback) {
+  // nargs: 1 2 3
+  // Python generator.throw(type[, value[, traceback]]) implementation
+  // Throws an exception at the yield point and returns next yielded value
+
+  // Check if this is a generator (has .throw method)
+  if (typeof this.throw !== "function") {
+    throw _pyfunc_op_error("AttributeError", "'generator' object has no attribute 'throw'");
+  }
+
+  // Create the exception to throw
+  let exc;
+  if (type instanceof Error) {
+    // Already an exception instance
+    exc = type;
+  } else if (typeof type === "function") {
+    // Exception class - instantiate it
+    if (value !== undefined) {
+      exc = type(value);
+    } else {
+      exc = type();
+    }
+  } else {
+    // type is the exception value itself
+    exc = type;
+  }
+
+  // Mark generator as started (throw can start a generator)
+  this._started = true;
+
+  // Call the underlying JS generator's .throw(exception)
+  let result;
+  try {
+    result = this.throw(exc);
+  } catch (e) {
+    // Exception was not caught by generator - re-throw
+    throw e;
+  }
+
+  // If generator is done after handling the exception, raise StopIteration
+  if (result.done) {
+    throw _pyfunc_op_error("StopIteration", "");
+  }
+
+  return result.value;
 };
 var _pymeth_get = function (key, d) {
   // nargs: 1 2
@@ -2104,6 +2236,40 @@ var _pymeth_rstrip = function (chars) {
     if (chars.indexOf(this[i]) < 0) return this.slice(0, i + 1);
   }
   return "";
+};
+var _pymeth_send = function (value) {
+  // nargs: 1
+  // Python generator.send(value) implementation
+  // - First call must send None (null) or TypeError is raised
+  // - Returns the yielded value (unwraps JS {value, done} object)
+  // - Raises StopIteration when generator is exhausted
+
+  // Check if this is a generator (has .next method)
+  if (typeof this.next !== "function") {
+    throw _pyfunc_op_error("AttributeError", "'object' has no attribute 'send'");
+  }
+
+  // Track if generator has been started using a hidden property
+  if (!this._started) {
+    // First call - must be None (null/undefined)
+    if (value !== null && value !== undefined) {
+      throw _pyfunc_op_error(
+        "TypeError",
+        "can't send non-None value to a just-started generator"
+      );
+    }
+    this._started = true;
+  }
+
+  // Call the underlying JS generator's .next(value)
+  let result = this.next(value);
+
+  // If generator is done, raise StopIteration
+  if (result.done) {
+    throw _pyfunc_op_error("StopIteration", "");
+  }
+
+  return result.value;
 };
 var _pymeth_setdefault = function (key, d) {
   // nargs: 1 2

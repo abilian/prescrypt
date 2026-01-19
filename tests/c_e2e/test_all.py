@@ -18,9 +18,9 @@ import pytest
 
 from prescrypt.compiler import py2js
 from prescrypt.testing import (
+    PROGRAMS_DIR,
     Config,
     Program,
-    PROGRAMS_DIR,
     ResultsDatabase,
     Status,
 )
@@ -141,7 +141,7 @@ def test_program(program_path: str, program: Program, known_failures: set[str]):
             # Show useful debug info
             print(f"\n\nJavaScript execution failed (exit code {result.returncode})")
             print(f"stderr: {js_stderr}")
-            print(f"\nGenerated JS (without stdlib):")
+            print("\nGenerated JS (without stdlib):")
             print(py2js(source, include_stdlib=False))
             pytest.fail(f"JavaScript runtime error: {js_stderr}")
 
@@ -150,7 +150,7 @@ def test_program(program_path: str, program: Program, known_failures: set[str]):
             print(f"\n\nOutput mismatch for {program_path}")
             print(f"Expected (Python):\n{expected_output}")
             print(f"\nActual (JavaScript):\n{js_output}")
-            print(f"\nGenerated JS (without stdlib):")
+            print("\nGenerated JS (without stdlib):")
             print(py2js(source, include_stdlib=False))
             pytest.fail(
                 f"Output mismatch: expected {expected_output!r}, got {js_output!r}"

@@ -145,6 +145,23 @@ export const StopIteration = (function() {
 
 // ---
 
+// function: GeneratorExit
+export const GeneratorExit = (function() {
+  // nargs: 0 1
+  function GeneratorExit(message) {
+    if (!(this instanceof GeneratorExit)) {
+      return new GeneratorExit(message);
+    }
+    FUNCTION_PREFIXBaseException.call(this, message);
+    this.name = "GeneratorExit";
+  }
+  GeneratorExit.prototype = Object.create(FUNCTION_PREFIXBaseException.prototype);
+  GeneratorExit.prototype.constructor = GeneratorExit;
+  return GeneratorExit;
+})();
+
+// ---
+
 // function: ValueError
 export const ValueError = (function() {
   // nargs: 0 1
@@ -484,6 +501,15 @@ export const iter = function (x) {
 export const next = function (iterator, defaultValue) {
   // nargs: 1 2
   // Get next item from iterator
+  // Check if generator was closed
+  if (iterator._closed) {
+    if (arguments.length >= 2) {
+      return defaultValue;
+    }
+    throw FUNCTION_PREFIXop_error("StopIteration", "");
+  }
+  // Mark generator as started for send/close methods
+  iterator._started = true;
   let result = iterator.next();
   if (result.done) {
     if (arguments.length >= 2) {
@@ -568,19 +594,24 @@ export const filter = function (func, iterable) {
 
 // function: list
 export const list = function (x) {
+  let res;
   // Handle iterators/generators using spread
   if (typeof x[Symbol.iterator] === 'function') {
-    return [...x];
+    res = [...x];
   }
   // Handle plain objects by converting to array of keys
-  if (typeof x === "object" && !Array.isArray(x)) {
-    return Object.keys(x);
+  else if (typeof x === "object" && !Array.isArray(x)) {
+    res = Object.keys(x);
   }
   // Fallback for array-like objects
-  const res = [];
-  for (let i = 0; i < x.length; i++) {
-    res.push(x[i]);
+  else {
+    res = [];
+    for (let i = 0; i < x.length; i++) {
+      res.push(x[i]);
+    }
   }
+  // Mark as list for repr() to display as [] not ()
+  res._is_list = true;
   return res;
 };
 
@@ -915,8 +946,12 @@ export const float = Number; // nargs: 1;
 // export const str = String // nargs: 0 1;
 export const str = function (x) {
   // nargs: 0 1;
-  if (x === undefined) {
+  // str() with no args returns empty string, str(None) returns "None"
+  if (arguments.length === 0) {
     return "";
+  }
+  if (x === null || x === undefined) {
+    return "None";
   }
   // Handle booleans with Python-style capitalization
   if (typeof x === "boolean") {
@@ -1214,14 +1249,24 @@ export const repr = function (x) {
     // Escape single quotes and backslashes, use single quotes
     return "'" + x.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
   }
-  // Handle null (None in Python)
-  if (x === null) {
+  // Handle null/undefined (None in Python)
+  if (x === null || x === undefined) {
     return "None";
   }
   // Handle arrays (lists/tuples)
   if (Array.isArray(x)) {
     let items = x.map(e => FUNCTION_PREFIXrepr(e));
-    return "[" + items.join(", ") + "]";
+    // Arrays marked with _is_list are lists (use [])
+    // Unmarked arrays are tuples (use ())
+    if (x._is_list) {
+      return "[" + items.join(", ") + "]";
+    } else {
+      // Tuple representation - need trailing comma for single-element tuples
+      if (items.length === 1) {
+        return "(" + items[0] + ",)";
+      }
+      return "(" + items.join(", ") + ")";
+    }
   }
   // Handle dicts (plain objects)
   if (typeof x === "object" && x !== null && x.constructor === Object) {

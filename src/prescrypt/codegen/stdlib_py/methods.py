@@ -55,3 +55,44 @@ def method_from_bytes(codegen: CodeGen, base, args, kwargs):
             signed = kw.value
     # Call runtime function
     return codegen.call_std_function("int_from_bytes", [*args, signed])
+
+
+def method_send(codegen: CodeGen, base, args, kwargs):
+    """Handle generator.send(value).
+
+    Uses runtime _pymeth_send which:
+    - Validates first call must be None
+    - Unwraps JS generator result {value, done} to just value
+    - Raises StopIteration when done
+    """
+    if kwargs:
+        return None  # Let runtime handle unexpected kwargs
+    return codegen.call_std_method(base, "send", args)
+
+
+def method_throw(codegen: CodeGen, base, args, kwargs):
+    """Handle generator.throw(type[, value[, traceback]]).
+
+    Uses runtime _pymeth_gen_throw which:
+    - Creates exception from type/value
+    - Calls JS generator.throw()
+    - Unwraps result or propagates exception
+    """
+    if kwargs:
+        return None  # Let runtime handle unexpected kwargs
+    # Use gen_throw to avoid JS reserved word issue
+    return codegen.call_std_method(base, "gen_throw", args)
+
+
+def method_close(codegen: CodeGen, base, args, kwargs):
+    """Handle generator.close().
+
+    Uses runtime _pymeth_gen_close which:
+    - Throws GeneratorExit into the generator
+    - Handles StopIteration/GeneratorExit silently
+    - Raises RuntimeError if generator yields a value
+    """
+    if kwargs or args:
+        return None  # close() takes no arguments
+    # Use gen_close to avoid conflicts with other close methods
+    return codegen.call_std_method(base, "gen_close", [])

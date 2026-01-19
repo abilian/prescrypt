@@ -10,10 +10,16 @@ from prescrypt.front import ast
 
 @gen_expr.register
 def gen_list(node: ast.List, codegen: CodeGen):
+    """Generate list literal with _is_list marker for proper repr().
+
+    Lists display as [1, 2, 3] while tuples display as (1, 2, 3).
+    """
     code = Builder()
     with code(surround=("[", "]"), separator=", "):
         code << [flatten(codegen.gen_expr(el)) for el in node.elts]
-    return code.build()
+    array_code = code.build()
+    # Mark as list so repr() uses [] instead of ()
+    return f"Object.assign({array_code}, {{_is_list: true}})"
 
 
 @gen_expr.register

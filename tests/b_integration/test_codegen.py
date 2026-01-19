@@ -36,8 +36,9 @@ def test_assignment():
 def test_assignment_subscript():
     prog = "a = [0]; a[0] = 1"
     # Uses op_setitem for __setitem__ support
+    # List is marked with _is_list for proper repr()
     expected = (
-        "const a = [0];\n_pyfunc_op_setitem(a, 0, 1);"  # Single assignment -> const
+        "const a = Object.assign([0], {_is_list: true});\n_pyfunc_op_setitem(a, 0, 1);"
     )
     assert _py2js(prog) == expected
 

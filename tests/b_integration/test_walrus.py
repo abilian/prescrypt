@@ -17,7 +17,8 @@ class TestWalrusBasic:
         """Simple walrus operator (x := 4)"""
         code = "(x := 4)"
         result = js(code)
-        assert "var x" in result
+        # Variable should be declared before use
+        assert "let x;" in result
         assert "(x = 4)" in result
 
     def test_walrus_in_if(self):

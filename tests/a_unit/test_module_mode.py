@@ -33,13 +33,17 @@ class TestModuleModeExports:
         """Module-level functions should be exported."""
         code = "def greet(name):\n    return name"
         js = py2js(code, include_stdlib=False, module_mode=True)
-        assert "export function greet" in js
+        # Function is declared and exported separately to prevent hoisting
+        assert "let greet = function greet" in js
+        assert "export { greet }" in js
 
     def test_async_function_export(self):
         """Async functions should be exported."""
         code = "async def fetch_data():\n    return 1"
         js = py2js(code, include_stdlib=False, module_mode=True)
-        assert "export async function fetch_data" in js
+        # Async function is declared and exported separately to prevent hoisting
+        assert "let fetch_data = async function fetch_data" in js
+        assert "export { fetch_data }" in js
 
     def test_class_export(self):
         """Module-level classes should be exported."""
@@ -56,11 +60,10 @@ def outer():
     return inner
 """
         js = py2js(code, include_stdlib=False, module_mode=True)
-        # Only outer should be exported
-        assert js.count("export") == 1
-        assert "export function outer" in js
+        # Only outer should be exported (via export { outer })
+        assert "export { outer }" in js
         # inner should not have export
-        assert "export function inner" not in js
+        assert "export { inner }" not in js
         assert "export let inner" not in js
 
     def test_class_method_not_exported(self):

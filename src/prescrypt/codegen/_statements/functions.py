@@ -176,17 +176,33 @@ class BaseFunDef:
             )
 
     def _gen_module_function(self, name: str, _func: str):
-        """Generate a module-level function."""
+        """Generate a module-level function.
+
+        Uses function expressions (assigned to variables) instead of function
+        declarations to prevent JavaScript hoisting. Python's `def` doesn't
+        hoist, so defining the same function name multiple times should use
+        the definition at that point in the code, not the last definition.
+        """
         js_args = self.gen_args()
         js_body = self.gen_body()
-        export_prefix = "export " if self.codegen.should_export() else ""
 
-        # Generate function definition
+        # Use let for module mode (export separately), var for regular mode
+        if self.codegen.should_export():
+            # ES6 module mode: declare and export separately
+            decl_keyword = "let"
+            export_stmt = f"\nexport {{ {name} }};"
+        else:
+            # Regular mode: use var for compatibility
+            decl_keyword = "var"
+            export_stmt = ""
+
+        # Generate function expression (not declaration) to prevent hoisting
+        # The function name after 'function' is for stack traces/recursion
         func_def = dedent(
             f"""
-            {export_prefix}{_func} {name}({js_args}) {{
+            {decl_keyword} {name} = {_func} {name}({js_args}) {{
             {js_body}
-            }}
+            }};{export_stmt}
             """
         )
 

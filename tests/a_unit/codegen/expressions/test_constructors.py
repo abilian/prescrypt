@@ -5,11 +5,11 @@ import pytest
 from .utils import check_gen
 
 CONSTRUCTORS = [
-    # Lists
-    ("[]", "[]"),
-    ("[1]", "[1]"),
-    ("[1, 2]", "[1, 2]"),
-    # Tuples
+    # Lists - marked with _is_list for proper repr()
+    ("[]", "Object.assign([], {_is_list: true})"),
+    ("[1]", "Object.assign([1], {_is_list: true})"),
+    ("[1, 2]", "Object.assign([1, 2], {_is_list: true})"),
+    # Tuples - unmarked arrays display as ()
     ("()", "[]"),
     ("(1,)", "[1]"),
     ("(1, 2)", "[1, 2]"),

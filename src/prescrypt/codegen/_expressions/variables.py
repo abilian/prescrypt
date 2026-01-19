@@ -25,6 +25,7 @@ EXCEPTION_TYPES = {
     "BaseException": "BaseException",
     "Exception": "Exception",
     "StopIteration": "StopIteration",
+    "GeneratorExit": "GeneratorExit",
     "ValueError": "ValueError",
     "IndexError": "IndexError",
     "KeyError": "KeyError",
