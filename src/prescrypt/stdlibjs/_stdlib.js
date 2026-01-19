@@ -1044,8 +1044,22 @@ var _pyfunc_super_proxy = function (self, classProto) {
   if (!base) {
     throw new TypeError("super(): no base class");
   }
+  var className = classProto ? classProto.__name__ : (self.__name__ || 'object');
   return new Proxy({}, {
     get: function(target, prop) {
+      // Handle string conversion
+      if (prop === '__str__' || prop === 'toString') {
+        return function() {
+          return '<super: <class \'' + className + '\'>, <' + className + ' object>>';
+        };
+      }
+      if (prop === Symbol.toStringTag) {
+        return 'super';
+      }
+      // Handle hasattr-style checks
+      if (prop === '__class__') {
+        return 'super';
+      }
       if (prop in base) {
         var val = base[prop];
         if (typeof val === 'function') {
@@ -1053,7 +1067,25 @@ var _pyfunc_super_proxy = function (self, classProto) {
         }
         return val;
       }
+      // Special case: __init__ on Object base class is a no-op
+      // This allows super().__init__() to work when inheriting from object
+      if (prop === '__init__' && (base === Object || base === Object.prototype)) {
+        return function() {};
+      }
       return undefined;
+    },
+    set: function(target, prop, value) {
+      throw _pyfunc_op_error('AttributeError', "'super' object attribute '" + prop + "' is read-only");
+    },
+    deleteProperty: function(target, prop) {
+      throw _pyfunc_op_error('AttributeError', "'super' object attribute '" + prop + "' is read-only");
+    },
+    has: function(target, prop) {
+      // Support 'in' operator and hasattr()
+      if (prop === '__str__' || prop === 'toString' || prop === '__class__') {
+        return true;
+      }
+      return prop in base;
     }
   });
 };
