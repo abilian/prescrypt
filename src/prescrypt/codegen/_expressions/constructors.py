@@ -39,32 +39,48 @@ def gen_set(node: ast.Set, codegen: CodeGen):
 
 @gen_expr.register
 def gen_dict(node: ast.Dict, codegen: CodeGen):
+    # Check for dict unpacking (**d) - indicated by None keys
+    has_unpacking = any(key is None for key in node.keys)
+    if has_unpacking:
+        return _gen_dict_with_unpacking(codegen, node.keys, node.values)
     return _gen_dict_fallback(codegen, node.keys, node.values)
 
-    # TODO: doesn't work, ast.Num, ast.Str are not used anymore
-    # # Oh JS; without the outer braces, it would only be an Object if used
-    # # in an assignment ...
-    # code = ["({"]
-    # for key, val in zip(node.keys, node.values):
-    #     if isinstance(key, (ast.Num, ast.NameConstant)):
-    #         code += codegen.gen_expr(key)
-    #     elif (
-    #         isinstance(key, ast.Str)
-    #         and isidentifier1.match(key.value)
-    #         and key.value[0] not in "0123456789"
-    #     ):
-    #         code += key.value
-    #     else:
-    #         return _gen_dict_fallback(codegen, node.keys, node.values)
-    #
-    #     code.append(": ")
-    #     code += codegen.gen_expr(val)
-    #     code.append(", ")
-    # if node.keys:
-    #     code.pop(-1)  # skip last comma
-    # code.append("})")
-    #
-    # return code
+
+def _gen_dict_with_unpacking(
+    codegen: CodeGen, keys: list[ast.expr | None], values: list[ast.expr]
+) -> str:
+    """Generate dict with **unpacking: {**d1, 'a': 1, **d2} -> Object.assign({}, d1, {'a': 1}, d2)"""
+    fragments = []
+    current_pairs = []  # Collect key-value pairs between unpacking
+
+    for key, val in zip(keys, values):
+        if key is None:
+            # **dict unpacking - flush current pairs and add the dict to merge
+            if current_pairs:
+                pair_args = []
+                for k, v in current_pairs:
+                    pair_args.extend([unify(gen_expr(k, codegen)), unify(gen_expr(v, codegen))])
+                fragments.append(codegen.call_std_function("create_dict", pair_args))
+                current_pairs = []
+            # Add the dict being unpacked directly
+            fragments.append(unify(gen_expr(val, codegen)))
+        else:
+            # Regular key-value pair
+            current_pairs.append((key, val))
+
+    # Flush remaining pairs
+    if current_pairs:
+        pair_args = []
+        for k, v in current_pairs:
+            pair_args.extend([unify(gen_expr(k, codegen)), unify(gen_expr(v, codegen))])
+        fragments.append(codegen.call_std_function("create_dict", pair_args))
+
+    if len(fragments) == 1:
+        # Single fragment, just use Object.assign to make a copy
+        return f"Object.assign({{}}, {fragments[0]})"
+    else:
+        # Multiple fragments, merge them all
+        return f"Object.assign({{}}, {', '.join(fragments)})"
 
 
 def _gen_dict_fallback(

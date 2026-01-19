@@ -423,7 +423,48 @@ def gen_delete(node: ast.Delete, codegen: CodeGen) -> str:
     target_nodes = node.targets
     code = []
     for target in target_nodes:
-        code.append(codegen.lf("delete "))
-        code += codegen.gen_expr(target)
-        code.append(";")
+        if isinstance(target, ast.Subscript):
+            # del obj[key] - need different handling for list vs dict
+            value = target.value
+            slice_node = target.slice
+            js_value = flatten(codegen.gen_expr(value))
+
+            if isinstance(slice_node, ast.Slice):
+                # del lst[:] or del lst[start:end] - clear or remove range
+                lower = slice_node.lower
+                upper = slice_node.upper
+                if lower is None and upper is None:
+                    # del lst[:] -> lst.splice(0, lst.length) (clear)
+                    code.append(codegen.lf(f"{js_value}.splice(0, {js_value}.length);"))
+                elif lower is None:
+                    # del lst[:n] -> lst.splice(0, n)
+                    js_upper = flatten(codegen.gen_expr(upper))
+                    code.append(codegen.lf(f"{js_value}.splice(0, {js_upper});"))
+                elif upper is None:
+                    # del lst[n:] -> lst.splice(n)
+                    js_lower = flatten(codegen.gen_expr(lower))
+                    code.append(codegen.lf(f"{js_value}.splice({js_lower});"))
+                else:
+                    # del lst[start:end] -> lst.splice(start, end - start)
+                    js_lower = flatten(codegen.gen_expr(lower))
+                    js_upper = flatten(codegen.gen_expr(upper))
+                    code.append(
+                        codegen.lf(f"{js_value}.splice({js_lower}, {js_upper} - {js_lower});")
+                    )
+            else:
+                # del obj[key] or del lst[idx]
+                # Use splice for arrays, delete for objects
+                # At runtime, check if it's an array and use appropriate method
+                js_key = flatten(codegen.gen_expr(slice_node))
+                code.append(
+                    codegen.lf(
+                        f"if (Array.isArray({js_value})) {{ {js_value}.splice({js_key}, 1); }} "
+                        f"else {{ delete {js_value}[{js_key}]; }}"
+                    )
+                )
+        else:
+            # del var or del obj.attr - use JS delete
+            code.append(codegen.lf("delete "))
+            code += codegen.gen_expr(target)
+            code.append(";")
     return flatten(code)

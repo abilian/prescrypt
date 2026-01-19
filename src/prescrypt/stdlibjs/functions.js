@@ -2172,3 +2172,42 @@ export const slice = function (obj, start, stop, step) {
 };
 
 // ---
+
+// function: call_kwargs
+export const call_kwargs = function (func, args, kwargs) {
+  // nargs: 3
+  // Call a function with positional args and keyword args.
+  // If the function has __args__ metadata (parameter names), use them to
+  // map kwargs to positional arguments. Otherwise, try to call with
+  // kwargs as a single argument (for functions expecting {flx_args, flx_kwargs}).
+
+  // Get function's parameter names if available
+  const paramNames = func.__args__;
+
+  if (paramNames && Array.isArray(paramNames)) {
+    // We have parameter metadata - map kwargs to positional args
+    const positional = args.slice();  // Copy positional args
+
+    // Fill in remaining parameters from kwargs
+    for (let i = positional.length; i < paramNames.length; i++) {
+      const paramName = paramNames[i];
+      if (kwargs.hasOwnProperty(paramName)) {
+        positional.push(kwargs[paramName]);
+      } else {
+        // Parameter not provided - let JS handle the default
+        positional.push(undefined);
+      }
+    }
+
+    return func.apply(null, positional);
+  } else {
+    // No metadata - fall back to passing kwargs object
+    // This handles functions that expect {flx_args, flx_kwargs} format
+    if (args.length === 0 && Object.keys(kwargs).length > 0) {
+      return func({flx_args: args, flx_kwargs: kwargs});
+    }
+    return func.apply(null, args);
+  }
+};
+
+// ---

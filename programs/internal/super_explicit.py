@@ -5,10 +5,10 @@ from __future__ import annotations
 class Base:
     def __init__(self, value):
         self.value = value
-    
+
     def get_value(self):
         return self.value
-    
+
     def describe(self):
         return "Base"
 
@@ -18,12 +18,12 @@ class Child(Base):
         # Use explicit super(Class, self) form
         super(Child, self).__init__(value)
         self.extra = extra
-    
+
     def get_value(self):
         # Call parent method explicitly
         base_value = super(Child, self).get_value()
         return base_value + self.extra
-    
+
     def describe(self):
         parent_desc = super(Child, self).describe()
         return parent_desc + " -> Child"
@@ -33,11 +33,11 @@ class GrandChild(Child):
     def __init__(self, value, extra, bonus):
         super(GrandChild, self).__init__(value, extra)
         self.bonus = bonus
-    
+
     def get_value(self):
         child_value = super(GrandChild, self).get_value()
         return child_value + self.bonus
-    
+
     def describe(self):
         parent_desc = super(GrandChild, self).describe()
         return parent_desc + " -> GrandChild"

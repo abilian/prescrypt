@@ -69,16 +69,40 @@ class FuncCall:
             # Use codegen.call_std_function for usage tracking
             return self.codegen.call_std_function(func_name, args)
 
+        # Check if there are kwargs - if so, use call_kwargs helper
+        if keywords:
+            return self._gen_call_with_kwargs(func_name, args, keywords)
+
         return f"{self.gen_func()}{self.gen_args()}"
+
+    def _gen_call_with_kwargs(self, func_name: str, args: list, keywords: list):
+        """Generate call using call_kwargs helper for **kwargs support."""
+        # Build positional args array
+        _args_simple, args_array = self._get_positional_args(args)
+
+        # Build kwargs dict
+        kwargs = self._get_keyword_args(keywords)
+
+        # Use call_kwargs runtime helper
+        return self.codegen.call_std_function(
+            "call_kwargs", [func_name, args_array, kwargs]
+        )
 
     def gen_method_call(self, value, method_name, args, keywords):
         stdlib_py = stdlib
         stdlib_js = StdlibJs()
 
+        # For class methods like int.from_bytes, pass the original name
+        # so the method handler can recognize it
+        if isinstance(value, ast.Name):
+            obj_for_handler = value.id
+        else:
+            obj_for_handler = unify(self.gen_expr(value))
+
         obj_js = unify(self.gen_expr(value))
 
         if builtin_meth := stdlib_py.get_method(method_name):
-            if res := builtin_meth(self.codegen, obj_js, args, keywords):
+            if res := builtin_meth(self.codegen, obj_for_handler, args, keywords):
                 return res
 
         if method_name in stdlib_js.methods:

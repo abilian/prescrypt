@@ -55,18 +55,21 @@ class TestDoubleStarred:
     """Double-starred (kwargs) expressions."""
 
     def test_kwargs_only(self):
-        """f(**kwargs)"""
+        """f(**kwargs) now uses call_kwargs helper"""
         code = "f(**kwargs)"
         result = js(code)
-        assert "flx_kwargs" in result
+        # Now uses call_kwargs for proper kwargs unpacking
+        assert "call_kwargs" in result
         assert "kwargs" in result
 
     def test_args_and_kwargs(self):
-        """f(*args, **kwargs)"""
+        """f(*args, **kwargs) now uses call_kwargs helper"""
         code = "f(*args, **kwargs)"
         result = js(code)
-        assert "flx_args" in result
-        assert "flx_kwargs" in result
+        # Now uses call_kwargs for proper kwargs unpacking
+        assert "call_kwargs" in result
+        assert "args" in result
+        assert "kwargs" in result
 
 
 class TestStarredInList:

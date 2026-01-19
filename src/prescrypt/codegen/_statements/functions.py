@@ -206,6 +206,11 @@ class BaseFunDef:
             """
         )
 
+        # Add __args__ metadata for **kwargs support in calls
+        args_metadata = self._get_args_metadata()
+        if args_metadata:
+            func_def += f"\n{name}.__args__ = {args_metadata};"
+
         # Apply decorators (in reverse order, innermost first)
         decorators = getattr(self.node, "decorator_list", [])
         if decorators:
@@ -226,6 +231,29 @@ class BaseFunDef:
                 return "".join(code)
 
         return func_def
+
+    def _get_args_metadata(self) -> str | None:
+        """Get JSON array of argument names for **kwargs support."""
+        args_node = self.node.args
+        args = args_node.args
+
+        # Collect parameter names (excluding self)
+        param_names = []
+        for arg in args:
+            name = arg.arg
+            if name not in ("self", "this"):
+                param_names.append(name)
+
+        # Also include keyword-only args
+        for arg in args_node.kwonlyargs:
+            param_names.append(arg.arg)
+
+        if not param_names:
+            return None
+
+        # Format as JSON array
+        quoted = [f'"{name}"' for name in param_names]
+        return "[" + ", ".join(quoted) + "]"
 
     def _gen_args_no_self_conversion(self) -> str:
         """Generate args without self→this conversion (for staticmethod)."""

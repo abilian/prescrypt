@@ -13,12 +13,13 @@ FUNC_CALLS = [
     ("f()", "f()"),
     ("f(1, 2)", "f(1, 2)"),
     ("f(1, 2, 3)", "f(1, 2, 3)"),
-    ("f(a=1)", "f({flx_args: [], flx_kwargs: {a: 1}})"),
-    ("f(1, a=1)", "f({flx_args: [1], flx_kwargs: {a: 1}})"),
-    ("f(1, 2, a=1)", "f({flx_args: [1, 2], flx_kwargs: {a: 1}})"),
+    # kwargs calls now use call_kwargs helper for proper argument unpacking
+    ("f(a=1)", "_pyfunc_call_kwargs(f, [], {a: 1})"),
+    ("f(1, a=1)", "_pyfunc_call_kwargs(f, [1], {a: 1})"),
+    ("f(1, 2, a=1)", "_pyfunc_call_kwargs(f, [1, 2], {a: 1})"),
     # ("f(*t)", ""), # TODO
-    ("f(*t, a=1)", "f({flx_args: t, flx_kwargs: {a: 1}})"),
-    ("f(*t, **kw)", "f({flx_args: t, flx_kwargs: kw})"),
+    ("f(*t, a=1)", "_pyfunc_call_kwargs(f, t, {a: 1})"),
+    ("f(*t, **kw)", "_pyfunc_call_kwargs(f, t, kw)"),
     # Calls to stdlib functions - optimized for primitive types
     ("print(1)", "console.log(1)"),  # Int is primitive, no str() needed
     ("str(1)", "String(1)"),  # Int uses String() constructor
@@ -28,6 +29,7 @@ FUNC_CALLS = [
     ("a.b()", "a.b()"),
     ("a.b(1)", "a.b(1)"),
     ("a.b(1, 2)", "a.b(1, 2)"),
+    # Method calls with kwargs still use the old format (methods may not have __args__)
     ("a.b(1, a=2, b=3)", "a.b({flx_args: [1], flx_kwargs: {a: 2, b: 3}})"),
     ("a.b(*t, **kw)", "a.b({flx_args: t, flx_kwargs: kw})"),
     # Calls to builtin methods (JS)
