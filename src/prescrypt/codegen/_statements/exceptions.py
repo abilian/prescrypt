@@ -28,7 +28,8 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
         return [codegen.lf(f"throw {exc_var};")]
 
     # Get cls and msg
-    err_cls, err_msg = None, "''"
+    err_cls = None
+    err_args = []  # List of arguments to pass to op_error
 
     match exc_node:
         case ast.Name(id):
@@ -45,20 +46,20 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
         case ast.Call(func, args, keywords):
             assert isinstance(func, ast.Name)
             err_cls = func.id
-            err_msg = ", ".join([unify(codegen.gen_expr(arg)) for arg in args])
+            err_args = [unify(codegen.gen_expr(arg)) for arg in args]
         case _:
             err_msg = "".join(codegen.gen_expr(exc_node))
+            err_args = [err_msg] if err_msg else []
 
     err_name = "err_%i" % codegen._indent
     codegen.add_var(err_name)
 
     # Build code to throw
     if err_cls:
-        exc_code = codegen.call_std_function(
-            "op_error", [f"'{err_cls}'", err_msg or '""']
-        )
+        op_error_args = [f"'{err_cls}'"] + err_args
+        exc_code = codegen.call_std_function("op_error", op_error_args)
     else:
-        exc_code = err_msg
+        exc_code = err_args[0] if err_args else '""'
 
     # Handle exception chaining: raise X from Y
     if cause_node is not None:

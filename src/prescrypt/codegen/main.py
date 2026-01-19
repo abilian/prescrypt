@@ -127,10 +127,7 @@ class CodeGen:
         exist in parent scopes (e.g., module-level variables used in
         comprehensions).
         """
-        for ns in self._stack:
-            if ns.is_known(name):
-                return True
-        return False
+        return any(ns.is_known(name) for ns in self._stack)
 
     def add_pending_declaration(self, name: str) -> None:
         """Add a variable to be declared before the current statement.

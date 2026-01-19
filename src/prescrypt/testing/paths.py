@@ -23,5 +23,5 @@ PROJECT_ROOT = _find_project_root()
 PROGRAMS_DIR = PROJECT_ROOT / "programs"
 DATA_DIR = PROJECT_ROOT / "data"
 DATABASE_PATH = DATA_DIR / "test-results.db"
-CONFIG_PATH = DATA_DIR / "test-config.toml"
+TEST_CONFIG_PATH = PROJECT_ROOT / "test-config.toml"
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"

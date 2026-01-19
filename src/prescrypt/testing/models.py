@@ -134,9 +134,9 @@ class Config:
     def load(cls, path: Path | None = None) -> Config:
         """Load configuration from TOML file."""
         if path is None:
-            from .paths import CONFIG_PATH
+            from .paths import TEST_CONFIG_PATH
 
-            path = CONFIG_PATH
+            path = TEST_CONFIG_PATH
 
         if not path.exists():
             return cls()

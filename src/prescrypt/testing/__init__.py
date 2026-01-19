@@ -14,11 +14,11 @@ from .models import Config, Program, Status, TestResult
 
 # Project paths
 from .paths import (
-    CONFIG_PATH,
     DATA_DIR,
     DATABASE_PATH,
     PROGRAMS_DIR,
     PROJECT_ROOT,
+    TEST_CONFIG_PATH,
 )
 
 # Report generation
@@ -45,7 +45,7 @@ __all__ = [
     # Database
     "ResultsDatabase",
     # Paths
-    "CONFIG_PATH",
+    "TEST_CONFIG_PATH",
     "DATA_DIR",
     "DATABASE_PATH",
     "PROGRAMS_DIR",

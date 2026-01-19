@@ -1,105 +1,139 @@
-"""Unified end-to-end tests for all programs in programs/ directory.
+"""End-to-end tests for programs in the programs/ directory.
 
-This module replaces the separate test modules in:
-- tests/c_e2e/from_micropython/test_all.py
-- tests/c_e2e/whole_programs/test_all.py
-
-It uses the test_manager database to determine which programs are eligible
-for testing (those that pass CPython validation and are not manually skipped).
+Discovers test programs from the filesystem using patterns from test-config.toml.
+No database dependency - runs Python at test time to get expected output.
 """
 
 from __future__ import annotations
 
+import re
 import subprocess
 import tempfile
+from functools import cache
 from pathlib import Path
 
 import pytest
 
 from prescrypt.compiler import py2js
-from prescrypt.testing import (
-    PROGRAMS_DIR,
-    Config,
-    Program,
-    ResultsDatabase,
-    Status,
-)
+from prescrypt.testing import PROJECT_ROOT, Config
 
 
-def get_eligible_programs() -> list[tuple[str, Program]]:
-    """Get programs that are eligible for pytest execution.
+@cache
+def get_config() -> Config:
+    """Load and cache the test configuration."""
+    return Config.load()
 
-    Returns programs that:
-    - Pass CPython validation (CPYTHON_PASS)
-    - Are not manually skipped
+
+@cache
+def get_programs_dir() -> Path:
+    """Get the programs directory from config."""
+    config = get_config()
+    return PROJECT_ROOT / config.programs_dir
+
+
+def _glob_to_regex(pattern: str) -> str:
+    """Convert a glob pattern to a regex pattern."""
+    # Escape special regex chars except * and ?
+    pattern = re.escape(pattern)
+    # Convert **/ to match zero or more directories
+    pattern = pattern.replace(r"\*\*/", "(.*/)?")
+    # Convert remaining ** to match anything
+    pattern = pattern.replace(r"\*\*", ".*")
+    # Convert * to match any non-/ chars
+    pattern = pattern.replace(r"\*", "[^/]*")
+    # Convert ? to match single char
+    pattern = pattern.replace(r"\?", ".")
+    return "^" + pattern + "$"
+
+
+def _matches_patterns(path: str, patterns: list[str]) -> bool:
+    """Check if path matches any of the glob patterns."""
+    for pattern in patterns:
+        regex = _glob_to_regex(pattern)
+        if re.match(regex, path):
+            return True
+    return False
+
+
+@cache
+def discover_programs() -> list[str]:
+    """Discover test programs from filesystem using config patterns.
+
+    Returns list of paths relative to programs_dir.
     """
-    config = Config.load()
-    db = ResultsDatabase()
+    config = get_config()
+    programs_dir = get_programs_dir()
 
-    try:
-        programs = db.get_programs_by_status(
-            [Status.CPYTHON_PASS], exclude_manual_skip=True
-        )
-        # Return (test_id, program) tuples for parametrization
-        return [(p.path, p) for p in programs]
-    finally:
-        db.close()
+    if not programs_dir.exists():
+        return []
+
+    programs = []
+
+    # Find all .py files in programs_dir
+    for py_file in programs_dir.rglob("*.py"):
+        # Get path relative to programs_dir
+        rel_path = str(py_file.relative_to(programs_dir))
+
+        # Must match at least one include pattern
+        if not _matches_patterns(rel_path, config.include_patterns):
+            continue
+
+        # Must not match any exclude pattern
+        if _matches_patterns(rel_path, config.exclude_patterns):
+            continue
+
+        programs.append(rel_path)
+
+    return sorted(programs)
 
 
+@cache
 def get_known_failures() -> set[str]:
     """Get set of known failure paths from config."""
-    config = Config.load()
+    config = get_config()
     return set(config.known_failures)
 
 
-# Cache the eligible programs at module load time
-_ELIGIBLE_PROGRAMS = None
-_KNOWN_FAILURES = None
-
-
-def _get_cached_programs():
-    global _ELIGIBLE_PROGRAMS
-    if _ELIGIBLE_PROGRAMS is None:
-        _ELIGIBLE_PROGRAMS = get_eligible_programs()
-    return _ELIGIBLE_PROGRAMS
-
-
-def _get_cached_known_failures():
-    global _KNOWN_FAILURES
-    if _KNOWN_FAILURES is None:
-        _KNOWN_FAILURES = get_known_failures()
-    return _KNOWN_FAILURES
+def run_python(file_path: Path, timeout: int = 10) -> tuple[str, int]:
+    """Run a Python file and return (output, return_code)."""
+    config = get_config()
+    try:
+        result = subprocess.run(
+            [config.python, str(file_path)],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=file_path.parent,
+        )
+        return result.stdout.strip(), result.returncode
+    except subprocess.TimeoutExpired:
+        return "", -1
 
 
 @pytest.fixture
 def known_failures():
-    return _get_cached_known_failures()
+    return get_known_failures()
 
 
 def pytest_generate_tests(metafunc):
-    """Generate test parameters from eligible programs."""
+    """Generate test parameters from discovered programs."""
     if "program_path" in metafunc.fixturenames:
-        programs = _get_cached_programs()
+        programs = discover_programs()
         if programs:
-            ids = [p[0] for p in programs]
-            metafunc.parametrize(
-                "program_path,program",
-                programs,
-                ids=ids,
-            )
+            metafunc.parametrize("program_path", programs, ids=programs)
         else:
-            # No programs found - skip all tests
-            metafunc.parametrize("program_path,program", [])
+            metafunc.parametrize("program_path", [])
 
 
-def test_program(program_path: str, program: Program, known_failures: set[str]):
+def test_program(program_path: str, known_failures: set[str]):
     """Test a single program through the Prescrypt pipeline.
 
-    1. Compile Python to JavaScript
-    2. Run JavaScript with Node.js
-    3. Compare output with stored CPython output
+    1. Run Python to get expected output
+    2. Compile Python to JavaScript
+    3. Run JavaScript with Node.js
+    4. Compare outputs
     """
-    src_path = PROGRAMS_DIR / program_path
+    src_path = get_programs_dir() / program_path
 
     if not src_path.exists():
         pytest.skip(f"Program file not found: {src_path}")
@@ -107,6 +141,11 @@ def test_program(program_path: str, program: Program, known_failures: set[str]):
     # Check if this is a known failure
     if program_path in known_failures:
         pytest.xfail(f"Known failure: {program_path}")
+
+    # Run Python to get expected output
+    expected_output, py_returncode = run_python(src_path)
+    if py_returncode != 0:
+        pytest.skip(f"Python execution failed (exit code {py_returncode})")
 
     # Read source and compile to JavaScript
     source = src_path.read_text()
@@ -116,9 +155,7 @@ def test_program(program_path: str, program: Program, known_failures: set[str]):
         pytest.fail(f"Compilation failed: {e}")
 
     # Write JS to temp file and execute with Node.js
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".js", delete=False
-    ) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as tmp:
         tmp.write(js_code)
         tmp_path = Path(tmp.name)
 
@@ -133,28 +170,22 @@ def test_program(program_path: str, program: Program, known_failures: set[str]):
         js_output = result.stdout.strip()
         js_stderr = result.stderr.strip()
 
-        # Get expected output from database (CPython output)
-        expected_output = (program.cpython_output or "").strip()
-
         # Check for runtime errors
         if result.returncode != 0:
-            # Show useful debug info
             print(f"\n\nJavaScript execution failed (exit code {result.returncode})")
             print(f"stderr: {js_stderr}")
-            print("\nGenerated JS (without stdlib):")
-            print(py2js(source, include_stdlib=False))
+            # print("\nGenerated JS (without stdlib):")
+            # print(py2js(source, include_stdlib=False))
             pytest.fail(f"JavaScript runtime error: {js_stderr}")
 
         # Compare outputs
         if js_output != expected_output:
-            print(f"\n\nOutput mismatch for {program_path}")
-            print(f"Expected (Python):\n{expected_output}")
-            print(f"\nActual (JavaScript):\n{js_output}")
-            print("\nGenerated JS (without stdlib):")
-            print(py2js(source, include_stdlib=False))
-            pytest.fail(
-                f"Output mismatch: expected {expected_output!r}, got {js_output!r}"
-            )
+            print(f"\n\n# Output mismatch for {program_path}")
+            print(f"## Expected (Python):\n\n```\n{expected_output}\n```\n\n")
+            print(f"## Actual (JavaScript):\n\n```\n{js_output}\n```\n")
+            # print("\nGenerated JS (without stdlib):")
+            # print(py2js(source, include_stdlib=False))
+            pytest.fail("Output mismatch")
 
     except subprocess.TimeoutExpired:
         pytest.fail("JavaScript execution timed out (>10s)")

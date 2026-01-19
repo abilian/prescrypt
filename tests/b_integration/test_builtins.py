@@ -61,7 +61,8 @@ chr(x) + chr(x+1)
     def test_str(self):
         assert js_eval(py2js("str(42)")) == "42"
         assert js_eval(py2js("str(3.14)")) == "3.14"
-        assert js_eval(py2js("str(True)")) == "true"
+        assert js_eval(py2js("str(True)")) == "True"  # Python style: capital T
+        assert js_eval(py2js("str(False)")) == "False"  # Python style: capital F
         assert js_eval(py2js("str()")) == ""
 
     def test_repr(self):

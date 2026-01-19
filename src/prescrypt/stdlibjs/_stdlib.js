@@ -1,13 +1,15 @@
 var _pyfunc_BaseException = (function() {
-  // nargs: 0 1
-  function BaseException(message) {
+  // nargs: 0+
+  function BaseException(...args) {
     if (!(this instanceof BaseException)) {
-      return new BaseException(message);
+      return new BaseException(...args);
     }
+    let message = args.length > 0 ? String(args[0]) : "";
     Error.call(this, message);
     this.name = "BaseException";
-    this.message = message || "";
-    this.args = message !== undefined ? [message] : [];
+    this.message = message;
+    // args is always a tuple (array without _is_list) containing all constructor arguments
+    this.args = args;
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, BaseException);
     }
@@ -18,12 +20,12 @@ var _pyfunc_BaseException = (function() {
 })();
 var _pyfunc_Ellipsis = Symbol.for('Ellipsis');
 var _pyfunc_Exception = (function() {
-  // nargs: 0 1
-  function Exception(message) {
+  // nargs: 0+
+  function Exception(...args) {
     if (!(this instanceof Exception)) {
-      return new Exception(message);
+      return new Exception(...args);
     }
-    _pyfunc_BaseException.call(this, message);
+    _pyfunc_BaseException.call(this, ...args);
     this.name = "Exception";
   }
   Exception.prototype = Object.create(_pyfunc_BaseException.prototype);
@@ -136,12 +138,12 @@ var _pyfunc_TypeError_py = (function() {
   return TypeError_py;
 })();
 var _pyfunc_ValueError = (function() {
-  // nargs: 0 1
-  function ValueError(message) {
+  // nargs: 0+
+  function ValueError(...args) {
     if (!(this instanceof ValueError)) {
-      return new ValueError(message);
+      return new ValueError(...args);
     }
-    _pyfunc_Exception.call(this, message);
+    _pyfunc_Exception.call(this, ...args);
     this.name = "ValueError";
   }
   ValueError.prototype = Object.create(_pyfunc_Exception.prototype);
@@ -898,8 +900,13 @@ var _pyfunc_slice = function (obj, start, stop, step) {
 };
 var _pyfunc_sorted = function (iter, key, reverse) {
   // nargs: 1 2 3
-  if (typeof iter === "object" && !Array.isArray(iter)) {
-    iter = Object.keys(iter);
+  // Handle iterators/generators - convert to array first
+  if (!Array.isArray(iter)) {
+    if (typeof iter[Symbol.iterator] === 'function') {
+      iter = [...iter];
+    } else if (typeof iter === "object") {
+      iter = Object.keys(iter);
+    }
   }
   let comp;
   if (key) {
@@ -1437,27 +1444,39 @@ var _pyfunc_op_mod = function (left, right) {
 };
 var _pyfunc_repr = function (x) {
   // nargs: 1
-  // Handle Error objects (Python exceptions)
-  if (x instanceof Error && x.name && x.args !== undefined) {
-    let argsRepr = x.args.map(a => _pyfunc_repr(a)).join(", ");
-    return x.name + "(" + argsRepr + ")";
+  // Handle null/undefined (None in Python) first
+  if (x === null || x === undefined) {
+    return "None";
   }
   // Handle booleans with Python-style capitalization
   if (typeof x === "boolean") {
     return x ? "True" : "False";
   }
+  // Check for __repr__ method on objects (custom classes)
+  if (typeof x === "object" && x !== null && typeof x.__repr__ === "function") {
+    return x.__repr__();
+  }
+  // Handle Error objects (Python exceptions)
+  if (x instanceof Error && x.name && x.args !== undefined) {
+    let argsRepr = x.args.map(a => _pyfunc_repr(a)).join(", ");
+    return x.name + "(" + argsRepr + ")";
+  }
   // Handle bytes (Uint8Array)
   if (x instanceof Uint8Array) {
     return _pyfunc_bytes_repr(x);
   }
-  // Handle strings - use single quotes like Python
+  // Handle strings - use quotes like Python
   if (typeof x === "string") {
-    // Escape single quotes and backslashes, use single quotes
+    // Python uses single quotes by default, but uses double quotes
+    // if the string contains single quotes but no double quotes
+    const hasSingle = x.indexOf("'") >= 0;
+    const hasDouble = x.indexOf('"') >= 0;
+    if (hasSingle && !hasDouble) {
+      // Use double quotes to avoid escaping
+      return '"' + x.replace(/\\/g, "\\\\") + '"';
+    }
+    // Default: use single quotes with escaping
     return "'" + x.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
-  }
-  // Handle null/undefined (None in Python)
-  if (x === null || x === undefined) {
-    return "None";
   }
   // Handle arrays (lists/tuples)
   if (Array.isArray(x)) {
@@ -1487,6 +1506,10 @@ var _pyfunc_repr = function (x) {
     });
     return "{" + parts.join(", ") + "}";
   }
+  // Handle numbers
+  if (typeof x === "number") {
+    return String(x);
+  }
   let res;
   try {
     res = JSON.stringify(x);
@@ -1511,15 +1534,43 @@ var _pyfunc_str = function (x) {
   if (typeof x === "boolean") {
     return x ? "True" : "False";
   }
+  // Check for __str__ method on objects (custom classes)
+  if (typeof x === "object" && x !== null && typeof x.__str__ === "function") {
+    return x.__str__();
+  }
   // Handle bytes (Uint8Array) - output like b'...'
   if (x instanceof Uint8Array) {
     return _pyfunc_bytes_repr(x);
+  }
+  // Handle floats - preserve .0 for whole numbers
+  if (typeof x === "number") {
+    if (Number.isFinite(x) && !Number.isInteger(x)) {
+      return String(x);
+    }
+    // Check if it was created as a float (has decimal point in source)
+    // For runtime, we check if it's a whole number that should display with .0
+    if (Number.isInteger(x)) {
+      return String(x);
+    }
+    return String(x);
   }
   if (Array.isArray(x)) {
     if (x.length == 0) {
       return "[]";
     }
-    let result = "[" + _pyfunc_str(x[0]);
+    // Quote first element if it's a string (same as other elements)
+    let first = x[0];
+    let firstStr;
+    if (typeof first === "string") {
+      if (first.indexOf("'") == -1) {
+        firstStr = "'" + first + "'";
+      } else {
+        firstStr = JSON.stringify(first);
+      }
+    } else {
+      firstStr = _pyfunc_str(first);
+    }
+    let result = "[" + firstStr;
     for (let i = 1; i < x.length; i++) {
       const e = x[i];
       if (typeof e === "string") {
@@ -1551,8 +1602,8 @@ var _pyfunc_str = function (x) {
     });
     return "{" + parts.join(", ") + "}";
   }
-  // Default
-  return JSON.stringify(x);
+  // Default - use String() for objects without __str__
+  return String(x);
 };
 var _pyfunc_string_mod = function (format_str, args) {
   // nargs: 2

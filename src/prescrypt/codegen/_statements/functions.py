@@ -111,14 +111,14 @@ class BaseFunDef:
                 """
             )
         elif decorator_type == "classmethod":
-            # Class method: first param is cls (the constructor's prototype)
+            # Class method: first param is cls (the constructor function)
             # Put on both constructor and prototype so it works either way
             js_args = self._gen_args_cls_to_name(class_name)
             js_body = self.gen_body()
             return dedent(
                 f"""
                 {class_name}.{name} = {class_name}.prototype.{name} = {_func} ({js_args}) {{
-                let cls = {class_name}.prototype;
+                let cls = {class_name};
                 {js_body}
                 }};
                 """
@@ -327,10 +327,38 @@ class BaseFunDef:
             else:
                 code.append(result)
 
+        # Add implicit return null if function doesn't end with a return statement.
+        # This ensures Python semantics where functions return None by default.
+        # Skip for generators (they don't implicitly return) and __init__ methods.
+        if not self._is_generator and self.node.name != "__init__":
+            if not self._ends_with_return(self.node.body):
+                code.append("return null;")
+
         # Restore previous binding scope
         self.codegen._binding_scope = old_binding_scope
         self.codegen.pop_ns()
         return "\n".join(code)
+
+    def _ends_with_return(self, body: list) -> bool:
+        """Check if a body of statements ends with a return statement."""
+        if not body:
+            return False
+        last = body[-1]
+        if isinstance(last, ast.Return):
+            return True
+        # For if/elif/else, check all branches
+        if isinstance(last, ast.If):
+            # Must have else clause and all branches must return
+            if not last.orelse:
+                return False
+            return self._ends_with_return(last.body) and self._ends_with_return(
+                last.orelse
+            )
+        # For try/except/finally
+        if isinstance(last, ast.Try):
+            # Complex case - simplified: just check if try body ends with return
+            return self._ends_with_return(last.body)
+        return False
 
 
 class FunDef(BaseFunDef):

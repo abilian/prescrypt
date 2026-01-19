@@ -169,8 +169,8 @@ x = str(get_price())
         assert "String(get_price())" in result
         assert "_pyfunc_str" not in result
 
-    def test_str_of_bool_uses_String(self):
-        """str() of a bool should use native String()."""
+    def test_str_of_bool_uses_pyfunc_str(self):
+        """str() of a bool should use _pyfunc_str for Python-style output (True/False)."""
         code = """
 def is_ready() -> bool:
     return True
@@ -178,8 +178,8 @@ def is_ready() -> bool:
 x = str(is_ready())
 """
         result = js(code)
-        assert "String(is_ready())" in result
-        assert "_pyfunc_str" not in result
+        # Booleans need _pyfunc_str to convert true/false -> True/False
+        assert "_pyfunc_str" in result
 
     def test_str_of_int_literal(self):
         """str() of an int literal should be optimized (constant folded or String())."""

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen
-from prescrypt.codegen.type_utils import get_type, is_numeric
+from prescrypt.codegen.type_utils import get_type
 from prescrypt.codegen.utils import unify
 from prescrypt.exceptions import JSError
-from prescrypt.front.passes.types import Bool, String
+from prescrypt.front.passes.types import Float, Int, String
 
 
 #
@@ -21,11 +21,12 @@ def function_str(codegen: CodeGen, args, _kwargs):
             if arg_type is String:
                 # Already a string, return as-is
                 return js_arg
-            elif is_numeric(arg_type) or arg_type is Bool:
-                # Numeric or bool: use String() for clean conversion
+            elif arg_type in (Int, Float):
+                # Numeric (int/float): use String() for clean conversion
                 return f"String({js_arg})"
             else:
-                # Unknown or complex type: use _pyfunc_str for Python-style output
+                # Unknown or complex type (including booleans): use _pyfunc_str
+                # for Python-style output (True/False instead of true/false)
                 return codegen.call_std_function("str", args)
         case [bytes_arg, encoding]:
             # str(bytes, encoding) - decode bytes to string

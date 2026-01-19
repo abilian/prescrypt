@@ -533,7 +533,7 @@ def cmd_export_denylist(args, config: Config, db: ResultsDatabase):
     """Export failing tests to known_failures in test-config.toml."""
     import tomlkit
 
-    from .paths import CONFIG_PATH
+    from .paths import TEST_CONFIG_PATH
 
     run_id = args.run if hasattr(args, "run") and args.run else None
 
@@ -577,11 +577,11 @@ def cmd_export_denylist(args, config: Config, db: ResultsDatabase):
     print(f"Found {len(failing_paths)} failing tests in run #{run_id}")
 
     # Load the existing config file
-    if not CONFIG_PATH.exists():
-        print(f"Config file not found: {CONFIG_PATH}")
+    if not TEST_CONFIG_PATH.exists():
+        print(f"Config file not found: {TEST_CONFIG_PATH}")
         return
 
-    with open(CONFIG_PATH) as f:
+    with open(TEST_CONFIG_PATH) as f:
         doc = tomlkit.load(f)
 
     # Update known_failures
@@ -613,10 +613,10 @@ def cmd_export_denylist(args, config: Config, db: ResultsDatabase):
                 f"Would remove {len(removed)} previously known failures (now passing)"
             )
     else:
-        with open(CONFIG_PATH, "w") as f:
+        with open(TEST_CONFIG_PATH, "w") as f:
             tomlkit.dump(doc, f)
 
-        print(f"\nUpdated {CONFIG_PATH}")
+        print(f"\nUpdated {TEST_CONFIG_PATH}")
         print(f"  Total known failures: {len(failing_paths)}")
 
         if added:
