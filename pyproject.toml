@@ -3,10 +3,7 @@ authors = [
     {name = "Stefane Fermigier", email = "sf@abilian.com"},
 ]
 requires-python = ">=3.10"
-dependencies = [
-    "buildstr<1.0.0,>=0.1.0",
-    "plum-dispatch<3.0.0,>=2.1.1",
-]
+dependencies = []
 name = "prescrypt"
 version = "0.9.1"
 description = ""
@@ -32,7 +29,6 @@ dev = [
     "pyrefly>=0.47.0",
     "pre-commit>=4.5.1",
     # JS infra for tests
-    "dukpy<1.0.0,>=0.3.0",
     "quickjs<2.0.0,>=1.19.2",
     # Doc
     "mkdocs-material",

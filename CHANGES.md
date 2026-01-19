@@ -5,6 +5,29 @@ All notable changes to Prescrypt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2 or 0.10.0] - Unreleased
+
+### Added
+
+- **`__all__` export control**: When `__all__` is defined in a module, only those names are exported in ES6 module mode
+- **Context manager protocol**: `with` statements now support `__enter__` and `__exit__` methods
+  - `__enter__()` return value is bound to the `as` variable
+  - `__exit__(None, None, None)` called in `finally` block
+  - Falls back to `.close()` for objects without context manager methods
+
+### Changed
+
+- **Zero runtime dependencies**: Removed `buildstr`, `plum-dispatch`, and `dukpy`
+  - `buildstr` replaced with simple string operations in list/tuple generation
+  - `plum-dispatch` was never used
+  - `dukpy` dev dependency removed (tests use `quickjs`)
+- **Removed dead code**: `src/prescrypt/namespace.py` (unused, superseded by binder)
+
+### Statistics
+
+- 2381 tests passing
+- Zero runtime dependencies
+
 ## [0.9.1] - 2026-01-19
 
 ### Added

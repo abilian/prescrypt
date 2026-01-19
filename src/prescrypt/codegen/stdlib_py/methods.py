@@ -91,8 +91,14 @@ def method_close(codegen: CodeGen, base, args, kwargs):
     - Throws GeneratorExit into the generator
     - Handles StopIteration/GeneratorExit silently
     - Raises RuntimeError if generator yields a value
+
+    Note: Only applies to non-self calls to avoid intercepting
+    user-defined .close() methods on classes.
     """
     if kwargs or args:
         return None  # close() takes no arguments
+    # Don't intercept self.close() - that's likely a user-defined method
+    if base in ("self", "this"):
+        return None
     # Use gen_close to avoid conflicts with other close methods
     return codegen.call_std_method(base, "gen_close", [])

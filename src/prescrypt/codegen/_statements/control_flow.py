@@ -293,28 +293,31 @@ def _iterator_assign(val, *names):
 
 @gen_stmt.register
 def gen_with(node: ast.With, codegen: CodeGen):
-    """Generate a with statement.
+    """Generate a with statement with context manager protocol support.
 
-    Transpiles Python `with` to JavaScript try/finally:
+    Transpiles Python `with` to JavaScript try/finally with __enter__/__exit__:
 
         with open('file.txt') as f:
             x = f.read()
 
     becomes:
 
-        const f = open('file.txt');
+        const _ctx = open('file.txt');
+        const f = _ctx.__enter__ ? _ctx.__enter__() : _ctx;
         try {
             const x = f.read();
         } finally {
-            if (f && typeof f.close === 'function') f.close();
+            if (_ctx.__exit__) {
+                _ctx.__exit__(null, null, null);
+            } else if (_ctx && typeof _ctx.close === 'function') {
+                _ctx.close();
+            }
         }
 
-    Note: This is a simplified implementation that only handles:
-    - Single context manager
-    - Context managers with optional variable binding
-    - Assumes .close() for cleanup (works for file-like objects)
-
-    For full Python semantics, we'd need __enter__/__exit__ support.
+    Supports:
+    - Context manager protocol (__enter__/__exit__)
+    - Fallback to .close() for file-like objects
+    - Single context manager (multiple not yet supported)
     """
     items = node.items
     body = node.body
@@ -335,30 +338,36 @@ def gen_with(node: ast.With, codegen: CodeGen):
     # Generate the context expression
     js_context = flatten(codegen.gen_expr(context_expr))
 
-    # If there's a binding variable (as x), assign it
+    # Always create a context manager variable for cleanup
+    ctx_var = codegen.dummy("ctx")
+    code.append(codegen.lf(f"let {ctx_var} = {js_context};"))
+
+    # If there's a binding variable (as x), call __enter__ or use context directly
     if optional_vars:
         if isinstance(optional_vars, ast.Name):
             var_name = optional_vars.id
             # Check if known BEFORE adding (for reassignment detection)
             is_known = codegen.ns.is_known(var_name)
             codegen.add_var(var_name)
+
+            # Call __enter__ if it exists, otherwise use context directly
+            enter_expr = f"{ctx_var}.__enter__ ? {ctx_var}.__enter__() : {ctx_var}"
+
             if is_known:
                 # Already declared - just reassign
-                code.append(codegen.lf(f"{var_name} = {js_context};"))
+                code.append(codegen.lf(f"{var_name} = {enter_expr};"))
             else:
                 decl = codegen.get_declaration_kind(var_name)
                 if decl:
-                    code.append(codegen.lf(f"{decl} {var_name} = {js_context};"))
+                    code.append(codegen.lf(f"{decl} {var_name} = {enter_expr};"))
                 else:
-                    code.append(codegen.lf(f"{var_name} = {js_context};"))
+                    code.append(codegen.lf(f"{var_name} = {enter_expr};"))
         else:
             msg = "Complex 'with' variable binding not supported"
             raise JSError(msg, optional_vars)
-        cleanup_var = var_name
     else:
-        # No binding, create a dummy variable for cleanup
-        cleanup_var = codegen.dummy("ctx")
-        code.append(codegen.lf(f"let {cleanup_var} = {js_context};"))
+        # No binding variable, but still call __enter__ if it exists
+        code.append(codegen.lf(f"if ({ctx_var}.__enter__) {ctx_var}.__enter__();"))
 
     # Generate try block
     code.append(codegen.lf("try {"))
@@ -371,11 +380,16 @@ def gen_with(node: ast.With, codegen: CodeGen):
     # Generate finally block with cleanup
     code.append(" finally {")
     codegen.indent()
-    # Check if the object has a close method and call it
+    # Call __exit__ if it exists, otherwise fall back to .close()
     code.append(
         codegen.lf(
-            f"if ({cleanup_var} && typeof {cleanup_var}.close === 'function') "
-            f"{cleanup_var}.close();"
+            f"if ({ctx_var}.__exit__) {{ {ctx_var}.__exit__(null, null, null); }}"
+        )
+    )
+    code.append(
+        codegen.lf(
+            f"else if ({ctx_var} && typeof {ctx_var}.close === 'function') "
+            f"{ctx_var}.close();"
         )
     )
     codegen.dedent()

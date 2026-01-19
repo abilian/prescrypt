@@ -95,6 +95,99 @@ class MyClass:
         assert len(lines_with_export) == 1
 
 
+class TestModuleModeAllExports:
+    """Test that __all__ controls which names are exported."""
+
+    def test_all_filters_exports(self):
+        """Only names in __all__ should be exported."""
+        code = """
+__all__ = ["public_func", "PublicClass"]
+
+def public_func():
+    pass
+
+def private_func():
+    pass
+
+class PublicClass:
+    pass
+
+class PrivateClass:
+    pass
+
+PUBLIC_VAR = 1
+PRIVATE_VAR = 2
+"""
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        # public_func should be exported
+        assert "export { public_func }" in js
+        # PublicClass should be exported
+        assert "export const PublicClass" in js
+        # private_func should NOT be exported
+        assert "export { private_func }" not in js
+        # PrivateClass should NOT be exported
+        assert "export const PrivateClass" not in js
+        # PUBLIC_VAR and PRIVATE_VAR should NOT be exported (not in __all__)
+        assert "export const PUBLIC_VAR" not in js or "export let PUBLIC_VAR" not in js
+        assert "export const PRIVATE_VAR" not in js
+
+    def test_all_empty_exports_nothing(self):
+        """Empty __all__ should export nothing."""
+        code = """
+__all__ = []
+
+def foo():
+    pass
+
+x = 1
+"""
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "export" not in js
+
+    def test_all_with_variables(self):
+        """__all__ should work with variables."""
+        code = """
+__all__ = ["x"]
+
+x = 1
+y = 2
+"""
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "export const x = 1" in js or "export let x = 1" in js
+        assert "export const y" not in js
+        assert "export let y" not in js
+
+    def test_without_all_exports_everything(self):
+        """Without __all__, all module-level names should be exported."""
+        code = """
+def foo():
+    pass
+
+def bar():
+    pass
+
+x = 1
+"""
+        js = py2js(code, include_stdlib=False, module_mode=True)
+        assert "export { foo }" in js
+        assert "export { bar }" in js
+        assert "export const x = 1" in js or "export let x = 1" in js
+
+    def test_all_does_not_affect_non_module_mode(self):
+        """__all__ should have no effect when module_mode=False."""
+        code = """
+__all__ = ["foo"]
+
+def foo():
+    pass
+
+def bar():
+    pass
+"""
+        js = py2js(code, include_stdlib=False, module_mode=False)
+        assert "export" not in js
+
+
 class TestModuleModeDisabled:
     """Test that module_mode=False (default) does not generate exports."""
 

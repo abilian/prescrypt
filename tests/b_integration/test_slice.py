@@ -108,19 +108,26 @@ class TestSliceAssignment:
         code = "a = [1, 2, 3, 4, 5]; a[1:3] = [10, 20]"
         result = js(code)
         # List literals are marked with _is_list for proper repr()
-        assert "a.splice(1, 3 - 1, ...Object.assign([10, 20], {_is_list: true}))" in result
+        assert (
+            "a.splice(1, 3 - 1, ...Object.assign([10, 20], {_is_list: true}))" in result
+        )
 
     def test_slice_assign_from_start(self):
         """Slice assignment from start a[:2] = [10, 20]"""
         code = "a = [1, 2, 3, 4, 5]; a[:2] = [10, 20]"
         result = js(code)
-        assert "a.splice(0, 2 - 0, ...Object.assign([10, 20], {_is_list: true}))" in result
+        assert (
+            "a.splice(0, 2 - 0, ...Object.assign([10, 20], {_is_list: true}))" in result
+        )
 
     def test_slice_assign_to_end(self):
         """Slice assignment to end a[2:] = [10, 20]"""
         code = "a = [1, 2, 3, 4, 5]; a[2:] = [10, 20]"
         result = js(code)
-        assert "a.splice(2, a.length - 2, ...Object.assign([10, 20], {_is_list: true}))" in result
+        assert (
+            "a.splice(2, a.length - 2, ...Object.assign([10, 20], {_is_list: true}))"
+            in result
+        )
 
 
 class TestSliceStrings:

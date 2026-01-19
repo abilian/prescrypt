@@ -187,7 +187,7 @@ class BaseFunDef:
         js_body = self.gen_body()
 
         # Use let for module mode (export separately), var for regular mode
-        if self.codegen.should_export():
+        if self.codegen.should_export(name):
             # ES6 module mode: declare and export separately
             decl_keyword = "let"
             export_stmt = f"\nexport {{ {name} }};"

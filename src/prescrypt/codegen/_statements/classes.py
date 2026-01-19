@@ -48,7 +48,7 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
             base_class,
             docstring,
             codegen.function_prefix,
-            export=codegen.should_export(),
+            export=codegen.should_export(node.name),
         )
     )
     codegen.call_std_function("op_instantiate", [])

@@ -63,6 +63,9 @@ class CodeGen:
         # ES6 module mode - emit exports for module-level definitions
         self.module_mode = module_mode
 
+        # __all__ support - if defined, only export these names
+        self._module_all: set[str] | None = self._extract_module_all(module)
+
         # Module resolution settings
         self._source_dir = source_dir or Path.cwd()
         self._module_paths = module_paths or []
@@ -434,12 +437,46 @@ class CodeGen:
         """Check if we're currently at module level (not inside a function or class)."""
         return len(self._stack) == 1 and self._stack[0].type == "module"
 
-    def should_export(self) -> bool:
+    def should_export(self, name: str | None = None) -> bool:
         """Check if the current definition should be exported.
 
         Returns True if module_mode is enabled and we're at module level.
+        If __all__ is defined, only names in __all__ are exported.
+
+        Args:
+            name: Optional name to check against __all__. If None, just checks
+                  if we're in export context (for backward compatibility).
         """
-        return self.module_mode and self.is_module_level()
+        if not self.module_mode or not self.is_module_level():
+            return False
+
+        # If __all__ is defined and name is provided, check if name is in __all__
+        if self._module_all is not None and name is not None:
+            return name in self._module_all
+
+        return True
+
+    @staticmethod
+    def _extract_module_all(module: ast.Module) -> set[str] | None:
+        """Extract __all__ from module if defined.
+
+        Scans module-level statements for `__all__ = [...]` and returns
+        the set of names. Returns None if __all__ is not defined.
+        """
+        for stmt in module.body:
+            if isinstance(stmt, ast.Assign):
+                # Check for __all__ = [...]
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name) and target.id == "__all__":
+                        if isinstance(stmt.value, ast.List):
+                            names = set()
+                            for elt in stmt.value.elts:
+                                if isinstance(elt, ast.Constant) and isinstance(
+                                    elt.value, str
+                                ):
+                                    names.add(elt.value)
+                            return names
+        return None
 
 
 class NameSpace:

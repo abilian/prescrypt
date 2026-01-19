@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from buildstr import Builder
-
 from prescrypt.codegen.main import CodeGen, gen_expr
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.exceptions import JSError
@@ -14,20 +12,16 @@ def gen_list(node: ast.List, codegen: CodeGen):
 
     Lists display as [1, 2, 3] while tuples display as (1, 2, 3).
     """
-    code = Builder()
-    with code(surround=("[", "]"), separator=", "):
-        code << [flatten(codegen.gen_expr(el)) for el in node.elts]
-    array_code = code.build()
+    elements = [flatten(codegen.gen_expr(el)) for el in node.elts]
+    array_code = "[" + ", ".join(elements) + "]"
     # Mark as list so repr() uses [] instead of ()
     return f"Object.assign({array_code}, {{_is_list: true}})"
 
 
 @gen_expr.register
 def gen_tuple(node: ast.Tuple, codegen: CodeGen):
-    code = Builder()
-    with code(surround=("[", "]"), separator=", "):
-        code << [flatten(codegen.gen_expr(el)) for el in node.elts]
-    return code.build()
+    elements = [flatten(codegen.gen_expr(el)) for el in node.elts]
+    return "[" + ", ".join(elements) + "]"
 
 
 @gen_expr.register
@@ -59,7 +53,9 @@ def _gen_dict_with_unpacking(
             if current_pairs:
                 pair_args = []
                 for k, v in current_pairs:
-                    pair_args.extend([unify(gen_expr(k, codegen)), unify(gen_expr(v, codegen))])
+                    pair_args.extend(
+                        [unify(gen_expr(k, codegen)), unify(gen_expr(v, codegen))]
+                    )
                 fragments.append(codegen.call_std_function("create_dict", pair_args))
                 current_pairs = []
             # Add the dict being unpacked directly

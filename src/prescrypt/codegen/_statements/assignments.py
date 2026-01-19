@@ -71,7 +71,7 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
                 # First assignment - determine declaration keyword
                 codegen.add_var(id)
                 decl = codegen.get_declaration_kind(id)
-                export_prefix = "export " if codegen.should_export() else ""
+                export_prefix = "export " if codegen.should_export(id) else ""
                 if decl:
                     return (
                         f"{export_prefix}{decl} {codegen.with_prefix(id)} = {js_value};"
@@ -120,7 +120,7 @@ def gen_multi_target_assign(
         is_known = codegen.ns.is_known(name)
         codegen.add_var(name)
 
-        export_prefix = "export " if codegen.should_export() else ""
+        export_prefix = "export " if codegen.should_export(name) else ""
 
         if is_known:
             # Already declared - just reassign
@@ -396,7 +396,7 @@ def gen_annassign(node: ast.AnnAssign, codegen: CodeGen) -> str:
             # First assignment
             codegen.add_var(name)
             decl = codegen.get_declaration_kind(name)
-            export_prefix = "export " if codegen.should_export() else ""
+            export_prefix = "export " if codegen.should_export(name) else ""
             if decl:
                 return (
                     f"{export_prefix}{decl} {codegen.with_prefix(name)} = {js_value};"
@@ -414,7 +414,7 @@ def gen_annassign(node: ast.AnnAssign, codegen: CodeGen) -> str:
         else:
             # Declare with let (will be assigned later)
             codegen.add_var(name)
-            export_prefix = "export " if codegen.should_export() else ""
+            export_prefix = "export " if codegen.should_export(name) else ""
             return f"{export_prefix}let {codegen.with_prefix(name)};"
 
 
@@ -449,7 +449,9 @@ def gen_delete(node: ast.Delete, codegen: CodeGen) -> str:
                     js_lower = flatten(codegen.gen_expr(lower))
                     js_upper = flatten(codegen.gen_expr(upper))
                     code.append(
-                        codegen.lf(f"{js_value}.splice({js_lower}, {js_upper} - {js_lower});")
+                        codegen.lf(
+                            f"{js_value}.splice({js_lower}, {js_upper} - {js_lower});"
+                        )
                     )
             else:
                 # del obj[key] or del lst[idx]

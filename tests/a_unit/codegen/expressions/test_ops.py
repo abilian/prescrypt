@@ -31,7 +31,10 @@ OPS = [
     ("'a' + 'b'", "('a' + 'b')"),
     ("'a' * 2", "'a'.repeat(2)"),
     # Lists - marked with _is_list for proper repr()
-    ("[1] + [2]", "_pyfunc_op_add(Object.assign([1], {_is_list: true}), Object.assign([2], {_is_list: true}))"),
+    (
+        "[1] + [2]",
+        "_pyfunc_op_add(Object.assign([1], {_is_list: true}), Object.assign([2], {_is_list: true}))",
+    ),
     ("[1] * 2", "_pyfunc_op_mul(Object.assign([1], {_is_list: true}), 2)"),
     # Tuples
     ("(1,) + (2,)", "_pyfunc_op_add([1], [2])"),
