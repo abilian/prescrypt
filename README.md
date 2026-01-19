@@ -76,9 +76,9 @@ py2js input.py output.js # Explicit output path
 
 ### Partially Supported
 
-- `**kwargs` - basic support
-- `with` statement - single context manager
-- `async`/`await` - basic support
+- `**kwargs` - in function calls only (not in function definitions)
+- `with` statement - single context manager only
+- `async def` - generates async functions (`await` not yet implemented)
 
 ### Not Supported
 
