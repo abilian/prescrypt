@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Language Features
 - **Set comprehensions**: `{x for x in items}` now compiles to JavaScript `Set`
+- **`func(**kwargs)` calls**: Proper keyword argument unpacking using `call_kwargs` runtime helper
+  - Functions now store parameter names as `__args__` metadata
+  - `greet(**{"name": "World"})` correctly maps kwargs to positional args
+- **Dict unpacking in literals**: `{**dict1, "key": val, **dict2}` using `Object.assign()`
+- **`del` statement enhancements**:
+  - `del lst[idx]` uses `splice()` for array element deletion
+  - `del lst[start:end]` for slice deletion
+  - `del d[key]` for dict key deletion
 - **Decorator syntax**: `@decorator` on functions now applies decorators correctly
 - **MatMult operator**: `a @ b` matrix multiplication operator (delegates to `__matmul__`)
 - **Ellipsis literal**: `...` and `Ellipsis` now compile to `Symbol.for('Ellipsis')`
@@ -53,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Exception args**: `raise ValueError()` now correctly sets `e.args = []` (empty tuple)
 - **Exception multiple args**: `raise ValueError("msg", 42)` now works correctly
 - **repr(undefined)**: No longer crashes on undefined values
+- **`int.from_bytes`**: Class method now correctly recognized (passes original name to handler)
+
+#### Developer Tools
+- **`scripts/coverage_report.py`**: Coverage report with context showing uncovered lines in their class/function scope
 
 ### Documentation
 
@@ -61,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Statistics
 
-- 2365 tests passing
+- 2403 tests passing
 
 
 ## [0.9.0] - 2026-01-16
