@@ -11,7 +11,7 @@ try:
 
     MAX_MEMORY = 512 * 1024 * 1024  # 512 MB
     resource.setrlimit(resource.RLIMIT_AS, (MAX_MEMORY, MAX_MEMORY))
-except Exception:
+except Exception:  # noqa: S110
     pass  # RLIMIT_AS not supported on macOS, or other error
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
