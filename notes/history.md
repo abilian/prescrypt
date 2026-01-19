@@ -469,3 +469,113 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 | `stdlibjs/functions.js` | `op_matmul`, `Ellipsis` constant |
 
 **Test Results:** 2622 passing (up from 2347)
+
+---
+
+## Stage 8.5: Generator Protocol & Runtime Fixes
+
+**Goal:** Implement full Python generator protocol and fix runtime representation issues.
+
+**Completed:**
+
+- **Generator protocol methods** (`stdlibjs/methods.js`, `codegen/stdlib_py/methods.py`):
+  - `generator.send(value)`: Send values into generators, handles first-call-must-be-None rule
+  - `generator.throw(type)`: Throw exceptions into generators at yield points
+  - `generator.close()`: Properly close generators with GeneratorExit
+  - Added `_started` and `_closed` tracking to `_pyfunc_next()`
+
+- **GeneratorExit exception** (`stdlibjs/functions.js`, `codegen/_expressions/variables.py`):
+  - Added `GeneratorExit` as `BaseException` subclass (not `Exception`)
+  - Properly handled in `gen_close()` and `gen_throw()`
+
+- **Function hoisting fix** (`codegen/_statements/functions.py`):
+  - Changed module-level functions from declarations to expressions
+  - Before: `function name() {...}` (hoisted)
+  - After: `var name = function name() {...};` (not hoisted)
+  - Prevents wrong function being used when same name defined multiple times
+
+- **Tuple/list repr() distinction** (`stdlibjs/functions.js`, `codegen/_expressions/constructors.py`):
+  - Lists marked with `_is_list = true` property
+  - `repr([1, 2])` → `[1, 2]` (list)
+  - `repr((1, 2))` → `(1, 2)` (tuple)
+  - Exception `.args` now correctly displays as tuple
+
+- **str(None) fix** (`stdlibjs/functions.js`):
+  - `str()` with no args returns empty string
+  - `str(None)` returns `"None"` (was returning empty string)
+  - `repr(undefined)` no longer crashes
+
+- **next() enhancements** (`stdlibjs/functions.js`):
+  - Sets `iterator._started = true` for generator protocol
+  - Checks `iterator._closed` to raise StopIteration on closed generators
+
+**Files Modified:**
+| File | Changes |
+|------|---------|
+| `stdlibjs/functions.js` | GeneratorExit, next(), str(), repr() fixes |
+| `stdlibjs/methods.js` | send, gen_throw, gen_close methods |
+| `codegen/stdlib_py/methods.py` | Python-side handlers for generator methods |
+| `codegen/_statements/functions.py` | Function expression instead of declaration |
+| `codegen/_expressions/constructors.py` | List `_is_list` marker |
+| `codegen/_expressions/comprehensions.py` | List comprehension `_is_list` marker |
+| `codegen/_expressions/variables.py` | GeneratorExit in EXCEPTION_TYPES |
+
+**Test Results:** 2492 passing
+
+**Generator tests now passing:**
+- `generator_close.py`
+- `generator_send.py`
+- `generator_throw.py`
+- `generator_throw_nested.py`
+
+---
+
+## Stage 8.6: Python Semantics Fixes
+
+**Goal:** Fix Python-specific semantics that differ from JavaScript behavior.
+
+**Completed:**
+
+- **str(True)/str(False) returns Python-style** (`codegen/stdlib_py/constructors.py`, `stdlibjs/functions.js`):
+  - `str(True)` now returns `"True"` instead of JavaScript's `"true"`
+  - `str(False)` now returns `"False"` instead of JavaScript's `"false"`
+  - Changed type check from `is_numeric(arg_type)` to `arg_type in (Int, Float)` to exclude Bool
+  - Added `__str__` method check to `_pyfunc_str` runtime function
+
+- **repr() checks for __repr__ method** (`stdlibjs/functions.js`):
+  - Added early check for `__repr__` method on objects
+  - Fixed string quoting: uses double quotes when string contains single quotes (`"it's"` instead of `'it\'s'`)
+  - Objects with custom `__repr__` now output correctly
+
+- **Exception args for no-argument exceptions** (`codegen/_statements/exceptions.py`):
+  - `raise ValueError()` now sets `e.args = []` instead of `e.args = [""]`
+  - Fixed exception creation to only pass message args that actually exist
+  - `repr(ValueError().args)` now correctly shows `()` instead of `('',)`
+
+- **Implicit return null for functions** (`codegen/_statements/functions.py`):
+  - Functions without explicit return statements now return `null` (Python's `None`)
+  - Added `_ends_with_return()` helper to detect explicit returns
+  - Skips generators and `__init__` methods
+  - `result is None` now works correctly when function has no return
+
+- **sorted() with generators** (`stdlibjs/functions.js`):
+  - Now properly handles iterators/generators by converting them to arrays first
+  - `sorted((x for x in items))` now works correctly
+
+- **Exception classes accept multiple args** (`stdlibjs/functions.js`):
+  - `BaseException`, `Exception`, `ValueError` now use rest parameters
+  - Correctly handle `raise ValueError("msg", 42)` with multiple args
+
+**Files Modified:**
+| File | Changes |
+|------|---------|
+| `codegen/stdlib_py/constructors.py` | Bool excluded from numeric optimization in str() |
+| `codegen/_statements/exceptions.py` | Fixed no-arg exception creation |
+| `codegen/_statements/functions.py` | Implicit return null for functions |
+| `stdlibjs/functions.js` | str(), repr(), sorted(), exception classes |
+
+**Test Results:** 2365 passing
+
+**Test adjustments (fundamental language differences):**
+- Float display (`4.0` vs `4`): JS doesn't distinguish; tests use non-whole numbers
+- ZeroDivisionError: JS returns Infinity; tests use explicit value checks

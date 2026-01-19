@@ -12,7 +12,7 @@ Prescrypt converts Python 3.9+ code to ES6+ JavaScript. It prioritizes correctne
 
 - **Modern Python support** - Python 3.10+ with pattern matching
 - **Modern JavaScript output** - Targets ES6+ with `const`/`let`, arrow functions, classes
-- **Comprehensive test suite** - 1200+ tests covering expressions, statements, and full programs
+- **Comprehensive test suite** - 2400+ tests covering expressions, statements, and full programs
 - **Optimized output** - Tree-shaking, constant folding, function inlining
 - **Source locations in errors** - Clear error messages with file:line:column
 
@@ -69,7 +69,8 @@ py2js input.py output.js # Explicit output path
 - **Functions**: `def`, `lambda`, `*args`, default arguments, closures
 - **Classes**: `class`, `__init__`, inheritance, `super()`, `@property`
 - **Decorators**: `@staticmethod`, `@classmethod`, `@property`
-- **Comprehensions**: list, dict, generator expressions
+- **Comprehensions**: list, dict, set, generator expressions
+- **Generators**: `yield`, `yield from`, `send()`, `throw()`, `close()`
 - **Operators**: arithmetic, comparison, logical, membership (`in`)
 - **Builtins**: `print`, `len`, `range`, `enumerate`, `zip`, `min`, `max`, `sorted`, etc.
 
@@ -81,7 +82,6 @@ py2js input.py output.js # Explicit output path
 
 ### Not Supported
 
-- `yield` / generators
 - Metaclasses
 - Multiple inheritance
 - `exec()`, `eval()`

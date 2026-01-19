@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Exception chaining**: `raise X from Y` now sets `__cause__` on the exception
 - **Generator expressions**: `(x for x in items)` compiles to JavaScript generator functions
 - **Generators and yield**: Full `yield` and `yield from` support using JavaScript `function*`
+- **Generator protocol methods**:
+  - `generator.send(value)`: Send values into generators
+  - `generator.throw(type)`: Throw exceptions into generators
+  - `generator.close()`: Close generators with GeneratorExit
+- **GeneratorExit exception**: Properly implemented as BaseException subclass
 
 #### Optimizations
 - **Type-informed code generation**: Native operators when types are known
@@ -25,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Equality: `x == y` → `(x === y)` for primitive types
   - F-strings: `f"Hello, {name}!"` → `('Hello, ' + name + '!')` with type annotations
   - `print()`: Direct `console.log()` for primitives, skips `_pyfunc_str` wrapper
-  - `str()`: Native `String()` for numbers/bools, passthrough for strings
+  - `str()`: Native `String()` for numbers, `_pyfunc_str` for bools (Python capitalization), passthrough for strings
   - Type inference from: literals, annotations, builtins (`len`, `str`), methods (`.upper()`, `.find()`), user-defined function return types
 
 ### Fixed
@@ -36,7 +41,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Parameter reassignment**: Reassigning function parameters no longer creates shadowed variables
 - **Default arguments with None**: `def foo(x=None)` generates correct `x = null` default
 - **sorted() with numbers**: Uses proper comparison function instead of JavaScript string sort
+- **sorted() with generators**: Now properly handles iterators/generators
 - **Division by zero in constants**: Left for runtime instead of crashing compiler
+- **Function hoisting**: Module-level functions use expressions instead of declarations to prevent JavaScript hoisting issues when same function is defined multiple times
+- **Implicit return null**: Functions without explicit return now return `null` (Python's `None`)
+- **Tuple/list repr()**: Lists display as `[1, 2]`, tuples as `(1, 2)` - exception `.args` now correctly shown as tuple
+- **str(None)**: Returns `"None"` instead of empty string
+- **str(True)/str(False)**: Returns `"True"` and `"False"` (Python-style capitalization)
+- **repr() with __repr__**: Objects with `__repr__` method now use it correctly
+- **repr() string quoting**: Uses double quotes for strings containing single quotes (`"it's"`)
+- **Exception args**: `raise ValueError()` now correctly sets `e.args = []` (empty tuple)
+- **Exception multiple args**: `raise ValueError("msg", 42)` now works correctly
+- **repr(undefined)**: No longer crashes on undefined values
 
 ### Documentation
 
@@ -45,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Statistics
 
-- 2622 tests passing (up from 2347)
+- 2365 tests passing
 
 
 ## [0.9.0] - 2026-01-16
@@ -82,7 +98,7 @@ Major release with ES6 module support, optimizations, and developer tooling.
   - Equality: `x == y` → `(x === y)` for primitive types
   - F-strings: `f"Hello, {name}!"` → `('Hello, ' + name + '!')` with type annotations
   - `print()`: Direct `console.log()` for primitives, skips `_pyfunc_str` wrapper
-  - `str()`: Native `String()` for numbers/bools, passthrough for strings
+  - `str()`: Native `String()` for numbers, `_pyfunc_str` for bools (Python capitalization), passthrough for strings
   - Type inference from: literals, annotations, builtins (`len`, `str`), methods (`.upper()`, `.find()`), user-defined function return types
 
 #### Class System Enhancements
