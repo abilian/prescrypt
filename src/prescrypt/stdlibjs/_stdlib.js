@@ -430,6 +430,22 @@ var _pyfunc_op_add = function (a, b) {
   }
   return a + b;
 };
+var _pyfunc_op_delitem = function op_delitem(obj, key) {
+  // nargs: 2
+  // Python del obj[key] - checks for __delitem__ method first
+  if (obj == null) {
+    throw new TypeError("'NoneType' object does not support item deletion");
+  }
+  if (typeof obj.__delitem__ === 'function') {
+    obj.__delitem__(key);
+  } else if (Array.isArray(obj)) {
+    // For arrays, use splice to remove element
+    obj.splice(key, 1);
+  } else {
+    // For objects, use delete
+    delete obj[key];
+  }
+};
 var _pyfunc_op_equals = function op_equals(a, b) {
   // nargs: 2
   let a_type = typeof a;
@@ -716,6 +732,40 @@ var _pyfunc_oct = function (x) {
   }
   return "0o" + x.toString(8);
 };
+var _pyfunc_op_delattr = function op_delattr(obj, name) {
+  // nargs: 2
+  // Python del obj.attr - checks for property deleters first
+  if (obj == null) {
+    throw _pyfunc_op_error('AttributeError', "'NoneType' object has no attribute '" + name + "'");
+  }
+  // Check for property deleter (__deleter_propname__ method on prototype)
+  var deleterName = '__deleter_' + name + '__';
+  var proto = Object.getPrototypeOf(obj);
+  if (proto && typeof proto[deleterName] === 'function') {
+    proto[deleterName].call(obj);
+    return;
+  }
+  // Check for __delattr__ method
+  if (typeof obj.__delattr__ === 'function') {
+    obj.__delattr__(name);
+    return;
+  }
+  // Fall back to regular delete
+  if (name in obj) {
+    delete obj[name];
+  } else {
+    var typeName = obj.constructor ? obj.constructor.name : typeof obj;
+    throw _pyfunc_op_error('AttributeError', "'" + typeName + "' object has no attribute '" + name + "'");
+  }
+};
+var _pyfunc_op_ge = function op_ge(a, b) {
+  // nargs: 2
+  // Check for __ge__ method on the left operand
+  if (a != null && typeof a.__ge__ === 'function') {
+    return a.__ge__(b);
+  }
+  return a >= b;
+};
 var _pyfunc_op_getitem = function op_getitem(obj, key) {
   // nargs: 2
   // Python obj[key] - checks for __getitem__ method first
@@ -730,6 +780,14 @@ var _pyfunc_op_getitem = function op_getitem(obj, key) {
     key = obj.length + key;
   }
   return obj[key];
+};
+var _pyfunc_op_gt = function op_gt(a, b) {
+  // nargs: 2
+  // Check for __gt__ method on the left operand
+  if (a != null && typeof a.__gt__ === 'function') {
+    return a.__gt__(b);
+  }
+  return a > b;
 };
 var _pyfunc_op_instantiate = function (ob, args) {
   // nargs: 2
@@ -754,6 +812,14 @@ var _pyfunc_op_instantiate = function (ob, args) {
     ob.__init__.apply(ob, args);
   }
 };
+var _pyfunc_op_le = function op_le(a, b) {
+  // nargs: 2
+  // Check for __le__ method on the left operand
+  if (a != null && typeof a.__le__ === 'function') {
+    return a.__le__(b);
+  }
+  return a <= b;
+};
 var _pyfunc_op_len = function op_len(obj) {
   // nargs: 1
   // Python len() - checks for __len__ method first, then falls back to .length
@@ -774,6 +840,14 @@ var _pyfunc_op_len = function op_len(obj) {
     return Object.keys(obj).length;
   }
   throw new TypeError("object has no len()");
+};
+var _pyfunc_op_lt = function op_lt(a, b) {
+  // nargs: 2
+  // Check for __lt__ method on the left operand
+  if (a != null && typeof a.__lt__ === 'function') {
+    return a.__lt__(b);
+  }
+  return a < b;
 };
 var _pyfunc_op_matmul = function (a, b) {
   // nargs: 2
@@ -1508,6 +1582,27 @@ var _pyfunc_op_mod = function (left, right) {
     return _pyfunc_string_mod(left, right);
   }
   return left % right;
+};
+var _pyfunc_property = function (fget, fset, fdel, doc) {
+  // nargs: 0 1 2 3 4
+  // Python property builtin - creates a property descriptor
+  var prop = {
+    __class__: 'property',
+    fget: fget || null,
+    fset: fset || null,
+    fdel: fdel || null,
+    __doc__: doc || null,
+    getter: function(fn) {
+      return _pyfunc_property(fn, this.fset, this.fdel, this.__doc__);
+    },
+    setter: function(fn) {
+      return _pyfunc_property(this.fget, fn, this.fdel, this.__doc__);
+    },
+    deleter: function(fn) {
+      return _pyfunc_property(this.fget, this.fset, fn, this.__doc__);
+    }
+  };
+  return prop;
 };
 var _pyfunc_repr = function (x) {
   // nargs: 1

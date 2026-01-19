@@ -44,15 +44,17 @@ class TestGenExprConditions:
         code = "(x for x in items if x > 0)"
         result = js(code)
         assert "if (!" in result
-        assert "x > 0" in result
+        # Accept either native operator or runtime helper for unknown types
+        assert "x > 0" in result or "op_gt(x, 0)" in result
         assert "continue" in result
 
     def test_multiple_ifs(self):
         """Generator expression with multiple conditions"""
         code = "(x for x in items if x > 0 if x < 10)"
         result = js(code)
-        assert "x > 0" in result
-        assert "x < 10" in result
+        # Accept either native operator or runtime helper for unknown types
+        assert "x > 0" in result or "op_gt(x, 0)" in result
+        assert "x < 10" in result or "op_lt(x, 10)" in result
 
 
 class TestGenExprNested:

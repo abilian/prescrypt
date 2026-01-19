@@ -56,6 +56,7 @@ BUILTIN_NAMES = {
     "delattr": "delattr",
     "dir": "dir",
     "callable": "callable",
+    "property": "property",
 }
 
 

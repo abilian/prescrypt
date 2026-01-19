@@ -455,17 +455,26 @@ def gen_delete(node: ast.Delete, codegen: CodeGen) -> str:
                     )
             else:
                 # del obj[key] or del lst[idx]
-                # Use splice for arrays, delete for objects
-                # At runtime, check if it's an array and use appropriate method
+                # Use op_delitem for __delitem__ support
                 js_key = flatten(codegen.gen_expr(slice_node))
                 code.append(
                     codegen.lf(
-                        f"if (Array.isArray({js_value})) {{ {js_value}.splice({js_key}, 1); }} "
-                        f"else {{ delete {js_value}[{js_key}]; }}"
+                        codegen.call_std_function("op_delitem", [js_value, js_key])
+                        + ";"
                     )
                 )
+        elif isinstance(target, ast.Attribute):
+            # del obj.attr - use runtime helper to check for property deleters
+            js_obj = flatten(codegen.gen_expr(target.value))
+            attr_name = target.attr
+            code.append(
+                codegen.lf(
+                    codegen.call_std_function("op_delattr", [js_obj, f'"{attr_name}"'])
+                    + ";"
+                )
+            )
         else:
-            # del var or del obj.attr - use JS delete
+            # del var - use JS delete
             code.append(codegen.lf("delete "))
             code += codegen.gen_expr(target)
             code.append(";")
