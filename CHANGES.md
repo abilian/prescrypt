@@ -14,18 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `__enter__()` return value is bound to the `as` variable
   - `__exit__(None, None, None)` called in `finally` block
   - Falls back to `.close()` for objects without context manager methods
+- **Class system enhancements**:
+  - `super()` support with `super_proxy` runtime helper for proper method delegation
+  - `@staticmethod` decorator - methods with no `this` binding
+  - `@classmethod` decorator - methods receiving constructor as first argument
+  - `@property` decorator with full getter/setter/deleter support via `Object.defineProperty()`
+  - Comparison special methods: `__eq__`, `__lt__`, `__gt__`, `__le__`, `__ge__` dispatch
+  - Container special methods: `__getitem__`, `__setitem__`, `__delitem__` dispatch
+  - Runtime helpers: `op_lt`, `op_gt`, `op_le`, `op_ge`, `op_delitem`, `op_delattr`
 
 ### Changed
 
 - **Zero runtime dependencies**: Removed `buildstr`, `plum-dispatch`, and `dukpy`
-  - `buildstr` replaced with simple string operations in list/tuple generation
-  - `plum-dispatch` was never used
-  - `dukpy` dev dependency removed (tests use `quickjs`)
 - **Removed dead code**: `src/prescrypt/namespace.py` (unused, superseded by binder)
+- **Comparison operators**: Now use runtime helpers for non-primitive types to support special methods
 
 ### Statistics
 
-- 2381 tests passing
+- 2385 tests passing
 - Zero runtime dependencies
 
 ## [0.9.1] - 2026-01-19

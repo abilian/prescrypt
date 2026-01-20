@@ -1,5 +1,5 @@
 .PHONY: all develop test lint clean doc format build
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs install lint lint/flake8
+.PHONY: clean clean-test coverage dist docs install lint lint/flake8
 
 # The package name
 PKG=pywire
@@ -79,6 +79,7 @@ clean: clean-test
 		.pytest_cache .pytest .DS_Store  docs/_build docs/cache docs/tmp \
 		dist build pip-wheel-metadata junit-*.xml htmlcov coverage.xml \
 		.ruff_cache
+	cd demos && make clean
 
 ## Cleanup tests artifacts
 clean-test: ## remove test and coverage artifacts
