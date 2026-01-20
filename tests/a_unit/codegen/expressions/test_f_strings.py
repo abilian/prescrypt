@@ -156,3 +156,67 @@ y = {y}
         result = js_eval(py2js(code))
         assert "x = 1" in result
         assert "y = 2" in result
+
+
+class TestFStringThousandsSeparator:
+    """Test f-string thousands separator (:,) format specifier."""
+
+    def test_thousands_integer(self):
+        """Thousands separator on integer."""
+        assert js_eval(py2js("x = 1234567; f'{x:,}'")) == "1,234,567"
+
+    def test_thousands_negative(self):
+        """Thousands separator on negative integer."""
+        assert js_eval(py2js("x = -1234567; f'{x:,}'")) == "-1,234,567"
+
+    def test_thousands_with_precision(self):
+        """Thousands separator combined with float precision."""
+        assert js_eval(py2js("x = 1234567.89; f'{x:,.2f}'")) == "1,234,567.89"
+
+    def test_thousands_small(self):
+        """Thousands separator on small number (no commas needed)."""
+        assert js_eval(py2js("x = 123; f'{x:,}'")) == "123"
+
+    def test_thousands_zero(self):
+        """Thousands separator on zero."""
+        assert js_eval(py2js("x = 0; f'{x:,}'")) == "0"
+
+
+class TestFStringAlignment:
+    """Test f-string width and alignment format specifiers."""
+
+    def test_right_align(self):
+        """Right align with > specifier."""
+        result = js_eval(py2js("x = 42; f'{x:>10}'"))
+        assert result == "        42"
+        assert len(result) == 10
+
+    def test_left_align(self):
+        """Left align with < specifier."""
+        result = js_eval(py2js("s = 'hi'; f'{s:<10}'"))
+        assert result == "hi        "
+        assert len(result) == 10
+
+    def test_center_align(self):
+        """Center align with ^ specifier."""
+        result = js_eval(py2js("x = 42; f'{x:^10}'"))
+        assert len(result) == 10
+        assert result.strip() == "42"
+
+    def test_custom_fill(self):
+        """Custom fill character with alignment."""
+        assert js_eval(py2js("x = 42; f'{x:*>5}'")) == "***42"
+
+    def test_zero_padding(self):
+        """Zero padding on numbers."""
+        assert js_eval(py2js("x = 42; f'{x:05}'")) == "00042"
+
+    def test_zero_padding_with_sign(self):
+        """Zero padding preserves sign position."""
+        assert js_eval(py2js("x = 42; f'{x:+05}'")) == "+0042"
+
+    def test_width_no_alignment(self):
+        """Width without explicit alignment (defaults to right)."""
+        result = js_eval(py2js("x = 7; f'{x:3}'"))
+        assert len(result) == 3
+        assert "7" in result

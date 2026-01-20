@@ -38,15 +38,17 @@ class TestDictCompConditions:
         code = "{k: v for k, v in items if v > 0}"
         result = js(code)
         assert "if (!(" in result
-        assert "v > 0" in result
+        # Accept either native operator or runtime helper for unknown types
+        assert "v > 0" in result or "op_gt(v, 0)" in result
         assert "continue" in result
 
     def test_multiple_ifs(self):
         """Dict comprehension with multiple conditions"""
         code = "{k: v for k, v in items if k > 0 if v < 10}"
         result = js(code)
-        assert "k > 0" in result
-        assert "v < 10" in result
+        # Accept either native operator or runtime helper for unknown types
+        assert "k > 0" in result or "op_gt(k, 0)" in result
+        assert "v < 10" in result or "op_lt(v, 10)" in result
 
 
 class TestDictCompNested:

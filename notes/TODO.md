@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.1 (released) | **Tests:** 2409 (2381 passing, 28 skipped) | **Coverage:** 89%
+**Current Status:** v0.9.2 (in progress) | **Tests:** 2385 passing, 28 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
@@ -35,11 +35,47 @@ See `notes/history.md` for completed work (Stages 0-6).
 - [x] `__all__` to control module exports
 - [x] Context manager protocol (`__enter__`/`__exit__`)
 
+### Class System Enhancements (v0.9.2) ✓
+- [x] `super()` support with `super_proxy` runtime
+- [x] `@staticmethod` and `@classmethod` decorators
+- [x] `@property` decorator with getter/setter/deleter
+- [x] Special method dispatch (`__eq__`, `__lt__`, `__gt__`, `__le__`, `__ge__`)
+- [x] Container special methods (`__getitem__`, `__setitem__`, `__delitem__`)
+
 ---
+
+## Missing Features (discovered via demos)
+
+### Tuple Unpacking ✓
+
+These patterns now work:
+
+- [x] **Assignment unpacking:** `a, b = func()`
+- [x] **For loop unpacking:** `for k, v in dict.items()`
+- [x] **Enumerate unpacking:** `for i, x in enumerate(lst)`
+- [x] **Nested unpacking:** `for i, (k, v) in enumerate(d.items())`
+- [x] **Chained assignment with subscripts:** `a[0] = a[1] = False` (fixed in v0.9.2)
+
+### F-String Format Specifiers ✓
+
+These format specifiers now work:
+
+- [x] **Thousands separator:** `f"{x:,}"` → outputs `"1,234,567"`
+- [x] **Fixed precision:** `f"{x:.2f}"` → outputs `"3.14"`
+- [x] **Width/alignment:** `f"{x:>10}"` → outputs `"        42"`
+- [x] **Combined:** `f"{x:,.2f}"` → outputs `"1,234,567.89"`
+
+### Variable Scoping (Low Priority)
+
+- [ ] **Loop variable redeclaration:** Variables declared in one loop aren't re-declared in subsequent loops with the same name, causing strict mode errors. Workaround: use different variable names.
+
+### Recently Fixed
+
+- [x] **Class `var` declaration:** Classes weren't declared with `var`, causing "assignment to undeclared variable" in strict mode. Fixed in `codegen/_statements/classes.py`.
 
 ## Future Enhancements
 
-- [ ] Dataclasses and/or attrs support
+- [ ] Dataclasses support
 - [ ] `__slots__` support
 - [ ] Multiple inheritance (MRO)
 - [ ] `match` statement (structural pattern matching)
@@ -47,44 +83,18 @@ See `notes/history.md` for completed work (Stages 0-6).
 
 ---
 
-## Class System Enhancements
+## Demos & Use Cases ✓
 
-**Goal:** Full class support with decorators and special methods.
+Demos created in `demos/` directory:
 
-### Phase 1: `super()` Support
-- [ ] Detect `super` as special function in `gen_call_named()`
-- [ ] Generate `this._base_class.METHOD.call(this, args)`
-- [ ] Enable test: `class_super.py`
+1. [x] **python-playground** - Interactive Python learning (server-side compilation)
+2. [x] **validation-library** - Shared validation (backend + frontend)
+3. [x] **data-dashboard** - Sales analytics with Canvas charts
+4. [x] **browser-extension** - Chrome/Firefox page analyzer
+5. [x] **simulation** - Predator-prey Lotka-Volterra model
+6. [x] **edge-worker** - Cloudflare Workers (bot detection, A/B testing)
 
-### Phase 2: `@staticmethod` / `@classmethod`
-- [ ] Remove "Class decorators not supported" error
-- [ ] Handle `@staticmethod` - no `this` binding
-- [ ] Handle `@classmethod` - pass constructor as `cls`
-- [ ] Enable test: `class_staticclassmethod.py`
-
-### Phase 3: `@property` Decorator
-- [ ] Detect `@property` and `.setter`/`.deleter`
-- [ ] Generate `Object.defineProperty()` calls
-- [ ] Enable test: `builtin_property.py`
-
-### Phase 4: Special Method Dispatch
-- [ ] `__getitem__` / `__setitem__` dispatch
-- [ ] `__len__` in `len()` calls
-- [ ] `__eq__` in equality comparisons
-- [ ] Enable tests: `class_binop.py`, `getitem.py`
-
----
-
-## Demos & Use Cases
-
-Develop demos for various use cases:
-
-1. Interactive Python learning platforms
-2. Shared validation libraries (backend + frontend)
-3. Lightweight data dashboards
-4. Browser extensions in Python
-5. Scientific simulations / educational widgets
-6. Edge computing (Cloudflare Workers)
+See `demos/README.md` for documentation.
 
 ---
 

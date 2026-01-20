@@ -268,13 +268,18 @@ class BaseFunDef:
         return "".join(code)
 
     def _gen_args_cls_to_name(self, class_name: str) -> str:
-        """Generate args, skipping cls parameter (for classmethod)."""
+        """Generate args, skipping first parameter (for classmethod).
+
+        Python's @classmethod convention uses 'cls' as first param, but
+        some code (like MicroPython tests) uses 'self'. We skip the first
+        param regardless of name since it represents the class.
+        """
         args = self.node.args.args
         code = []
         for i, arg in enumerate(args):
             name = arg.arg
-            if i == 0 and name == "cls":
-                # Skip cls - we'll inject it as a local variable
+            if i == 0:
+                # Skip first param (cls/self) - we'll inject cls as a local variable
                 continue
             code.append(name)
             code.append(", ")

@@ -11,8 +11,8 @@ def tests(session: nox.Session):
     session.run("pytest")
 
 
-@nox.session(python=PYTHONS[0])
-def lint(session: nox.Session):
+@nox.session
+def check(session: nox.Session):
     uv_sync(session)
     session.run("ruff", "check")
 
@@ -22,5 +22,10 @@ def lint(session: nox.Session):
 #
 def uv_sync(session: nox.Session):
     session.run(
-        "uv", "sync", "-q", "--all-groups", "--all-extras", "--active", external=True
+        # "uv", "sync", "-q", "--all-groups", "--all-extras", "--active", external=True
+        "uv",
+        "sync",
+        "-q",
+        "--active",
+        external=True,
     )

@@ -258,6 +258,21 @@ def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
             code = "!" + code
         return code
 
+    elif type(op) in (ast.Lt, ast.Gt, ast.LtE, ast.GtE):
+        # Optimize when both types are primitives: use native operators
+        if is_primitive(left_type) and is_primitive(right_type):
+            js_op = COMP_OP[op]
+            return f"{js_left} {js_op} {js_right}"
+        else:
+            # Unknown or non-primitive types: use helper for __lt__/__gt__/__le__/__ge__
+            op_map = {
+                ast.Lt: "op_lt",
+                ast.Gt: "op_gt",
+                ast.LtE: "op_le",
+                ast.GtE: "op_ge",
+            }
+            return codegen.call_std_function(op_map[type(op)], [js_left, js_right])
+
     else:
         js_op = COMP_OP[op]
         return f"{js_left} {js_op} {js_right}"

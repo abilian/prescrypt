@@ -66,17 +66,18 @@ class TestMultipleAssignment:
         """Double assignment a = b = 2"""
         code = "a = b = 2"
         result = js(code)
-        # Should declare both variables
+        # Should declare both variables with value 2
         assert "b = 2" in result
-        assert "a = b" in result
+        assert "a = 2" in result
 
     def test_triple_assign(self):
         """Triple assignment a = b = c = 3"""
         code = "a = b = c = 3"
         result = js(code)
+        # All variables should be assigned value 3
         assert "c = 3" in result
-        assert "b = c" in result
-        assert "a = b" in result
+        assert "b = 3" in result
+        assert "a = 3" in result
 
 
 class TestNestedUnpack:
@@ -119,3 +120,61 @@ class TestStarredUnpack:
         result = js(code)
         assert "pop()" in result
         assert "middle" in result
+
+
+class TestChainedSubscriptAssign:
+    """Tests for chained assignment with subscripts and attributes."""
+
+    def test_chained_subscript(self):
+        """Chained assignment with subscripts: a[0] = a[1] = value"""
+        from prescrypt.testing import js_eval
+
+        code = "a = [True, True]; a[0] = a[1] = False; a"
+        result = js_eval(py2js(code))
+        assert result == [False, False]
+
+    def test_chained_subscript_int(self):
+        """Chained assignment with subscripts using integers."""
+        from prescrypt.testing import js_eval
+
+        code = "a = [0, 0, 0]; a[0] = a[1] = a[2] = 5; a"
+        result = js_eval(py2js(code))
+        assert result == [5, 5, 5]
+
+    def test_chained_attr(self):
+        """Chained assignment with attributes: c.x = c.y = value"""
+        from prescrypt.testing import js_eval
+
+        code = """
+class C:
+    x = 0
+    y = 0
+c = C()
+c.x = c.y = 5
+[c.x, c.y]
+"""
+        result = js_eval(py2js(code))
+        assert result == [5, 5]
+
+    def test_mixed_chained(self):
+        """Chained assignment mixing names, subscripts, and attributes."""
+        from prescrypt.testing import js_eval
+
+        code = """
+class C:
+    x = 0
+c = C()
+b = [0]
+a = b[0] = c.x = 3
+[a, b[0], c.x]
+"""
+        result = js_eval(py2js(code))
+        assert result == [3, 3, 3]
+
+    def test_chained_dict_subscript(self):
+        """Chained assignment with dict subscripts."""
+        from prescrypt.testing import js_eval
+
+        code = "d = {}; d['a'] = d['b'] = 10; [d['a'], d['b']]"
+        result = js_eval(py2js(code))
+        assert result == [10, 10]

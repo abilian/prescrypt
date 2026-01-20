@@ -105,7 +105,8 @@ class TestLambdaExpressions:
         """Lambda with comparison."""
         code = "is_positive = lambda x: x > 0"
         result = js(code)
-        assert "(x > 0)" in result
+        # Accept either native operator or runtime helper for unknown types
+        assert "(x > 0)" in result or "op_gt(x, 0)" in result
 
     def test_lambda_boolean_expression(self):
         """Lambda with boolean expression."""

@@ -128,7 +128,12 @@ def _collect_properties(body_nodes: list) -> dict:
 def _make_property_definition(
     class_name: str, prop_name: str, prop_info: dict, codegen
 ) -> str:
-    """Generate Object.defineProperty() call for a property."""
+    """Generate Object.defineProperty() call for a property.
+
+    Note: JavaScript property descriptors don't support a 'delete' handler.
+    We store deleters as __deleter_propname__ methods on the prototype and
+    the runtime op_delattr checks for them.
+    """
     parts = []
     parts.append(
         f"Object.defineProperty({class_name}.prototype, {js_repr(prop_name)}, {{"
@@ -147,15 +152,25 @@ def _make_property_definition(
             value_param = "value"
         setter_body = _gen_property_function_body(setter_node, codegen)
         parts.append(f"    set: function({value_param}) {{ {setter_body} }},")
-
-    if "deleter" in prop_info:
-        deleter_body = _gen_property_function_body(prop_info["deleter"], codegen)
-        parts.append(f"    delete: function() {{ {deleter_body} }},")
+    elif "getter" in prop_info:
+        # Read-only property: add a setter that throws AttributeError
+        parts.append(
+            f"    set: function(v) {{ throw _pyfunc_op_error('AttributeError', "
+            f"\"property '{prop_name}' has no setter\"); }},"
+        )
 
     parts.append("    configurable: true")
     parts.append("});")
 
-    return "\n".join(parts)
+    result = "\n".join(parts)
+
+    # Handle deleter separately - store as __deleter_propname__ method
+    if "deleter" in prop_info:
+        deleter_body = _gen_property_function_body(prop_info["deleter"], codegen)
+        deleter_name = f"__deleter_{prop_name}__"
+        result += f"\n{class_name}.prototype.{deleter_name} = function() {{ {deleter_body} }};"
+
+    return result
 
 
 def _gen_property_function_body(node: ast.FunctionDef, codegen) -> str:
@@ -192,7 +207,8 @@ def make_class_definition(
     """
     # Create constructor that works with or without 'new' keyword
     # ES6 export requires 'const' keyword: export const X = ...
-    decl = "export const " if export else ""
+    # Non-exported classes need 'var' to avoid strict mode errors
+    decl = "export const " if export else "var "
     lines = [f"{decl}{name} = function () {{"]
     # Auto-instantiate if called without 'new'
     lines.append(f"    if (!(this instanceof {name})) {{")
