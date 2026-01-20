@@ -467,3 +467,72 @@ class TestJsFFI:
         code = "import foo\nx = foo.bar"
         js = py2js(code, include_stdlib=False)
         assert "foo.bar" in js
+
+    def test_js_object_new(self):
+        """js.Object.new() should become new Object()."""
+        code = "import js\nobj = js.Object.new()"
+        result = py2js(code, include_stdlib=False)
+        assert "new Object()" in result
+        assert "Object.new()" not in result
+
+    def test_js_date_new_with_args(self):
+        """js.Date.new(args) should become new Date(args)."""
+        code = "import js\nd = js.Date.new(2024, 0, 15)"
+        result = py2js(code, include_stdlib=False)
+        assert "new Date(2024, 0, 15)" in result
+        assert "Date.new(" not in result
+
+    def test_js_array_new(self):
+        """js.Array.new() should become new Array()."""
+        code = "import js\narr = js.Array.new(10)"
+        result = py2js(code, include_stdlib=False)
+        assert "new Array(10)" in result
+
+    def test_js_regexp_new(self):
+        """js.RegExp.new(pattern) should become new RegExp(pattern)."""
+        code = "import js\nre = js.RegExp.new('[a-z]+', 'gi')"
+        result = py2js(code, include_stdlib=False)
+        assert "new RegExp('[a-z]+', 'gi')" in result
+
+    def test_js_get_method_not_converted(self):
+        """js.X.get() should NOT be converted to _pymeth_get()."""
+        code = "import js\nresult = js.chrome.storage.local.get('key')"
+        result = py2js(code, include_stdlib=False)
+        assert "chrome.storage.local.get('key')" in result
+        assert "_pymeth_get" not in result
+
+    def test_js_clear_method_not_converted(self):
+        """js.X.clear() should NOT be converted to _pymeth_clear()."""
+        code = "import js\njs.chrome.alarms.clear('alarm1')"
+        result = py2js(code, include_stdlib=False)
+        assert "chrome.alarms.clear('alarm1')" in result
+        assert "_pymeth_" not in result
+
+    def test_js_keys_method_not_converted(self):
+        """js.X.keys() should NOT be converted to _pymeth_keys()."""
+        code = "import js\nk = js.Object.keys(obj)"
+        result = py2js(code, include_stdlib=False)
+        assert "Object.keys(obj)" in result
+        assert "_pymeth_keys" not in result
+
+    def test_js_values_method_not_converted(self):
+        """js.X.values() should NOT be converted to _pymeth_values()."""
+        code = "import js\nv = js.Object.values(obj)"
+        result = py2js(code, include_stdlib=False)
+        assert "Object.values(obj)" in result
+        assert "_pymeth_values" not in result
+
+    def test_js_chained_call_then_method(self):
+        """js.fetch().then() should work correctly."""
+        code = "import js\njs.fetch('/api').then(callback)"
+        result = py2js(code, include_stdlib=False)
+        assert "fetch('/api').then(callback)" in result
+        assert "_pymeth_" not in result
+
+    def test_js_subscript_then_method(self):
+        """js.chrome.storage['local'].get() - .get() should not become _pymeth_get()."""
+        code = "import js\nresult = js.chrome.storage['local'].get('key')"
+        result = py2js(code, include_stdlib=False)
+        # The subscript uses op_getitem, but .get() should NOT become _pymeth_get
+        assert ".get('key')" in result
+        assert "_pymeth_get" not in result

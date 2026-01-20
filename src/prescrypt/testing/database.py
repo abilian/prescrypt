@@ -169,7 +169,7 @@ class ResultsDatabase:
             ),
         )
         self.conn.commit()
-        return cursor.lastrowid
+        return cursor.lastrowid or 0
 
     def update_cpython_status(
         self,
@@ -231,7 +231,7 @@ class ResultsDatabase:
             ),
         )
         self.conn.commit()
-        return cursor.lastrowid
+        return cursor.lastrowid or 0
 
     def finish_run(
         self,

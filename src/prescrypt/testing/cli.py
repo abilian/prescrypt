@@ -589,14 +589,18 @@ def cmd_export_denylist(args, config: Config, db: ResultsDatabase):
         doc["manual_overrides"] = tomlkit.table()
 
     # Get current known_failures to show diff
-    current_failures = set(doc["manual_overrides"].get("known_failures", []))
+    manual_overrides = doc["manual_overrides"]
+    if hasattr(manual_overrides, "get"):
+        current_failures = set(manual_overrides.get("known_failures", []))  # type: ignore[union-attr]
+    else:
+        current_failures = set()
     new_failures = set(failing_paths)
 
     added = new_failures - current_failures
     removed = current_failures - new_failures
 
     # Update the list
-    doc["manual_overrides"]["known_failures"] = sorted(failing_paths)
+    doc["manual_overrides"]["known_failures"] = sorted(failing_paths)  # type: ignore[index]
 
     # Write back
     if args.dry_run:

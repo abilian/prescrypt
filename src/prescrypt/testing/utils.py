@@ -30,8 +30,11 @@ def _to_json(obj: quickjs.Object) -> JSON:
 
 
 def _pre_check(x):
-    tmp_file = Path(tempfile.mktemp(suffix=".js", prefix="prescrypt_"))
-    tmp_file.write_text(x)
+    with tempfile.NamedTemporaryFile(
+        suffix=".js", prefix="prescrypt_", delete=False, mode="w"
+    ) as tmp:
+        tmp.write(x)
+        tmp_file = Path(tmp.name)
     try:
         subprocess.run(["node", str(tmp_file)], check=True)
         tmp_file.unlink()

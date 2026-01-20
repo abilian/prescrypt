@@ -9,6 +9,23 @@ from prescrypt.front import ast
 from prescrypt.stdlib_js import StdlibJs
 
 
+def _is_js_ffi_chain(node: ast.AST, codegen: CodeGen) -> bool:
+    """Check if an AST node is part of a js.X.Y.Z chain."""
+    match node:
+        case ast.Name(id=name):
+            return codegen.is_js_ffi_name(name)
+        case ast.Attribute(value=value):
+            return _is_js_ffi_chain(value, codegen)
+        case ast.Call(func=func):
+            # js.fetch().then() - the base is still a JS FFI chain
+            return _is_js_ffi_chain(func, codegen)
+        case ast.Subscript(value=value):
+            # js.chrome.storage["local"] - the base is still a JS FFI chain
+            return _is_js_ffi_chain(value, codegen)
+        case _:
+            return False
+
+
 @gen_expr.register
 def gen_call(node: ast.Call, codegen: CodeGen) -> str | list:
     """Generate code for a function call."""
@@ -91,6 +108,24 @@ class FuncCall:
     def gen_method_call(self, value, method_name, args, keywords):
         stdlib_py = stdlib
         stdlib_js = StdlibJs()
+
+        # Check if this is a JS FFI chain (js.X.Y.method())
+        # If so, don't apply Python stdlib transformations
+        is_js_ffi = _is_js_ffi_chain(value, self.codegen)
+
+        if is_js_ffi:
+            # JS FFI: bypass Python stdlib and handle specially
+            obj_js = unify(self.gen_expr(value))
+
+            # Handle .new() -> new Constructor()
+            if method_name == "new":
+                js_args = ", ".join(
+                    flatten(self.gen_expr(arg)) for arg in args
+                )
+                return f"new {obj_js}({js_args})"
+
+            # All other methods: pass through directly to JS
+            return f"{self.gen_func()}{self.gen_args()}"
 
         # For class methods like int.from_bytes, pass the original name
         # so the method handler can recognize it

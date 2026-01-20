@@ -1,12 +1,17 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.2 (in progress) | **Tests:** 2404 passing, 28 skipped | **Coverage:** 89%
+**Current Status:** v0.9.3 (in progress) | **Tests:** 2414 passing, 28 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
 ---
 
 ## Recently Completed (v0.9.2)
+
+### JS FFI Fixes ✓
+- [x] **`js.X.new()` constructor syntax:** `js.Object.new()` → `new Object()`, `js.Date.new(2024, 0, 15)` → `new Date(2024, 0, 15)`
+- [x] **JS FFI method passthrough:** Methods like `.get()`, `.keys()`, `.values()`, `.clear()` no longer converted to `_pymeth_*` wrappers
+- [x] **Browser extension API compatibility:** `js.chrome.storage.local.get('key')` now works correctly
 
 ### Assignment & Formatting Enhancements ✓
 - [x] **Chained assignment with subscripts/attributes:** `a[0] = a[1] = value` and `obj.x = obj.y = value`
@@ -64,11 +69,22 @@ See `notes/history.md` for completed work (Stages 0-6).
 
 ## Future Enhancements
 
+### Build & Tooling
+- [ ] **Built-in bundling:** Bundle multi-file projects into a single JS file (currently requires external bundler like esbuild)
+- [ ] **Watch mode for CLI:** Auto-recompile on file changes
+- [ ] **Reserved word handling:** Auto-rename JavaScript reserved words (`default`, `class`, `import`, etc.)
+
+### JS FFI Enhancements
+- [ ] **`JS` type annotation:** Mark variables as JavaScript objects to bypass Python stdlib transformations
+  - Example: `result: JS = callback()` - compiler treats `result.get()` as JS method, not `_pymeth_get`
+  - Useful for stored references, callback return values, and any JS object not from direct `js.X` chain
+- [ ] **`from js import document, fetch`:** Direct imports from `js` module
+
+### Language Features
 - [ ] Dataclasses support
 - [ ] `__slots__` support
 - [ ] Multiple inheritance (MRO)
 - [ ] `match` statement (structural pattern matching)
-- [ ] Watch mode for CLI
 
 ---
 

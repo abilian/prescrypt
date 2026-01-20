@@ -5,7 +5,13 @@ All notable changes to Prescrypt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.2] - 2025-01-20
+## Unreleased
+
+### Planned
+
+See `notes/TODO.md` for upcoming features.
+
+## [0.9.2] - 2026-01-20
 
 ### Added
 
@@ -30,6 +36,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Zero padding: `f"{x:05}"` → `"00042"`
   - Sign-aware padding: `f"{x:+05}"` → `"+0042"`
   - Combined formats: `f"{x:,.2f}"` → `"1,234,567.89"`
+- **JS FFI `.new()` method**: `js.Object.new()` now correctly generates `new Object()`
+  - Works with all constructors: `js.Date.new(2024, 0, 15)` → `new Date(2024, 0, 15)`
+  - `js.Array.new(10)` → `new Array(10)`
+  - `js.RegExp.new('[a-z]+', 'gi')` → `new RegExp('[a-z]+', 'gi')`
+
+### Fixed
+
+- **JS FFI method collision**: JS FFI calls (`js.X.method()`) no longer incorrectly convert methods like `.get()`, `.keys()`, `.values()`, `.clear()` to Python stdlib wrappers
+  - `js.chrome.storage.local.get('key')` → `chrome.storage.local.get('key')` (previously used `_pymeth_get`)
+  - `js.Object.keys(obj)` → `Object.keys(obj)` (previously used `_pymeth_keys`)
+  - Affects all browser extension APIs that have Python-like method names
 
 ### Changed
 
@@ -39,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Statistics
 
-- 2404 tests passing
+- 2414 tests passing
 - Zero runtime dependencies
 
 ## [0.9.1] - 2026-01-19

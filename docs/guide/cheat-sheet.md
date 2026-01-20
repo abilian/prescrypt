@@ -46,9 +46,15 @@ text = js.JSON.stringify({"x": 1})
 ### Creating JavaScript Objects
 
 ```python
-# Use js.eval for object literals (Object.new() doesn't work)
-options = js.eval("({method: 'POST', headers: {}})")
-options.body = "data"
+# Use .new() to instantiate JavaScript classes
+obj = js.Object.new()           # new Object()
+date = js.Date.new(2024, 0, 15) # new Date(2024, 0, 15)
+parser = js.DOMParser.new()     # new DOMParser()
+re = js.RegExp.new("[a-z]+")    # new RegExp("[a-z]+")
+
+# Or use Python dicts (compiled to JS objects)
+options = {"method": "POST", "headers": {}}
+options["body"] = "data"
 
 # Access object properties
 value = obj.property      # obj.property
@@ -65,8 +71,11 @@ def handle_text(text):
     data = js.JSON.parse(text)
     print(data.message)
 
-options = js.eval("({method: 'POST', headers: {'Content-Type': 'application/json'}})")
-options.body = js.JSON.stringify({"key": "value"})
+options = {
+    "method": "POST",
+    "headers": {"Content-Type": "application/json"},
+    "body": js.JSON.stringify({"key": "value"})
+}
 js.fetch("/api/endpoint", options).then(on_response)
 ```
 
@@ -183,40 +192,6 @@ add = lambda x, y=1: x + y
 
 ## What Doesn't Work (Workarounds)
 
-### Tuple Unpacking
-
-```python
-# NOT SUPPORTED
-a, b = get_pair()
-for k, v in dict.items():
-for i, x in enumerate(lst):
-
-# WORKAROUND: Use indexing
-result = get_pair()
-a = result[0]
-b = result[1]
-
-for k in my_dict:
-    v = my_dict[k]
-
-for i in range(len(lst)):
-    x = lst[i]
-```
-
-### F-String Format Specifiers
-
-```python
-# NOT SUPPORTED (compiler hangs or wrong output)
-f"{x:,}"      # thousands separator
-f"{x:.2f}"    # fixed precision
-f"{x:>10}"    # width/alignment
-
-# WORKAROUND: Use str() and string methods
-str(int(x))              # instead of f"{x:.0f}"
-str(round(x, 2))         # instead of f"{x:.2f}"
-str(x).rjust(10)         # instead of f"{x:>10}"
-```
-
 ### Variable Scoping in Loops
 
 ```python
@@ -250,40 +225,16 @@ else:
     result = "no"
 ```
 
-### Chained Assignment with Subscripts
+### Reserved Words as Variable Names
 
 ```python
-# NOT SUPPORTED
-a[0] = a[1] = False
+# PROBLEM: JavaScript reserved words cause issues
+default = {"key": "value"}  # 'default' is reserved in JS
+class_ = "container"        # 'class' is reserved
 
-# WORKAROUND: Split into separate statements
-a[0] = False
-a[1] = False
-```
-
-### dict.get() with Default
-
-```python
-# May not work as expected
-value = d.get("key", default)
-
-# WORKAROUND: Use explicit check
-if "key" in d:
-    value = d["key"]
-else:
-    value = default
-```
-
-### Generator Expressions in Builtins
-
-```python
-# May not work
-total = sum(x["value"] for x in data)
-
-# WORKAROUND: Use explicit loop
-total = 0
-for x in data:
-    total += x["value"]
+# WORKAROUND: Use alternative names
+defaults = {"key": "value"}
+css_class = "container"
 ```
 
 ---
@@ -309,6 +260,67 @@ String methods: Most common methods work (`split`, `join`, `strip`, `replace`, `
 List methods: `append`, `extend`, `insert`, `remove`, `pop`, `clear`, `index`, `count`, `sort`, `reverse`, `copy`
 
 Dict methods: `keys`, `values`, `items`, `get`, `pop`, `update`, `clear`, `copy`
+
+---
+
+## Multi-File Projects
+
+Prescrypt compiles each Python file separately. For multi-file projects, you have two options:
+
+### Option 1: ES6 Modules (Browser/Modern Node)
+
+Use the `-m` flag to generate ES6 imports/exports:
+
+```bash
+py2js src/main.py -o dist/main.js -m
+py2js src/utils.py -o dist/utils.js -m
+```
+
+```python
+# src/main.py
+from utils import helper_function
+helper_function()
+```
+
+Generates:
+```javascript
+// dist/main.js
+import { helper_function } from './utils.js';
+helper_function();
+```
+
+**Note**: You need a bundler (esbuild, webpack, rollup) or native ES6 module support in the browser.
+
+### Option 2: Single File (Simpler)
+
+For simpler projects, inline all code into a single Python file:
+
+```python
+# app.py - all code in one file
+def helper():
+    return "hello"
+
+def main():
+    print(helper())
+
+main()
+```
+
+### Using a Bundler
+
+For production multi-file projects, use a bundler:
+
+```bash
+# Install esbuild
+npm install -g esbuild
+
+# Compile Python to JS modules
+py2js src/main.py -o dist/main.js -m
+py2js src/utils.py -o dist/utils.js -m
+
+# Bundle into single file
+esbuild dist/main.js --bundle --outfile=dist/bundle.js
+```
 
 ---
 

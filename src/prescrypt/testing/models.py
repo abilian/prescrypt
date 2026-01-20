@@ -9,17 +9,24 @@ This module contains the core data classes used throughout the testing system:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import sys
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 # Try to import tomllib (Python 3.11+) or fall back to tomli
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ImportError:
+else:
     try:
         import tomli as tomllib
     except ImportError:
-        tomllib = None
+        tomllib = None  # type: ignore[assignment]
+
+if TYPE_CHECKING:
+    from types import ModuleType
+
+    tomllib: ModuleType | None
 
 
 class Status:
@@ -96,39 +103,33 @@ class TestResult:
     runtime: str | None = None  # "quickjs" or "node"
 
 
+def _default_runtimes() -> list[str]:
+    return ["quickjs", "node"]
+
+
+def _default_include() -> list[str]:
+    return ["**/*.py"]
+
+
+def _default_exclude() -> list[str]:
+    return ["**/__pycache__/**", "**/_*.py"]
+
+
 @dataclass
 class Config:
     """Configuration loaded from test-config.toml."""
 
     timeout: int = 10
-    runtimes: list[str] = None
+    runtimes: list[str] = field(default_factory=_default_runtimes)
     python: str = "python3"
     programs_dir: str = "programs"
-    include_patterns: list[str] = None
-    exclude_patterns: list[str] = None
-    micropython_only: list[str] = None
-    unsupported_features: list[str] = None
-    manual_skip: list[str] = None
-    force_include: list[str] = None
-    known_failures: list[str] = None
-
-    def __post_init__(self):
-        if self.runtimes is None:
-            self.runtimes = ["quickjs", "node"]
-        if self.include_patterns is None:
-            self.include_patterns = ["**/*.py"]
-        if self.exclude_patterns is None:
-            self.exclude_patterns = ["**/__pycache__/**", "**/_*.py"]
-        if self.micropython_only is None:
-            self.micropython_only = []
-        if self.unsupported_features is None:
-            self.unsupported_features = []
-        if self.manual_skip is None:
-            self.manual_skip = []
-        if self.force_include is None:
-            self.force_include = []
-        if self.known_failures is None:
-            self.known_failures = []
+    include_patterns: list[str] = field(default_factory=_default_include)
+    exclude_patterns: list[str] = field(default_factory=_default_exclude)
+    micropython_only: list[str] = field(default_factory=list)
+    unsupported_features: list[str] = field(default_factory=list)
+    manual_skip: list[str] = field(default_factory=list)
+    force_include: list[str] = field(default_factory=list)
+    known_failures: list[str] = field(default_factory=list)
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
