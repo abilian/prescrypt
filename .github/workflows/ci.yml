@@ -32,7 +32,7 @@ jobs:
       - name: Install uv and nox
         run: pip install uv nox
       - name: Run tests
-        run: nox -s test -p ${{ matrix.python-version }}
+        run: nox -s tests -p ${{ matrix.python-version }}
 
   build:
     runs-on: ubuntu-latest

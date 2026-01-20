@@ -12,7 +12,7 @@ def tests(session: nox.Session):
 
 
 @nox.session(python=PYTHONS[0])
-def lint(session: nox.Session):
+def check(session: nox.Session):
     uv_sync(session)
     session.run("ruff", "check")
 
