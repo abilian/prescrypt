@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predator-Prey Simulation - Prescrypt Demo</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #8b5cf6;
+            --prey: #3b82f6;
+            --predator: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--prey), var(--predator));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .charts {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 15px;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 8px;
+            width: 100%;
+            height: auto;
+        }
+
+        .sidebar {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .param-group {
+            margin-bottom: 20px;
+        }
+
+        .param-group h3 {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .param {
+            margin-bottom: 12px;
+        }
+
+        .param label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .param-value {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #start-btn {
+            background: var(--accent);
+            color: white;
+        }
+
+        #start-btn:hover:not(:disabled) {
+            filter: brightness(1.1);
+        }
+
+        #stop-btn {
+            background: var(--predator);
+            color: white;
+        }
+
+        #reset-btn {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .equation-box {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Times New Roman', serif;
+            font-size: 14px;
+        }
+
+        .equation-box h4 {
+            font-family: -apple-system, sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .equation {
+            color: var(--text);
+            margin: 8px 0;
+        }
+
+        .prey-color {
+            color: var(--prey);
+        }
+
+        .predator-color {
+            color: var(--predator);
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 900px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🦊 Predator-Prey Ecosystem 🐰</h1>
+            <p class="subtitle">Interactive Lotka-Volterra simulation - Python running in your browser</p>
+        </header>
+
+        <div class="main-layout">
+            <div class="charts">
+                <div class="chart-container">
+                    <div class="chart-title">Population Over Time</div>
+                    <canvas id="sim-canvas"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Phase Space (Limit Cycle)</div>
+                    <canvas id="phase-canvas"></canvas>
+                </div>
+            </div>
+
+            <aside class="sidebar">
+                <h2>Parameters</h2>
+
+                <div class="param-group">
+                    <h3>Initial Populations</h3>
+                    <div class="param">
+                        <label>
+                            <span class="prey-color">Prey (Rabbits)</span>
+                            <span class="param-value" id="initial-prey-val">100</span>
+                        </label>
+                        <input type="range" id="initial-prey" min="10" max="200" value="100"
+                               oninput="document.getElementById('initial-prey-val').textContent=this.value">
+                    </div>
+                    <div class="param">
+                        <label>
+                            <span class="predator-color">Predators (Foxes)</span>
+                            <span class="param-value" id="initial-predators-val">20</span>
+                        </label>
+                        <input type="range" id="initial-predators" min="5" max="100" value="20"
+                               oninput="document.getElementById('initial-predators-val').textContent=this.value">
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <h3>Prey Parameters</h3>
+                    <div class="param">
+                        <label>
+                            Birth Rate (α)
+                            <span class="param-value" id="birth-rate-val">0.10</span>
+                        </label>
+                        <input type="range" id="birth-rate" min="0.01" max="0.3" step="0.01" value="0.1"
+                               oninput="document.getElementById('birth-rate-val').textContent=parseFloat(this.value).toFixed(2)">
+                    </div>
+                    <div class="param">
+                        <label>
+                            Predation Rate (β)
+                            <span class="param-value" id="predation-rate-val">0.02</span>
+                        </label>
+                        <input type="range" id="predation-rate" min="0.005" max="0.05" step="0.005" value="0.02"
+                               oninput="document.getElementById('predation-rate-val').textContent=parseFloat(this.value).toFixed(3)">
+                    </div>
+                </div>
+
+                <div class="param-group">
+                    <h3>Predator Parameters</h3>
+                    <div class="param">
+                        <label>
+                            Death Rate (γ)
+                            <span class="param-value" id="death-rate-val">0.10</span>
+                        </label>
+                        <input type="range" id="death-rate" min="0.01" max="0.3" step="0.01" value="0.1"
+                               oninput="document.getElementById('death-rate-val').textContent=parseFloat(this.value).toFixed(2)">
+                    </div>
+                    <div class="param">
+                        <label>
+                            Conversion Rate (δ)
+                            <span class="param-value" id="conversion-rate-val">0.01</span>
+                        </label>
+                        <input type="range" id="conversion-rate" min="0.005" max="0.03" step="0.001" value="0.01"
+                               oninput="document.getElementById('conversion-rate-val').textContent=parseFloat(this.value).toFixed(3)">
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="start-btn">▶ Start</button>
+                    <button id="stop-btn" disabled>⏸ Pause</button>
+                    <button id="reset-btn">↺ Reset</button>
+                </div>
+
+                <div class="equation-box">
+                    <h4>Lotka-Volterra Equations</h4>
+                    <div class="equation">
+                        d<span class="prey-color">P</span>/dt = α<span class="prey-color">P</span> − β<span class="prey-color">P</span><span class="predator-color">F</span>
+                    </div>
+                    <div class="equation">
+                        d<span class="predator-color">F</span>/dt = δ<span class="prey-color">P</span><span class="predator-color">F</span> − γ<span class="predator-color">F</span>
+                    </div>
+                </div>
+
+                <p class="info-text">
+                    This simulation runs entirely in your browser. The Python code
+                    was compiled to JavaScript by Prescrypt - no server needed!
+                </p>
+            </aside>
+        </div>
+    </div>
+
+    <script type="module" src="dist/simulation.js"></script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Validation Library - Prescrypt Demo</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.2s;
+            background: var(--surface);
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input.valid {
+            border-color: var(--success);
+        }
+
+        input.invalid {
+            border-color: var(--error);
+        }
+
+        .feedback {
+            font-size: 13px;
+            margin-top: 6px;
+            min-height: 20px;
+        }
+
+        .feedback.error {
+            color: var(--error);
+        }
+
+        .feedback.success {
+            color: var(--success);
+        }
+
+        #password-strength {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .strength-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .meter {
+            height: 100%;
+            border-radius: 3px;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            line-height: 6px;
+        }
+
+        .meter.weak {
+            background: var(--error);
+        }
+
+        .meter.medium {
+            background: var(--warning);
+        }
+
+        .meter.strong {
+            background: var(--success);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .form-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .form-result.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .form-result.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .form-result ul {
+            margin: 10px 0 0 20px;
+        }
+
+        .info-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 30px;
+        }
+
+        .info-box h3 {
+            color: var(--primary);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .info-box code {
+            background: rgba(99, 102, 241, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 500px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Shared Validation Library</h1>
+            <p class="subtitle">
+                Write validation rules <span class="highlight">once in Python</span>,
+                use on backend AND frontend
+            </p>
+        </header>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">📝</div>
+                <span class="card-title">Registration Form</span>
+            </div>
+
+            <form id="registration-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="text" id="email" placeholder="you@example.com" autocomplete="email">
+                    <div id="email-feedback" class="feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" placeholder="John Doe" autocomplete="name">
+                    <div id="name-feedback" class="feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••">
+                    <div id="password-strength">
+                        <div class="strength-bar">
+                            <div id="strength-meter" class="meter"></div>
+                        </div>
+                    </div>
+                    <div id="password-feedback" class="feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" placeholder="••••••••">
+                    <div id="confirm-password-feedback" class="feedback"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone (optional)</label>
+                        <input type="tel" id="phone" placeholder="(555) 123-4567">
+                        <div id="phone-feedback" class="feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="card">Card Number (optional)</label>
+                        <input type="text" id="card" placeholder="4242 4242 4242 4242">
+                        <div id="card-feedback" class="feedback"></div>
+                    </div>
+                </div>
+
+                <button type="submit">Create Account</button>
+
+                <div id="form-result" class="form-result"></div>
+            </form>
+
+            <div class="info-box">
+                <h3>How It Works</h3>
+                <p>
+                    The validation logic in <code>validators.py</code> runs in your browser
+                    as JavaScript, compiled by Prescrypt.
+                </p>
+                <p>
+                    The <strong>same Python code</strong> can run on your Django/FastAPI
+                    backend - eliminating duplicate validation logic!
+                </p>
+                <p>
+                    Try typing <code>test@gmial.com</code> to see typo detection, or
+                    <code>4242424242424242</code> for Luhn algorithm validation.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="dist/validators.js"></script>
+    <script src="dist/app.js"></script>
+</body>
+</html>
