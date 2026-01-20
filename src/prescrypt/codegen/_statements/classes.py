@@ -207,7 +207,8 @@ def make_class_definition(
     """
     # Create constructor that works with or without 'new' keyword
     # ES6 export requires 'const' keyword: export const X = ...
-    decl = "export const " if export else ""
+    # Non-exported classes need 'var' to avoid strict mode errors
+    decl = "export const " if export else "var "
     lines = [f"{decl}{name} = function () {{"]
     # Auto-instantiate if called without 'new'
     lines.append(f"    if (!(this instanceof {name})) {{")
