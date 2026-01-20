@@ -46,24 +46,24 @@ See `notes/history.md` for completed work (Stages 0-6).
 
 ## Missing Features (discovered via demos)
 
-### Tuple Unpacking (High Priority)
+### Tuple Unpacking ✓
 
-These patterns don't work and require manual workarounds:
+These patterns now work:
 
-- [ ] **Assignment unpacking:** `a, b = func()` → must use `r = func(); a = r[0]; b = r[1]`
-- [ ] **For loop unpacking:** `for k, v in dict.items()` → must use `for k in dict: v = dict[k]`
-- [ ] **Enumerate unpacking:** `for i, x in enumerate(lst)` → must use `for i in range(len(lst)): x = lst[i]`
-- [ ] **Nested unpacking:** `for i, (k, v) in enumerate(d.items())` → not supported at all
-- [ ] **Chained assignment with subscripts:** `a[0] = a[1] = False` → must split into two statements
+- [x] **Assignment unpacking:** `a, b = func()`
+- [x] **For loop unpacking:** `for k, v in dict.items()`
+- [x] **Enumerate unpacking:** `for i, x in enumerate(lst)`
+- [x] **Nested unpacking:** `for i, (k, v) in enumerate(d.items())`
+- [x] **Chained assignment with subscripts:** `a[0] = a[1] = False` (fixed in v0.9.2)
 
-### F-String Format Specifiers (Medium Priority)
+### F-String Format Specifiers ✓
 
-These format specifiers cause issues (compiler hangs or incorrect output):
+These format specifiers now work:
 
-- [ ] **Thousands separator:** `f"{x:,}"` → use `str(x)` instead
-- [ ] **Fixed precision:** `f"{x:.2f}"` → use `str(round(x, 2))` instead
-- [ ] **Width/alignment:** `f"{x:>10}"` or `f"{x:2d}"` → use `str(x).rjust(10)` instead
-- [ ] **Combined:** `f"{x:,.0f}"` → use `str(int(x))` instead
+- [x] **Thousands separator:** `f"{x:,}"` → outputs `"1,234,567"`
+- [x] **Fixed precision:** `f"{x:.2f}"` → outputs `"3.14"`
+- [x] **Width/alignment:** `f"{x:>10}"` → outputs `"        42"`
+- [x] **Combined:** `f"{x:,.2f}"` → outputs `"1,234,567.89"`
 
 ### Variable Scoping (Low Priority)
 

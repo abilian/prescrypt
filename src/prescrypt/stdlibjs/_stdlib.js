@@ -1264,8 +1264,9 @@ var _pyfunc_format = function (v, fmt) {
   if (fmt === undefined) {
     return String(v);
   }
-  fmt = fmt.toLowerCase();
   let s = String(v);
+
+  // Handle !r conversion (repr)
   if (fmt.indexOf("!r") >= 0) {
     try {
       s = JSON.stringify(v);
@@ -1275,65 +1276,103 @@ var _pyfunc_format = function (v, fmt) {
     if (typeof s === "undefined") {
       s = v._IS_COMPONENT ? v.id : String(v);
     }
+    fmt = fmt.replace("!r", "");
   }
-  let fmt_type = "";
-  if (
-    fmt.slice(-1) == "i" ||
-    fmt.slice(-1) == "f" ||
-    fmt.slice(-1) == "e" ||
-    fmt.slice(-1) == "g"
-  ) {
-    fmt_type = fmt[fmt.length - 1];
-    fmt = fmt.slice(0, fmt.length - 1);
-  }
+
+  // Parse format spec: [[fill]align][sign][#][0][width][,][.precision][type]
+  // The format can be either ":spec" (from f-strings) or just "spec" (from format() builtin)
   let i0 = fmt.indexOf(":");
-  let i1 = fmt.indexOf(".");
-  let spec1 = "",
-    spec2 = ""; // before and after dot
-  if (i0 >= 0) {
-    if (i1 > i0) {
-      spec1 = fmt.slice(i0 + 1, i1);
-      spec2 = fmt.slice(i1 + 1);
-    } else {
-      spec1 = fmt.slice(i0 + 1);
-    }
-  } else if (i1 >= 0) {
-    // No colon, but has dot (e.g., ".2f" after removing "f")
-    spec1 = fmt.slice(0, i1);
-    spec2 = fmt.slice(i1 + 1);
+  let spec = i0 >= 0 ? fmt.slice(i0 + 1) : fmt;
+
+  // Parse fill and alignment
+  let fill = ' ';
+  let align = '';
+  if (spec.length >= 2 && ['<', '>', '^', '='].includes(spec[1])) {
+    fill = spec[0];
+    align = spec[1];
+    spec = spec.slice(2);
+  } else if (spec.length >= 1 && ['<', '>', '^', '='].includes(spec[0])) {
+    align = spec[0];
+    spec = spec.slice(1);
   }
-  // Format numbers
-  if (fmt_type == "") {
-  } else if (fmt_type == "i") {
-    // integer formatting, for %i
+
+  // Parse sign
+  let prefix = "";
+  if (spec.length > 0 && ['+', '-', ' '].includes(spec[0])) {
+    if (spec[0] === '+' && typeof v === 'number' && v >= 0) {
+      prefix = '+';
+    } else if (spec[0] === ' ' && typeof v === 'number' && v >= 0) {
+      prefix = ' ';
+    }
+    spec = spec.slice(1);
+  }
+
+  // Parse # (alternate form) - skip for now
+  if (spec.length > 0 && spec[0] === '#') {
+    spec = spec.slice(1);
+  }
+
+  // Check for thousands separator
+  let useThousands = false;
+  if (spec.indexOf(',') >= 0) {
+    useThousands = true;
+    spec = spec.replace(',', '');
+  }
+
+  // Handle zero-fill shorthand: 05 means 0>5 for numbers
+  if (spec.length > 0 && spec[0] === '0' && !align) {
+    fill = '0';
+    align = '>';
+    spec = spec.slice(1);
+  }
+
+  // Parse width
+  let width = 0;
+  let widthMatch = spec.match(/^(\d+)/);
+  if (widthMatch) {
+    width = parseInt(widthMatch[1], 10);
+    spec = spec.slice(widthMatch[1].length);
+  }
+
+  // Parse precision
+  let precision = null;
+  if (spec.length > 0 && spec[0] === '.') {
+    spec = spec.slice(1);
+    let precMatch = spec.match(/^(\d+)/);
+    if (precMatch) {
+      precision = parseInt(precMatch[1], 10);
+      spec = spec.slice(precMatch[1].length);
+    }
+  }
+
+  // Parse type (remaining characters)
+  let fmt_type = spec.toLowerCase();
+
+  // Format the value based on type
+  if (fmt_type === 'd' || fmt_type === 'i') {
     s = parseInt(v).toFixed(0);
-  } else if (fmt_type == "f") {
-    // float formatting
+  } else if (fmt_type === 'f') {
     v = parseFloat(v);
-    let decimals = spec2 ? Number(spec2) : 6;
+    let decimals = precision !== null ? precision : 6;
     s = v.toFixed(decimals);
-  } else if (fmt_type == "e") {
-    // exp formatting
+  } else if (fmt_type === 'e') {
     v = parseFloat(v);
-    let precision = (spec2 ? Number(spec2) : 6) || 1;
-    s = v.toExponential(precision);
-  } else if (fmt_type == "g") {
-    // "general" formatting
+    let prec = precision !== null ? precision : 6;
+    s = v.toExponential(prec);
+  } else if (fmt_type === 'g') {
     v = parseFloat(v);
-    let precision = (spec2 ? Number(spec2) : 6) || 1;
-    // Exp or decimal?
-    s = v.toExponential(precision - 1);
+    let prec = (precision !== null ? precision : 6) || 1;
+    s = v.toExponential(prec - 1);
     let s1 = s.slice(0, s.indexOf("e")),
       s2 = s.slice(s.indexOf("e"));
     if (s2.length == 3) {
       s2 = "e" + s2[1] + "0" + s2[2];
     }
     let exp = Number(s2.slice(1));
-    if (exp >= -4 && exp < precision) {
-      s1 = v.toPrecision(precision);
+    if (exp >= -4 && exp < prec) {
+      s1 = v.toPrecision(prec);
       s2 = "";
     }
-    // Skip trailing zeros and dot
     let j = s1.length - 1;
     while (j > 0 && s1[j] == "0") {
       j -= 1;
@@ -1343,22 +1382,59 @@ var _pyfunc_format = function (v, fmt) {
       s1 = s1.slice(0, s1.length - 1);
     }
     s = s1 + s2;
+  } else if (fmt_type === '' && precision !== null && typeof v === 'number') {
+    // No type but has precision - treat as float
+    s = parseFloat(v).toFixed(precision);
   }
-  // prefix/padding
-  let prefix = "";
-  if (spec1) {
-    if (spec1[0] == "+" && v > 0) {
-      prefix = "+";
-      spec1 = spec1.slice(1);
-    } else if (spec1[0] == " " && v > 0) {
-      prefix = " ";
-      spec1 = spec1.slice(1);
+
+  // Apply thousands separator
+  if (useThousands && !isNaN(parseFloat(v))) {
+    let parts = s.split('.');
+    let intPart = parts[0];
+    let sign = '';
+    if (intPart[0] === '-') {
+      sign = '-';
+      intPart = intPart.slice(1);
+    }
+    // Add commas to integer part using regex
+    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    parts[0] = sign + intPart;
+    s = parts.join('.');
+  }
+
+  // Apply width and alignment padding
+  if (width > 0) {
+    let totalLen = s.length + prefix.length;
+    if (totalLen < width) {
+      let padLen = width - totalLen;
+      let padding = fill.repeat(padLen);
+      if (align === '<') {
+        // Left align - padding on right
+        s = prefix + s + padding;
+        prefix = '';
+      } else if (align === '^') {
+        // Center align
+        let left = Math.floor(padLen / 2);
+        let right = padLen - left;
+        s = fill.repeat(left) + prefix + s + fill.repeat(right);
+        prefix = '';
+      } else if (align === '=' && prefix) {
+        // Sign-aware padding (padding between sign and digits)
+        s = prefix + padding + s;
+        prefix = '';
+      } else {
+        // Default: right align ('>') - padding on left
+        if (fill === '0' && prefix) {
+          // Zero padding goes after sign
+          s = prefix + padding + s;
+          prefix = '';
+        } else {
+          s = padding + s;
+        }
+      }
     }
   }
-  if (spec1 && spec1[0] == "0") {
-    let padding = Number(spec1.slice(1)) - (s.length + prefix.length);
-    s = "0".repeat(Math.max(0, padding)) + s;
-  }
+
   return prefix + s;
 };
 var _pyfunc_format_value = function (value, type, flags, width, precision) {

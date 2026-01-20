@@ -103,48 +103,55 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
 def gen_multi_target_assign(
     targets: list[ast.expr], js_value: str, codegen: CodeGen
 ) -> str:
-    """Handle multiple assignment: a = b = c = 3"""
+    """Handle multiple assignment: a = b = c = 3
+
+    Supports simple names, subscripts (a[0]), and attributes (a.x).
+    """
     lines = []
 
+    # For non-simple targets, use a temp variable to avoid evaluating the RHS multiple times
+    needs_temp = any(not isinstance(t, ast.Name) for t in targets)
+
+    if needs_temp:
+        tmp = codegen.dummy("val")
+        lines.append(f"let {tmp} = {js_value};")
+        js_value = tmp
+
     # Process targets right-to-left
-    # a = b = c = 3 -> let c = 3; let b = c; let a = b;
-    prev_name = None
     for target in reversed(targets):
-        if not isinstance(target, ast.Name):
-            msg = "Multiple assignment only supports simple names"
-            raise JSError(msg)
+        match target:
+            case ast.Name(id=name):
+                # Check if already known BEFORE adding
+                is_known = codegen.ns.is_known(name)
+                codegen.add_var(name)
 
-        name = target.id
+                export_prefix = "export " if codegen.should_export(name) else ""
 
-        # Check if already known BEFORE adding
-        is_known = codegen.ns.is_known(name)
-        codegen.add_var(name)
-
-        export_prefix = "export " if codegen.should_export(name) else ""
-
-        if is_known:
-            # Already declared - just reassign
-            if prev_name is None:
-                lines.append(f"{name} = {js_value};")
-            else:
-                lines.append(f"{name} = {prev_name};")
-        else:
-            # New variable - declare it
-            decl = codegen.get_declaration_kind(name)
-            if prev_name is None:
-                # First (rightmost) target gets the value
-                if decl:
-                    lines.append(f"{export_prefix}{decl} {name} = {js_value};")
-                else:
+                if is_known:
+                    # Already declared - just reassign
                     lines.append(f"{name} = {js_value};")
-            else:
-                # Subsequent targets get the previous variable
-                if decl:
-                    lines.append(f"{export_prefix}{decl} {name} = {prev_name};")
                 else:
-                    lines.append(f"{name} = {prev_name};")
+                    # New variable - declare it
+                    decl = codegen.get_declaration_kind(name)
+                    if decl:
+                        lines.append(f"{export_prefix}{decl} {name} = {js_value};")
+                    else:
+                        lines.append(f"{name} = {js_value};")
 
-        prev_name = name
+            case ast.Subscript(value, slice_node):
+                js_obj = flatten(codegen.gen_expr(value))
+                js_key = flatten(codegen.gen_expr(slice_node))
+                lines.append(
+                    f"{codegen.call_std_function('op_setitem', [js_obj, js_key, js_value])};"
+                )
+
+            case ast.Attribute(value, attr):
+                js_obj = flatten(codegen.gen_expr(value))
+                lines.append(f"{js_obj}.{attr} = {js_value};")
+
+            case _:
+                msg = f"Multiple assignment does not support {type(target).__name__}"
+                raise JSError(msg)
 
     return "\n".join(lines)
 
