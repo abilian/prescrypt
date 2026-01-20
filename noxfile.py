@@ -11,7 +11,7 @@ def tests(session: nox.Session):
     session.run("pytest")
 
 
-@nox.session(python=PYTHONS[0])
+@nox.session()
 def check(session: nox.Session):
     uv_sync(session)
     session.run("ruff", "check")
