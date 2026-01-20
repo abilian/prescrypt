@@ -99,6 +99,7 @@ nav:
       - Source Maps: guide/source-maps.md
       - Optimization: guide/optimization.md
       - Troubleshooting: guide/troubleshooting.md
+      - Cheat Sheet: guide/cheat-sheet.md
   - Examples:
       - examples/index.md
       - Browser App: examples/browser-app.md
