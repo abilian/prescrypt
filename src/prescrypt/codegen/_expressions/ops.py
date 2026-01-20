@@ -237,7 +237,7 @@ def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
     assert len(ops) == 1
     op = ops[0]
 
-    if type(op) in (ast.Eq, ast.NotEq) and not js_left.endswith(".length"):
+    if type(op) in (ast.Eq, ast.NotEq):
         # Optimize when both types are primitives: use === instead of helper
         if is_primitive(left_type) and is_primitive(right_type):
             if type(op) == ast.NotEq:
