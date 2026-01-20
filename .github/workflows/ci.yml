@@ -16,7 +16,7 @@ jobs:
       - name: Install uv and nox
         run: pip install uv nox
       - name: Run checks (lint, format, typecheck)
-        run: nox -s check -p 3.12
+        run: nox -s check -P 3.12
 
   test:
     runs-on: ubuntu-latest
