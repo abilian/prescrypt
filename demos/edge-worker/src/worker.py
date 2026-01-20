@@ -9,6 +9,7 @@ This worker demonstrates common edge computing patterns:
 - Rate limiting
 - Caching strategies
 """
+
 from __future__ import annotations
 
 import js
@@ -36,15 +37,16 @@ RATE_LIMIT = 60
 
 # A/B test configuration
 AB_TEST_VARIANTS = {
-    "control": 0.5,      # 50% get control
-    "variant_a": 0.3,    # 30% get variant A
-    "variant_b": 0.2,    # 20% get variant B
+    "control": 0.5,  # 50% get control
+    "variant_a": 0.3,  # 30% get variant A
+    "variant_b": 0.2,  # 20% get variant B
 }
 
 
 # ============================================================================
 # Utilities
 # ============================================================================
+
 
 def is_bot(user_agent: str) -> bool:
     """Check if the request appears to be from a bot."""
@@ -95,14 +97,12 @@ def get_ab_variant(identifier: str) -> str:
 # Request Handlers
 # ============================================================================
 
+
 def handle_blocked(reason: str):
     """Return a blocked response."""
     return js.Response.new(
         f"Access Denied: {reason}",
-        {
-            "status": 403,
-            "headers": {"Content-Type": "text/plain"}
-        }
+        {"status": 403, "headers": {"Content-Type": "text/plain"}},
     )
 
 
@@ -110,13 +110,7 @@ def handle_rate_limited():
     """Return a rate limited response."""
     return js.Response.new(
         "Rate limit exceeded. Please try again later.",
-        {
-            "status": 429,
-            "headers": {
-                "Content-Type": "text/plain",
-                "Retry-After": "60"
-            }
-        }
+        {"status": 429, "headers": {"Content-Type": "text/plain", "Retry-After": "60"}},
     )
 
 
@@ -133,11 +127,14 @@ def add_security_headers(response):
     # Custom header to show this was processed by edge
     headers.set("X-Edge-Processed", "true")
 
-    return js.Response.new(response.body, {
-        "status": response.status,
-        "statusText": response.statusText,
-        "headers": headers
-    })
+    return js.Response.new(
+        response.body,
+        {
+            "status": response.status,
+            "statusText": response.statusText,
+            "headers": headers,
+        },
+    )
 
 
 def transform_html(html: str, variant: str) -> str:
@@ -161,6 +158,7 @@ def transform_html(html: str, variant: str) -> str:
 # ============================================================================
 # Main Handler
 # ============================================================================
+
 
 async def handle_request(request):
     """
@@ -263,7 +261,7 @@ async def handle_request(request):
 
         <p style="color: #64748b; font-size: 14px;">
             The Python code running this worker was compiled to JavaScript by
-            <a href="https://github.com/user/prescrypt" style="color: #4f46e5;">Prescrypt</a>.
+            <a href="https://github.com/abilian/prescrypt" style="color: #4f46e5;">Prescrypt</a>.
             Edge workers run on Cloudflare's global network with sub-millisecond cold starts.
         </p>
     </div>
@@ -274,10 +272,9 @@ async def handle_request(request):
     # --- Step 6: Transform Response ---
     transformed = transform_html(html_content, variant)
 
-    response = js.Response.new(transformed, {
-        "status": 200,
-        "headers": {"Content-Type": "text/html"}
-    })
+    response = js.Response.new(
+        transformed, {"status": 200, "headers": {"Content-Type": "text/html"}}
+    )
 
     # Add security headers
     response = add_security_headers(response)
@@ -288,6 +285,7 @@ async def handle_request(request):
 # ============================================================================
 # Worker Entry Point
 # ============================================================================
+
 
 def handle_fetch(event):
     """Fetch event handler - Cloudflare Worker entry point."""

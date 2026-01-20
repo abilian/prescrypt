@@ -1,168 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: system-ui, sans-serif;
-            width: 300px;
-            padding: 20px;
-            margin: 0;
-            background: #1e293b;
-            color: #e2e8f0;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <style>
+            body {
+                font-family: system-ui, sans-serif;
+                width: 300px;
+                padding: 20px;
+                margin: 0;
+                background: #1e293b;
+                color: #e2e8f0;
+            }
 
-        h1 {
-            font-size: 18px;
-            margin: 0 0 15px 0;
-            color: #6366f1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+            h1 {
+                font-size: 18px;
+                margin: 0 0 15px 0;
+                color: #6366f1;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
 
-        .description {
-            font-size: 13px;
-            color: #94a3b8;
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
+            .description {
+                font-size: 13px;
+                color: #94a3b8;
+                line-height: 1.5;
+                margin-bottom: 20px;
+            }
 
-        .feature {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #334155;
-        }
+            .feature {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #334155;
+            }
 
-        .feature:last-child {
-            border-bottom: none;
-        }
+            .feature:last-child {
+                border-bottom: none;
+            }
 
-        .feature-name {
-            font-size: 14px;
-        }
+            .feature-name {
+                font-size: 14px;
+            }
 
-        .feature-desc {
-            font-size: 11px;
-            color: #64748b;
-        }
+            .feature-desc {
+                font-size: 11px;
+                color: #64748b;
+            }
 
-        .toggle {
-            position: relative;
-            width: 40px;
-            height: 22px;
-        }
+            .toggle {
+                position: relative;
+                width: 40px;
+                height: 22px;
+            }
 
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+            .toggle input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
 
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #334155;
-            border-radius: 22px;
-            transition: 0.3s;
-        }
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: #334155;
+                border-radius: 22px;
+                transition: 0.3s;
+            }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: 0.3s;
-        }
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 16px;
+                width: 16px;
+                left: 3px;
+                bottom: 3px;
+                background: white;
+                border-radius: 50%;
+                transition: 0.3s;
+            }
 
-        input:checked + .slider {
-            background: #6366f1;
-        }
+            input:checked + .slider {
+                background: #6366f1;
+            }
 
-        input:checked + .slider:before {
-            transform: translateX(18px);
-        }
+            input:checked + .slider:before {
+                transform: translateX(18px);
+            }
 
-        .footer {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #334155;
-            font-size: 11px;
-            color: #64748b;
-            text-align: center;
-        }
+            .footer {
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 1px solid #334155;
+                font-size: 11px;
+                color: #64748b;
+                text-align: center;
+            }
 
-        .footer a {
-            color: #6366f1;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <h1>🐍 Page Analyzer</h1>
-    <p class="description">
-        This extension analyzes web pages using Python code compiled to JavaScript
-        by Prescrypt.
-    </p>
+            .footer a {
+                color: #6366f1;
+                text-decoration: none;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🐍 Page Analyzer</h1>
+        <p class="description">
+            This extension analyzes web pages using Python code compiled to JavaScript by Prescrypt.
+        </p>
 
-    <div class="features">
-        <div class="feature">
-            <div>
-                <div class="feature-name">Price Highlighting</div>
-                <div class="feature-desc">Highlight expensive items</div>
+        <div class="features">
+            <div class="feature">
+                <div>
+                    <div class="feature-name">Price Highlighting</div>
+                    <div class="feature-desc">Highlight expensive items</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="slider"></span>
+                </label>
             </div>
-            <label class="toggle">
-                <input type="checkbox" checked>
-                <span class="slider"></span>
-            </label>
+
+            <div class="feature">
+                <div>
+                    <div class="feature-name">Reading Time</div>
+                    <div class="feature-desc">Estimate time to read</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="feature">
+                <div>
+                    <div class="feature-name">Link Analysis</div>
+                    <div class="feature-desc">Count internal/external links</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="feature">
+                <div>
+                    <div class="feature-name">Text Statistics</div>
+                    <div class="feature-desc">Word and character counts</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
 
-        <div class="feature">
-            <div>
-                <div class="feature-name">Reading Time</div>
-                <div class="feature-desc">Estimate time to read</div>
-            </div>
-            <label class="toggle">
-                <input type="checkbox" checked>
-                <span class="slider"></span>
-            </label>
+        <div class="footer">
+            Powered by <a href="https://github.com/abilian/prescrypt" target="_blank">Prescrypt</a>
         </div>
-
-        <div class="feature">
-            <div>
-                <div class="feature-name">Link Analysis</div>
-                <div class="feature-desc">Count internal/external links</div>
-            </div>
-            <label class="toggle">
-                <input type="checkbox" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="feature">
-            <div>
-                <div class="feature-name">Text Statistics</div>
-                <div class="feature-desc">Word and character counts</div>
-            </div>
-            <label class="toggle">
-                <input type="checkbox" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-    </div>
-
-    <div class="footer">
-        Powered by <a href="https://github.com/user/prescrypt" target="_blank">Prescrypt</a>
-    </div>
-</body>
+    </body>
 </html>
