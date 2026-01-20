@@ -5,7 +5,7 @@ All notable changes to Prescrypt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.2 or 0.10.0] - Unreleased
+## [0.9.2] - 2025-01-20
 
 ### Added
 
@@ -22,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comparison special methods: `__eq__`, `__lt__`, `__gt__`, `__le__`, `__ge__` dispatch
   - Container special methods: `__getitem__`, `__setitem__`, `__delitem__` dispatch
   - Runtime helpers: `op_lt`, `op_gt`, `op_le`, `op_ge`, `op_delitem`, `op_delattr`
+- **Chained assignment with subscripts/attributes**: `a[0] = a[1] = value` and `obj.x = obj.y = value` now work
+- **F-string format specifiers**: Enhanced `format()` function with reasonable Python format spec support
+  - Thousands separator: `f"{x:,}"` → `"1,234,567"`
+  - Width/alignment: `f"{x:>10}"` → `"        42"`, `f"{x:<10}"`, `f"{x:^10}"`
+  - Custom fill characters: `f"{x:*>5}"` → `"***42"`
+  - Zero padding: `f"{x:05}"` → `"00042"`
+  - Sign-aware padding: `f"{x:+05}"` → `"+0042"`
+  - Combined formats: `f"{x:,.2f}"` → `"1,234,567.89"`
 
 ### Changed
 
@@ -31,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Statistics
 
-- 2385 tests passing
+- 2404 tests passing
 - Zero runtime dependencies
 
 ## [0.9.1] - 2026-01-19
