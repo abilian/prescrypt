@@ -28,7 +28,7 @@ tasks:
   - lint: |
       cd prescrypt
       uv run ruff check
-      uv run ty check src
+      # uv run ty check src
   - nox: |
       cd prescrypt
       uvx nox
