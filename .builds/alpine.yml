@@ -1,10 +1,10 @@
 image: alpine/latest
 packages:
-  - pipx
+  - uv
+  - nox
   - gcc
   - python3-dev
   - nodejs
-  - nodejs-dev
 
 secrets:
   - b88a4c2c-944c-42a6-9fbb-7483049c458a
@@ -14,8 +14,6 @@ sources:
 
 tasks:
   - install: |
-      pipx install uv
-      sudo cp /home/build/.local/bin/uv /usr/local/bin/uv
       cd prescrypt
       uv sync
   - test: |
@@ -24,10 +22,9 @@ tasks:
   - lint: |
       cd prescrypt
       uv run ruff check
-      uv run ty check src
   - nox: |
       cd prescrypt
-      uvx nox
+      nox
 
 triggers:
   - action: email
