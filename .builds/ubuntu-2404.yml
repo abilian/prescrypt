@@ -1,0 +1,36 @@
+# Copyright (c) 2024, Abilian SAS
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+image: ubuntu/24.04
+
+packages:
+  # Build tools
+  - software-properties-common
+  - build-essential
+  # - gcc
+  # - g++
+  # Python 3.12
+  - python3-dev
+
+tasks:
+  - setup: |
+      sudo pip install --break-system-packages -U uv nox
+      cd prescrypt
+      uv sync
+
+  - test: |
+      cd prescrypt
+      uv run pytest -q --tb=short
+  - lint: |
+      cd prescrypt
+      uv run ruff check
+      uv run ty check src
+  - nox: |
+      cd prescrypt
+      uvx nox
+
+triggers:
+  - action: email
+    condition: failure
+    to: builds@fermigier.com
