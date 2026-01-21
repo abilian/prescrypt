@@ -8,8 +8,6 @@ packages:
   # Build tools
   - software-properties-common
   - build-essential
-  # - gcc
-  # - g++
   # Python is 3.12
   - python3-dev
   - python3-pip

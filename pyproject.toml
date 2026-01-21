@@ -24,9 +24,7 @@ dev = [
     "nox>=2025.5.1",
     # Types & Lint
     "ruff>=0.14.11",
-    "mypy>=1.19.1",
     "ty>=0.0.11",
-    "pyrefly>=0.47.0",
     "pre-commit>=4.5.1",
     # JS infra for tests
     "quickjs<2.0.0,>=1.19.2",
