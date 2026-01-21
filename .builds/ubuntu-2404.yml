@@ -16,6 +16,7 @@ packages:
 
 tasks:
   - setup: |
+      echo "Building on Ubuntu 2404"
       sudo pip install --break-system-packages -U uv nox
       cd prescrypt
       uv sync

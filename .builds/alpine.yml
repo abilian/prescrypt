@@ -1,7 +1,6 @@
 image: alpine/latest
 packages:
   - uv
-  - nox
   - gcc
   - python3-dev
   - nodejs
@@ -14,6 +13,7 @@ sources:
 
 tasks:
   - install: |
+      echo "Building on Alpine"
       cd prescrypt
       uv sync
   - test: |
@@ -24,7 +24,7 @@ tasks:
       uv run ruff check
   - nox: |
       cd prescrypt
-      nox
+      uv run nox
 
 triggers:
   - action: email
