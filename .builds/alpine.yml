@@ -15,6 +15,7 @@ sources:
 tasks:
   - install: |
       pipx install uv
+      sudo cp /home/build/.local/bin/uv /usr/local/bin/uv
       cd prescrypt
       uv sync
   - test: |
