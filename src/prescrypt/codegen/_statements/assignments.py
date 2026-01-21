@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_stmt
 from prescrypt.codegen.utils import flatten
+from prescrypt.constants import escape_js_name
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
@@ -163,7 +164,8 @@ def gen_unpack_assign(targets: list[ast.expr], js_value: str, codegen: CodeGen) 
 
     if all_simple:
         # Simple destructuring: let [a, b] = value;
-        names = [t.id for t in targets]  # type: ignore
+        raw_names = [t.id for t in targets]  # type: ignore
+        names = [escape_js_name(n) for n in raw_names]
 
         # Check if any are already known BEFORE adding (for reassignment detection)
         any_known = any(codegen.ns.is_known(name) for name in names)
@@ -271,7 +273,7 @@ def gen_starred_unpack(
     after_starred = targets[starred_idx + 1 :]
     for t in reversed(after_starred):
         if isinstance(t, ast.Name):
-            name = t.id
+            name = escape_js_name(t.id)
             is_known = codegen.ns.is_known(name)
             codegen.add_var(name)
             if is_known:
@@ -287,7 +289,7 @@ def gen_starred_unpack(
     if isinstance(starred_target, ast.Starred) and isinstance(
         starred_target.value, ast.Name
     ):
-        starred_name = starred_target.value.id
+        starred_name = escape_js_name(starred_target.value.id)
         starred_known = codegen.ns.is_known(starred_name)
         codegen.add_var(starred_name)
     else:
@@ -301,10 +303,11 @@ def gen_starred_unpack(
         before_any_known = False
         for t in before_starred:
             if isinstance(t, ast.Name):
-                if codegen.ns.is_known(t.id):
+                name = escape_js_name(t.id)
+                if codegen.ns.is_known(name):
                     before_any_known = True
-                codegen.add_var(t.id)
-                before_names.append(t.id)
+                codegen.add_var(name)
+                before_names.append(name)
             else:
                 msg = "Complex unpacking before starred not supported"
                 raise JSError(msg)

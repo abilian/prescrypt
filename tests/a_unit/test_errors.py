@@ -138,19 +138,17 @@ class TestTypeErrors:
 class TestErrorInCompilation:
     """Test that errors raised during compilation have source locations."""
 
-    def test_reserved_name_error(self):
+    def test_reserved_name_auto_renamed(self):
         from prescrypt.compiler import py2js
 
         # 'interface' is valid Python but reserved in JS
-        # Using it in a load context (reading the variable)
-        with pytest.raises(JSError) as exc_info:
-            py2js("x = interface + 1")
+        # Now auto-renamed by appending underscore
+        result = py2js("x = interface + 1")
+        assert "interface_" in result
 
-        err = exc_info.value
-        # The error should have a location
-        assert err.location is not None
-        assert err.location.line >= 1
-        assert "interface" in err.message
+        # 'default' is another common reserved word
+        result = py2js("default = 5")
+        assert "default_" in result
 
     def test_set_literal_compiles(self):
         from prescrypt.compiler import py2js

@@ -4,6 +4,7 @@ from textwrap import dedent
 
 from prescrypt.codegen.main import CodeGen, gen_stmt
 from prescrypt.codegen.utils import flatten
+from prescrypt.constants import escape_js_name
 from prescrypt.front import ast
 
 
@@ -68,7 +69,7 @@ class BaseFunDef:
         return f"{self._async}function"
 
     def gen(self):
-        name = self.node.name
+        name = escape_js_name(self.node.name)
         _func = self._func_keyword
 
         # Check for special decorators
@@ -260,7 +261,7 @@ class BaseFunDef:
         args = self.node.args.args
         code = []
         for arg in args:
-            name = arg.arg
+            name = escape_js_name(arg.arg)
             code.append(name)
             code.append(", ")
         if code:
@@ -277,7 +278,7 @@ class BaseFunDef:
         args = self.node.args.args
         code = []
         for i, arg in enumerate(args):
-            name = arg.arg
+            name = escape_js_name(arg.arg)
             if i == 0:
                 # Skip first param (cls/self) - we'll inject cls as a local variable
                 continue
@@ -311,6 +312,8 @@ class BaseFunDef:
             name = arg.arg
             if name == "self":
                 name = "this"
+            else:
+                name = escape_js_name(name)
             if name != "this":
                 argnames.append(name)
                 # Check for default value
@@ -326,7 +329,7 @@ class BaseFunDef:
 
         # Handle *args (vararg) - convert to JS rest parameter
         if args_node.vararg:
-            vararg_name = args_node.vararg.arg
+            vararg_name = escape_js_name(args_node.vararg.arg)
             code.append(f"...{vararg_name}")
             code.append(", ")
 
@@ -336,17 +339,17 @@ class BaseFunDef:
 
     def gen_body(self):
         # Push function namespace to isolate local variables
-        self.codegen.push_ns("function", self.node.name)
+        self.codegen.push_ns("function", escape_js_name(self.node.name))
 
         # Register function parameters in the namespace so they're recognized as defined
         args_node = self.node.args
         for arg in args_node.args:
             name = arg.arg
             if name not in ("self", "this"):
-                self.codegen.add_var(name)
+                self.codegen.add_var(escape_js_name(name))
         # Also register *args parameter if present
         if args_node.vararg:
-            self.codegen.add_var(args_node.vararg.arg)
+            self.codegen.add_var(escape_js_name(args_node.vararg.arg))
 
         # Use function's binding scope for variable declarations
         old_binding_scope = self.codegen._binding_scope

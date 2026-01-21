@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.constants import JS_RESERVED_NAMES
+from prescrypt.constants import JS_RESERVED_NAMES, escape_js_name
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
@@ -96,9 +96,9 @@ def gen_name(node: ast.Name, codegen: CodeGen) -> str:
         codegen._used_std_functions.add(stdlib_name)
         return codegen.function_prefix + stdlib_name
 
+    # Auto-rename JavaScript reserved words by appending underscore
     if name in JS_RESERVED_NAMES:
-        msg = f"Cannot use reserved name '{name}' as a variable name"
-        raise JSError(msg, node)
+        return escape_js_name(name)
 
     # TODO:
     if codegen.ns.is_known(name):

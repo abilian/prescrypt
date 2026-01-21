@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Planned
+### Added
 
-See `notes/TODO.md` for upcoming features.
+- **Reserved word auto-renaming**: JavaScript reserved words (`default`, `switch`, `case`, `interface`, `export`, etc.) used as variable/function/parameter names are automatically renamed by appending underscore
+  - Example: `default = 5` → `const default_ = 5`
+  - Works in variable declarations, function definitions, function parameters, and tuple unpacking
+  - Previously raised an error
+
+### Fixed
+
+- **Dict methods on non-Object JS objects**: `.get()`, `.keys()`, `.values()`, `.items()`, `.setdefault()`, `.update()`, `.popitem()` now work on any JavaScript object, not just plain `Object` instances
+  - Previously failed with "can't access property 'apply'" on browser API objects
+  - Methods now check if native method exists before attempting to call it
+- **Type-based comparison optimization**: Removed fragile string-pattern matching (`.endswith(".length")`) in favor of proper type inference for `==`/`!=` optimization decisions
+
+### Statistics
+
+- 2417 tests passing
 
 ## [0.9.2] - 2026-01-20
 

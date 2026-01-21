@@ -393,9 +393,10 @@ class CodeGen:
 
     def with_prefix(self, name, new=False):
         """Add class prefix to a variable name if necessary."""
-        # Rename 'super' to '_super' since it's a JS reserved keyword
-        if name == "super":
-            name = "_super"
+        from prescrypt.constants import escape_js_name
+
+        # Escape JavaScript reserved words
+        name = escape_js_name(name)
 
         if self.ns.type == "class":
             ns_name = self.ns.name

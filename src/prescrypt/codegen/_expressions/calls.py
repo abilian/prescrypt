@@ -119,9 +119,7 @@ class FuncCall:
 
             # Handle .new() -> new Constructor()
             if method_name == "new":
-                js_args = ", ".join(
-                    flatten(self.gen_expr(arg)) for arg in args
-                )
+                js_args = ", ".join(flatten(self.gen_expr(arg)) for arg in args)
                 return f"new {obj_js}({js_args})"
 
             # All other methods: pass through directly to JS

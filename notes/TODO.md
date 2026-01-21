@@ -81,7 +81,7 @@ See `notes/history.md` for completed work (Stages 0-6).
 ### Build & Tooling
 - [ ] **Built-in bundling:** Bundle multi-file projects into a single JS file (currently requires external bundler like esbuild)
 - [ ] **Watch mode for CLI:** Auto-recompile on file changes
-- [ ] **Reserved word handling:** Auto-rename JavaScript reserved words (`default`, `class`, `import`, etc.)
+- [x] **Reserved word handling:** Auto-rename JavaScript reserved words (`default`, `switch`, `interface`, etc.) - done in v0.9.3
 
 ### JS FFI Enhancements
 - [ ] **`JS` type annotation:** Mark variables as JavaScript objects to bypass Python stdlib transformations

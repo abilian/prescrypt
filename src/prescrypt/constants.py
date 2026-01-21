@@ -75,49 +75,63 @@ COMP_OP = Map(_COMP_OP)
 ISIDENTIFIER1 = re.compile(r"^\w+$", re.UNICODE)
 isidentifier1 = ISIDENTIFIER1
 
-JS_RESERVED_NAMES = (
-    "abstract",
-    "instanceof",
-    "boolean",
-    "enum",
-    "switch",
-    "export",
-    "interface",
-    "synchronized",
-    "extends",
-    "let",
-    "case",
-    "throw",
-    "catch",
-    "final",
-    "native",
-    "throws",
-    "new",
-    "transient",
-    "const",
-    "package",
-    "function",
-    "private",
-    "typeof",
-    "debugger",
-    "goto",
-    "protected",
-    "var",
-    "default",
-    "public",
-    "void",
-    "delete",
-    "implements",
-    "volatile",
-    "do",
-    "static",
-    # Commented, because are disallowed in Python too.
-    # 'else', 'break', 'finally', 'class', 'for', 'try', 'continue', 'if',
-    # 'return', 'import', 'while', 'in', 'with',
-    # Commented for pragmatic reasons
-    # 'super', 'float', 'this', 'int', 'byte', 'long', 'char', 'short',
-    # 'double', 'null', 'true', 'false',
+JS_RESERVED_NAMES = frozenset(
+    (
+        "abstract",
+        "instanceof",
+        "boolean",
+        "enum",
+        "switch",
+        "export",
+        "interface",
+        "synchronized",
+        "extends",
+        "let",
+        "case",
+        "throw",
+        "catch",
+        "final",
+        "native",
+        "throws",
+        "new",
+        "transient",
+        "const",
+        "package",
+        "function",
+        "private",
+        "typeof",
+        "debugger",
+        "goto",
+        "protected",
+        "var",
+        "default",
+        "public",
+        "void",
+        "delete",
+        "implements",
+        "volatile",
+        "do",
+        "static",
+        # Commented, because are disallowed in Python too.
+        # 'else', 'break', 'finally', 'class', 'for', 'try', 'continue', 'if',
+        # 'return', 'import', 'while', 'in', 'with',
+        # Commented for pragmatic reasons
+        # 'super', 'float', 'this', 'int', 'byte', 'long', 'char', 'short',
+        # 'double', 'null', 'true', 'false',
+    )
 )
+
+
+def escape_js_name(name: str) -> str:
+    """Escape JavaScript reserved words by appending underscore.
+
+    This allows Python code to use names like 'default', 'export', 'switch'
+    which are reserved in JavaScript but valid in Python.
+    """
+    if name in JS_RESERVED_NAMES:
+        return name + "_"
+    return name
+
 
 # Define builtin stuff for which we know that it returns a bool or int
 _bool_funcs = (
