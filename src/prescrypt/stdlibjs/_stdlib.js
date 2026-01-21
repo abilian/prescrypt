@@ -2184,7 +2184,13 @@ var _pymeth_gen_throw = function (type, value, traceback) {
 };
 var _pymeth_get = function (key, d) {
   // nargs: 1 2
-  if (this.constructor !== Object) return this.get.apply(this, arguments);
+  // If object has a native .get() method (like Map), use it
+  // But check typeof to avoid calling this function recursively
+  if (typeof this.get === 'function' && this.constructor !== Object) {
+    return this.get.apply(this, arguments);
+  }
+  // Python dict-like behavior: get key with optional default
+  // This works for plain objects and any object without native .get()
   if (this[key] !== undefined) {
     return this[key];
   } else if (d !== undefined) {
@@ -2288,7 +2294,11 @@ var _pymeth_isupper = function () {
 };
 var _pymeth_items = function () {
   // nargs: 0
-  if (this.constructor !== Object) return this.items.apply(this, arguments);
+  // If object has native .items() method, use it
+  if (typeof this.items === 'function' && this.constructor !== Object) {
+    return this.items.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let key,
     keys = Object.keys(this),
     res = [];
@@ -2383,7 +2393,10 @@ var _pymeth_pop = function (i, d) {
 };
 var _pymeth_popitem = function () {
   // nargs: 0
-  if (this.constructor !== Object) return this.popitem.apply(this, arguments);
+  if (typeof this.popitem === 'function' && this.constructor !== Object) {
+    return this.popitem.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let keys, key, val;
   keys = Object.keys(this);
   if (keys.length == 0) {
@@ -2562,7 +2575,10 @@ var _pymeth_send = function (value) {
 };
 var _pymeth_setdefault = function (key, d) {
   // nargs: 1 2
-  if (this.constructor !== Object) return this.setdefault.apply(this, arguments);
+  if (typeof this.setdefault === 'function' && this.constructor !== Object) {
+    return this.setdefault.apply(this, arguments);
+  }
+  // Python dict-like behavior
   if (this[key] !== undefined) {
     return this[key];
   } else if (d !== undefined) {
@@ -2759,7 +2775,10 @@ var _pymeth_translate = function (table) {
 };
 var _pymeth_update = function (other) {
   // nargs: 1
-  if (this.constructor !== Object) return this.update.apply(this, arguments);
+  if (typeof this.update === 'function' && this.constructor !== Object) {
+    return this.update.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let key,
     keys = Object.keys(other);
   for (let i = 0; i < keys.length; i++) {
@@ -2777,7 +2796,10 @@ var _pymeth_upper = function () {
 };
 var _pymeth_values = function () {
   // nargs: 0
-  if (this.constructor !== Object) return this.values.apply(this, arguments);
+  if (typeof this.values === 'function' && this.constructor !== Object) {
+    return this.values.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let key,
     keys = Object.keys(this),
     res = [];

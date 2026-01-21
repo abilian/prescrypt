@@ -67,6 +67,15 @@ See `notes/history.md` for completed work (Stages 0-6).
 
 - [ ] **Loop variable redeclaration:** Variables declared in one loop aren't re-declared in subsequent loops with the same name, causing strict mode errors. Workaround: use different variable names.
 
+### JS Interop (Fixed in v0.9.3)
+
+- [x] **`for x in js_obj` iteration:** Now works - plain objects are automatically converted to `Object.keys()`
+- [x] **`.get(key, default)` on JS objects:** Fixed - dict methods now check for native method before calling, preventing "apply undefined" errors
+
+### Compatibility
+
+- [ ] **Python 3.14 support:** Test and fix any import errors on Python 3.14.
+
 ## Future Enhancements
 
 ### Build & Tooling

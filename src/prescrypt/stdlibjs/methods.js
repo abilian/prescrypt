@@ -223,7 +223,13 @@ export const index = function (x, start, stop) {
 // method: get
 export const get = function (key, d) {
   // nargs: 1 2
-  if (this.constructor !== Object) return this.KEY.apply(this, arguments);
+  // If object has a native .get() method (like Map), use it
+  // But check typeof to avoid calling this function recursively
+  if (typeof this.KEY === 'function' && this.constructor !== Object) {
+    return this.KEY.apply(this, arguments);
+  }
+  // Python dict-like behavior: get key with optional default
+  // This works for plain objects and any object without native .get()
   if (this[key] !== undefined) {
     return this[key];
   } else if (d !== undefined) {
@@ -238,7 +244,11 @@ export const get = function (key, d) {
 // method: items
 export const items = function () {
   // nargs: 0
-  if (this.constructor !== Object) return this.KEY.apply(this, arguments);
+  // If object has native .items() method, use it
+  if (typeof this.KEY === 'function' && this.constructor !== Object) {
+    return this.KEY.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let key,
     keys = Object.keys(this),
     res = [];
@@ -263,7 +273,10 @@ export const keys = function () {
 // method: popitem
 export const popitem = function () {
   // nargs: 0
-  if (this.constructor !== Object) return this.KEY.apply(this, arguments);
+  if (typeof this.KEY === 'function' && this.constructor !== Object) {
+    return this.KEY.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let keys, key, val;
   keys = Object.keys(this);
   if (keys.length == 0) {
@@ -282,7 +295,10 @@ export const popitem = function () {
 // method: setdefault
 export const setdefault = function (key, d) {
   // nargs: 1 2
-  if (this.constructor !== Object) return this.KEY.apply(this, arguments);
+  if (typeof this.KEY === 'function' && this.constructor !== Object) {
+    return this.KEY.apply(this, arguments);
+  }
+  // Python dict-like behavior
   if (this[key] !== undefined) {
     return this[key];
   } else if (d !== undefined) {
@@ -298,7 +314,10 @@ export const setdefault = function (key, d) {
 // method: update
 export const update = function (other) {
   // nargs: 1
-  if (this.constructor !== Object) return this.KEY.apply(this, arguments);
+  if (typeof this.KEY === 'function' && this.constructor !== Object) {
+    return this.KEY.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let key,
     keys = Object.keys(other);
   for (let i = 0; i < keys.length; i++) {
@@ -313,7 +332,10 @@ export const update = function (other) {
 // method: values
 export const values = function () {
   // nargs: 0
-  if (this.constructor !== Object) return this.KEY.apply(this, arguments);
+  if (typeof this.KEY === 'function' && this.constructor !== Object) {
+    return this.KEY.apply(this, arguments);
+  }
+  // Python dict-like behavior
   let key,
     keys = Object.keys(this),
     res = [];
