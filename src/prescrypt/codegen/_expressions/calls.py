@@ -6,14 +6,20 @@ from prescrypt.codegen.main import CodeGen, gen_expr
 from prescrypt.codegen.stdlib_py import stdlib
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.front import ast
+from prescrypt.front.passes.types import JSObject
 from prescrypt.stdlib_js import StdlibJs
 
 
 def _is_js_ffi_chain(node: ast.AST, codegen: CodeGen) -> bool:
-    """Check if an AST node is part of a js.X.Y.Z chain."""
+    """Check if an AST node is part of a JS FFI chain.
+
+    This includes:
+    - js.X.Y.Z chains (from 'import js')
+    - document.X.Y chains (from 'from js import document')
+    """
     match node:
         case ast.Name(id=name):
-            return codegen.is_js_ffi_name(name)
+            return codegen.is_js_ffi_chain_root(name)
         case ast.Attribute(value=value):
             return _is_js_ffi_chain(value, codegen)
         case ast.Call(func=func):
@@ -110,10 +116,12 @@ class FuncCall:
         stdlib_js = StdlibJs()
 
         # Check if this is a JS FFI chain (js.X.Y.method())
+        # or if the value is typed as JS/JSObject
         # If so, don't apply Python stdlib transformations
         is_js_ffi = _is_js_ffi_chain(value, self.codegen)
+        is_js_typed = getattr(value, "_type", None) is JSObject
 
-        if is_js_ffi:
+        if is_js_ffi or is_js_typed:
             # JS FFI: bypass Python stdlib and handle specially
             obj_js = unify(self.gen_expr(value))
 

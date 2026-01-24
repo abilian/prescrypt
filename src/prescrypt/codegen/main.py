@@ -81,7 +81,12 @@ class CodeGen:
         self._binding_scope: Scope | None = getattr(module, "_scope", None)
 
         # Track JS FFI module names (e.g., 'js' or aliases like 'import js as javascript')
+        # These are namespace prefixes that get stripped: js.X -> X
         self._js_ffi_names: set[str] = set()
+
+        # Track direct JS FFI imports (from js import X)
+        # These are actual JS globals that should NOT be stripped: document -> document
+        self._js_ffi_globals: set[str] = set()
 
         # Source map generation
         self._source_map = source_map
@@ -181,8 +186,24 @@ class CodeGen:
         self._js_ffi_names.add(name)
 
     def is_js_ffi_name(self, name: str) -> bool:
-        """Check if a name is a JS FFI module reference."""
+        """Check if a name is a JS FFI module reference (namespace prefix like 'js')."""
         return name in self._js_ffi_names
+
+    def add_js_ffi_global(self, name: str) -> None:
+        """Register a name as a direct JS global.
+
+        This is called when processing 'from js import X'.
+        The name is used directly as a JS global (not stripped like module refs).
+        """
+        self._js_ffi_globals.add(name)
+
+    def is_js_ffi_global(self, name: str) -> bool:
+        """Check if a name is a direct JS FFI global (from 'from js import X')."""
+        return name in self._js_ffi_globals
+
+    def is_js_ffi_chain_root(self, name: str) -> bool:
+        """Check if a name is any kind of JS FFI root (module ref or direct global)."""
+        return name in self._js_ffi_names or name in self._js_ffi_globals
 
     #
     # Module Resolution

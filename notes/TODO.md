@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.3 (in progress) | **Tests:** 2414 passing, 28 skipped | **Coverage:** 89%
+**Current Status:** v0.9.3 (in progress) | **Tests:** 2433 passing, 28 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
@@ -84,10 +84,12 @@ See `notes/history.md` for completed work (Stages 0-6).
 - [x] **Reserved word handling:** Auto-rename JavaScript reserved words (`default`, `switch`, `interface`, etc.) - done in v0.9.3
 
 ### JS FFI Enhancements
-- [ ] **`JS` type annotation:** Mark variables as JavaScript objects to bypass Python stdlib transformations
+- [x] **`JS` type annotation:** Mark variables as JavaScript objects to bypass Python stdlib transformations ✓
   - Example: `result: JS = callback()` - compiler treats `result.get()` as JS method, not `_pymeth_get`
   - Useful for stored references, callback return values, and any JS object not from direct `js.X` chain
-- [ ] **`from js import document, fetch`:** Direct imports from `js` module
+- [x] **`from js import document, fetch`:** Direct imports from `js` module ✓
+  - Imported names work as native JS globals
+  - Supports aliases and `.new()` constructor
 
 ### Language Features
 - [ ] Dataclasses support

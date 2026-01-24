@@ -50,6 +50,16 @@ def _gen_import_from(node: ast.ImportFrom, codegen: CodeGen):
     if node.module == "__future__":
         return ""
 
+    # Handle "from js import X" - JS FFI imports
+    # Each imported name becomes a direct JS global reference
+    if node.module == "js":
+        for alias in node.names:
+            # Register the local name (or original name) as a direct JS global
+            # This is different from 'import js' - the name IS the JS global, not a prefix
+            local_name = alias.asname or alias.name
+            codegen.add_js_ffi_global(local_name)
+        return ""  # No output needed - names are used directly as JS globals
+
     # In module mode, generate ES6 imports
     if codegen.module_mode:
         module = node.module or ""

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`JS` type annotation**: Mark variables as JavaScript objects to bypass Python stdlib transformations
+  - Example: `result: JS = callback()` - compiler treats `result.get()` as native JS method, not `_pymeth_get`
+  - Works with annotated assignments, function parameters, and any variable with `JS` or `JSObject` type
+  - Useful for stored references from callbacks, browser APIs, and any JS object not from direct `js.X` chain
+- **`from js import X` syntax**: Import JavaScript globals directly
+  - Example: `from js import document, console, fetch`
+  - Imported names are used as native JS globals: `document.getElementById("id")` → `document.getElementById("id")`
+  - Works with aliases: `from js import document as doc`
+  - Supports `.new()` constructor: `from js import Date; today = Date.new()`
 - **Reserved word auto-renaming**: JavaScript reserved words (`default`, `switch`, `case`, `interface`, `export`, etc.) used as variable/function/parameter names are automatically renamed by appending underscore
   - Example: `default = 5` → `const default_ = 5`
   - Works in variable declarations, function definitions, function parameters, and tuple unpacking
@@ -23,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Statistics
 
-- 2417 tests passing
+- 2433 tests passing
 
 ## [0.9.2] - 2026-01-20
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from prescrypt.front import ast
 
 from .base import Visitor
-from .types import Bool, Dict, Float, Int, List, String, Tuple, Unknown, Void
+from .types import Bool, Dict, Float, Int, JSObject, List, String, Tuple, Unknown, Void
 
 TYPE_MAP = {
     "int": Int,
@@ -20,6 +20,8 @@ TYPE_MAP = {
     "list": List,
     "dict": Dict,
     "tuple": Tuple,
+    "JS": JSObject,
+    "JSObject": JSObject,
 }
 
 # Return types for built-in functions
@@ -222,7 +224,11 @@ class TypeInference(Visitor):
         """Annotated assignment - use the annotation."""
         if node.value:
             self.visit(node.value)
-        node.target._type = self._type_from_annotation(node.annotation)
+        target_type = self._type_from_annotation(node.annotation)
+        node.target._type = target_type
+        # Register variable type in scope for simple Name targets
+        if isinstance(node.target, ast.Name):
+            self._set_var_type(node.target.id, target_type)
 
     def visit_Assign(self, node: ast.Assign):
         """Assignment - propagate type from value to targets."""

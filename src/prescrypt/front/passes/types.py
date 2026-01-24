@@ -82,3 +82,28 @@ class Tuple(metaclass=Singleton):
 
     def compatible_with(self, other):
         return other == self
+
+
+class JSObject(metaclass=Singleton):
+    """
+    JavaScript object type singleton.
+
+    Used to mark variables that hold JavaScript objects (from browser APIs,
+    callbacks, etc.) so the compiler treats method calls as native JS calls
+    rather than Python stdlib calls.
+
+    Usage:
+        from typing import TYPE_CHECKING
+        if TYPE_CHECKING:
+            from prescrypt import JS
+
+        result: JS = some_js_callback()
+        value = result.get("key")  # Treated as JS .get(), not _pymeth_get
+    """
+
+    def compatible_with(self, other):
+        return other == self
+
+
+# Alias for user code
+JS = JSObject

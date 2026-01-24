@@ -11,10 +11,16 @@ from prescrypt.front import ast
 def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
     value_node, attr = node.value, node.attr
 
-    # Check for JS FFI access: js.X -> X (strip the 'js.' prefix)
-    if isinstance(value_node, ast.Name) and codegen.is_js_ffi_name(value_node.id):
-        # Direct access: js.console -> console
-        return attr
+    # Check for JS FFI module access: js.X -> X (strip the 'js.' prefix)
+    # But NOT for direct globals from 'from js import X' - those stay as-is
+    if isinstance(value_node, ast.Name):
+        name = value_node.id
+        if codegen.is_js_ffi_name(name):
+            # Module reference like 'js': js.console -> console
+            return attr
+        if codegen.is_js_ffi_global(name):
+            # Direct global from 'from js import X': document.body -> document.body
+            return f"{name}.{attr}"
 
     # Check for chained JS FFI access: js.console.log -> console.log
     if _is_js_ffi_chain(value_node, codegen):
@@ -45,18 +51,33 @@ def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
 
 
 def _is_js_ffi_chain(node: ast.AST, codegen: CodeGen) -> bool:
-    """Check if an AST node is part of a js.X.Y.Z chain."""
+    """Check if an AST node is part of a JS FFI chain.
+
+    This includes:
+    - js.X.Y.Z chains (from 'import js')
+    - document.X.Y chains (from 'from js import document')
+    """
     if isinstance(node, ast.Name):
-        return codegen.is_js_ffi_name(node.id)
+        return codegen.is_js_ffi_chain_root(node.id)
     if isinstance(node, ast.Attribute):
         return _is_js_ffi_chain(node.value, codegen)
     return False
 
 
 def _strip_js_ffi_prefix(node: ast.AST, codegen: CodeGen) -> str:
-    """Convert js.X.Y to X.Y (strip the FFI module prefix)."""
+    """Convert js.X.Y to X.Y (strip the FFI module prefix).
+
+    For 'import js' chains: js.console.log -> console.log
+    For 'from js import X' chains: document.body -> document.body (no stripping)
+    """
     if isinstance(node, ast.Name):
-        # This is the 'js' name itself - don't include it
+        name = node.id
+        if codegen.is_js_ffi_name(name):
+            # Module ref like 'js' - strip it
+            return ""
+        if codegen.is_js_ffi_global(name):
+            # Direct global like 'document' - keep it
+            return name
         return ""
     if isinstance(node, ast.Attribute):
         base = _strip_js_ffi_prefix(node.value, codegen)
