@@ -285,3 +285,147 @@ match x:
 result
 """
         assert js_eval(py2js(code)) == 300
+
+
+class TestMatchMapping:
+    """Test dictionary/mapping patterns."""
+
+    def test_simple_mapping(self):
+        """Test simple mapping pattern with capture."""
+        code = """
+data = {"x": 10, "y": 20}
+match data:
+    case {"x": x, "y": y}:
+        result = x + y
+    case _:
+        result = 0
+result
+"""
+        assert js_eval(py2js(code)) == 30
+
+    def test_mapping_with_literal(self):
+        """Test mapping pattern with literal value check."""
+        code = """
+cmd = {"type": "move", "x": 5}
+match cmd:
+    case {"type": "stop"}:
+        result = "stopping"
+    case {"type": "move", "x": x}:
+        result = f"moving {x}"
+    case _:
+        result = "unknown"
+result
+"""
+        assert js_eval(py2js(code)) == "moving 5"
+
+    def test_mapping_no_match(self):
+        """Test mapping pattern that doesn't match."""
+        code = """
+data = {"a": 1}
+match data:
+    case {"x": x}:
+        result = x
+    case _:
+        result = "no x"
+result
+"""
+        assert js_eval(py2js(code)) == "no x"
+
+    def test_mapping_nested(self):
+        """Test nested mapping pattern."""
+        code = """
+data = {"point": {"x": 3, "y": 4}}
+match data:
+    case {"point": {"x": x, "y": y}}:
+        result = x * x + y * y
+    case _:
+        result = 0
+result
+"""
+        assert js_eval(py2js(code)) == 25
+
+
+class TestMatchClass:
+    """Test class patterns."""
+
+    def test_class_keyword_pattern(self):
+        """Test class pattern with keyword attributes."""
+        code = """
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+p = Point(3, 4)
+match p:
+    case Point(x=x, y=y):
+        result = x + y
+    case _:
+        result = 0
+result
+"""
+        assert js_eval(py2js(code)) == 7
+
+    def test_class_literal_check(self):
+        """Test class pattern with literal value check."""
+        code = """
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+p = Point(0, 5)
+match p:
+    case Point(x=0, y=y):
+        result = f"on y-axis at {y}"
+    case Point(x=x, y=0):
+        result = f"on x-axis at {x}"
+    case _:
+        result = "elsewhere"
+result
+"""
+        assert js_eval(py2js(code)) == "on y-axis at 5"
+
+    def test_class_no_match(self):
+        """Test class pattern that doesn't match type."""
+        code = """
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+class Circle:
+    def __init__(self, r):
+        self.r = r
+
+c = Circle(10)
+match c:
+    case Point(x=x, y=y):
+        result = "point"
+    case Circle(r=r):
+        result = f"circle r={r}"
+    case _:
+        result = "unknown"
+result
+"""
+        assert js_eval(py2js(code)) == "circle r=10"
+
+    def test_class_with_guard(self):
+        """Test class pattern with guard."""
+        code = """
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+p = Point(3, 4)
+match p:
+    case Point(x=x, y=y) if x == y:
+        result = "diagonal"
+    case Point(x=x, y=y) if x > y:
+        result = "right of diagonal"
+    case Point(x=x, y=y):
+        result = "left of diagonal"
+result
+"""
+        assert js_eval(py2js(code)) == "left of diagonal"

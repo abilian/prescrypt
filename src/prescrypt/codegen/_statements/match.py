@@ -18,15 +18,16 @@ def gen_match(node: ast.Match, codegen: CodeGen) -> list[str]:
 
     Supports:
     - MatchValue: literal values (case 0:)
+    - MatchSingleton: None, True, False
     - MatchOr: alternatives (case 1 | 2:)
     - MatchAs: capture/wildcard (case n: or case _:)
-    - MatchSequence: simple sequences (case [a, b]:)
+    - MatchSequence: sequences (case [a, b]:)
+    - MatchMapping: dictionaries (case {"x": x}:)
+    - MatchClass: class instances (case Point(x=x):)
     - Guards: (case n if n > 0:)
 
     Not yet supported:
-    - MatchMapping: dictionary patterns
-    - MatchClass: class patterns
-    - MatchStar: starred patterns in sequences
+    - MatchStar: starred patterns in sequences (*rest)
     """
     code = []
 
@@ -159,14 +160,16 @@ def _gen_pattern_condition(
             # Sequence pattern: case [a, b]:
             return _gen_sequence_pattern(patterns, subject, codegen)
 
-        case ast.MatchMapping():
-            msg = "Match mapping patterns not yet supported"
-            raise JSError(msg, pattern, hint="Use if/elif with dict access instead.")
+        case ast.MatchMapping(keys=keys, patterns=patterns, rest=rest):
+            # Dictionary pattern: case {"x": x, "y": y}:
+            return _gen_mapping_pattern(keys, patterns, rest, subject, codegen)
 
-        case ast.MatchClass():
-            msg = "Match class patterns not yet supported"
-            raise JSError(
-                msg, pattern, hint="Use if/elif with isinstance() checks instead."
+        case ast.MatchClass(
+            cls=cls, patterns=pos_patterns, kwd_attrs=kwd_attrs, kwd_patterns=kwd_patterns
+        ):
+            # Class pattern: case Point(x=0, y=y):
+            return _gen_class_pattern(
+                cls, pos_patterns, kwd_attrs, kwd_patterns, subject, codegen
             )
 
         case ast.MatchStar():
@@ -192,6 +195,18 @@ def _collect_pattern_names_set(pattern: ast.pattern, names: set[str]) -> None:
 
         case ast.MatchSequence(patterns=patterns):
             for p in patterns:
+                _collect_pattern_names_set(p, names)
+
+        case ast.MatchMapping(patterns=patterns, rest=rest):
+            for p in patterns:
+                _collect_pattern_names_set(p, names)
+            if rest is not None:
+                names.add(rest)
+
+        case ast.MatchClass(patterns=pos_patterns, kwd_patterns=kwd_patterns):
+            for p in pos_patterns:
+                _collect_pattern_names_set(p, names)
+            for p in kwd_patterns:
                 _collect_pattern_names_set(p, names)
 
         case _:
@@ -240,6 +255,25 @@ def _get_pattern_substitutions(pattern: ast.pattern, subject: str) -> dict[str, 
             for i, p in enumerate(patterns):
                 if isinstance(p, ast.MatchAs) and p.pattern is None and p.name:
                     subs[p.name] = f"{subject}[{i}]"
+
+        case ast.MatchMapping(keys=keys, patterns=patterns):
+            # For mapping patterns, map captured names to subject[key]
+            from prescrypt.codegen.utils import flatten as _flatten
+
+            for key, p in zip(keys, patterns):
+                if isinstance(p, ast.MatchAs) and p.pattern is None and p.name:
+                    # Note: We can't easily get the codegen here, so use simple key access
+                    if isinstance(key, ast.Constant):
+                        if isinstance(key.value, str):
+                            subs[p.name] = f'{subject}["{key.value}"]'
+                        else:
+                            subs[p.name] = f"{subject}[{key.value}]"
+
+        case ast.MatchClass(kwd_attrs=kwd_attrs, kwd_patterns=kwd_patterns):
+            # For class patterns, map captured names to subject.attr
+            for attr, p in zip(kwd_attrs, kwd_patterns):
+                if isinstance(p, ast.MatchAs) and p.pattern is None and p.name:
+                    subs[p.name] = f"{subject}.{attr}"
 
         case _:
             pass
@@ -305,6 +339,157 @@ def _gen_sequence_pattern(
                 # Recurse for other patterns
                 elem_cond, elem_bindings = _gen_pattern_condition(
                     p, elem_access, codegen
+                )
+                if elem_cond:
+                    conditions.append(elem_cond)
+                bindings.extend(elem_bindings)
+
+    return " && ".join(conditions), bindings
+
+
+def _gen_mapping_pattern(
+    keys: list[ast.expr],
+    patterns: list[ast.pattern],
+    rest: str | None,
+    subject: str,
+    codegen: CodeGen,
+) -> tuple[str, list[str]]:
+    """Generate condition and bindings for a mapping pattern.
+
+    Handles: case {"x": x, "y": y}:, case {"type": "point", **rest}:
+    """
+    conditions = []
+    bindings = []
+
+    # Check it's an object (not null, not array)
+    conditions.append(f"(typeof {subject} === 'object' && {subject} !== null)")
+    conditions.append(f"!Array.isArray({subject})")
+
+    # Check each key exists and matches pattern
+    for key, pattern in zip(keys, patterns):
+        key_js = flatten(codegen.gen_expr(key))
+        key_access = f"{subject}[{key_js}]"
+
+        # Check key exists
+        conditions.append(f"({key_js} in {subject})")
+
+        match pattern:
+            case ast.MatchAs(pattern=None, name=None):
+                # Wildcard: {"x": _}
+                pass
+
+            case ast.MatchAs(pattern=None, name=name):
+                # Capture: {"x": x}
+                bindings.append(f"{name} = {key_access};")
+
+            case ast.MatchValue(value=value):
+                # Literal: {"type": "point"}
+                value_js = flatten(codegen.gen_expr(value))
+                conditions.append(
+                    f"{codegen.call_std_function('op_equals', [key_access, value_js])}"
+                )
+
+            case _:
+                # Recurse for nested patterns
+                elem_cond, elem_bindings = _gen_pattern_condition(
+                    pattern, key_access, codegen
+                )
+                if elem_cond:
+                    conditions.append(elem_cond)
+                bindings.extend(elem_bindings)
+
+    # Handle **rest capture
+    if rest is not None:
+        # Collect remaining keys into a new object
+        key_exprs = [flatten(codegen.gen_expr(k)) for k in keys]
+        exclude_set = "{" + ", ".join(key_exprs) + "}"
+        bindings.append(
+            f"{rest} = Object.fromEntries("
+            f"Object.entries({subject}).filter(([k]) => !{exclude_set}.has(k)));"
+        )
+
+    return " && ".join(conditions), bindings
+
+
+def _gen_class_pattern(
+    cls: ast.expr,
+    pos_patterns: list[ast.pattern],
+    kwd_attrs: list[str],
+    kwd_patterns: list[ast.pattern],
+    subject: str,
+    codegen: CodeGen,
+) -> tuple[str, list[str]]:
+    """Generate condition and bindings for a class pattern.
+
+    Handles: case Point(x=0, y=y):
+    """
+    conditions = []
+    bindings = []
+
+    # Get class name for isinstance check
+    cls_js = flatten(codegen.gen_expr(cls))
+
+    # Check it's an instance of the class
+    conditions.append(f"({subject} instanceof {cls_js})")
+
+    # Handle positional patterns using __match_args__
+    if pos_patterns:
+        # Positional patterns require __match_args__ on the class
+        # For now, we'll use __match_args__ if defined, otherwise error
+        # Common case: Point(x, y) where Point.__match_args__ = ('x', 'y')
+        for i, pattern in enumerate(pos_patterns):
+            # Access attribute via __match_args__
+            attr_access = f"{subject}[{cls_js}.__match_args__[{i}]]"
+
+            match pattern:
+                case ast.MatchAs(pattern=None, name=None):
+                    # Wildcard
+                    pass
+
+                case ast.MatchAs(pattern=None, name=name):
+                    # Capture
+                    bindings.append(f"{name} = {attr_access};")
+
+                case ast.MatchValue(value=value):
+                    # Literal
+                    value_js = flatten(codegen.gen_expr(value))
+                    conditions.append(
+                        f"{codegen.call_std_function('op_equals', [attr_access, value_js])}"
+                    )
+
+                case _:
+                    # Recurse
+                    elem_cond, elem_bindings = _gen_pattern_condition(
+                        pattern, attr_access, codegen
+                    )
+                    if elem_cond:
+                        conditions.append(elem_cond)
+                    bindings.extend(elem_bindings)
+
+    # Handle keyword patterns
+    for attr, pattern in zip(kwd_attrs, kwd_patterns):
+        attr_access = f"{subject}.{attr}"
+
+        match pattern:
+            case ast.MatchAs(pattern=None, name=None):
+                # Wildcard
+                pass
+
+            case ast.MatchAs(pattern=None, name=name):
+                # Capture
+                bindings.append(f"{name} = {attr_access};")
+
+            case ast.MatchValue(value=value):
+                # Literal: Point(x=0)
+                value_js = flatten(codegen.gen_expr(value))
+                conditions.append(
+                    f"{codegen.call_std_function('op_equals', [attr_access, value_js])}"
+                )
+
+            case _:
+                # Recurse
+                elem_cond, elem_bindings = _gen_pattern_condition(
+                    pattern, attr_access, codegen
                 )
                 if elem_cond:
                     conditions.append(elem_cond)

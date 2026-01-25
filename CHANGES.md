@@ -33,19 +33,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `-v` shows compilation stages with timing
   - `-vv` also shows AST after each pass (truncated)
   - `--debug` or `-vvv` for full debug output
-- **Match statement support** (partial): Python 3.10+ structural pattern matching
+- **Match statement support**: Python 3.10+ structural pattern matching
   - Literal patterns: `case 0:`, `case "hello":`
   - OR patterns: `case 1 | 2 | 3:`
   - Capture patterns: `case n:`
   - Wildcard: `case _:`
   - Sequence patterns: `case [a, b]:`
   - Singleton patterns: `case None:`, `case True:`, `case False:`
+  - Mapping patterns: `case {"x": x, "y": y}:`
+  - Class patterns: `case Point(x=x, y=y):`
   - Guard clauses: `case n if n > 0:`
-  - Not yet supported: class patterns, mapping patterns, starred patterns
+  - Not yet supported: starred patterns in sequences (*rest)
 
 ### Statistics
 
-- 2470 tests passing, 28 skipped
+- 2478 tests passing, 28 skipped
 
 ## [0.9.3] - 2026-01-24
 

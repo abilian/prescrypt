@@ -102,8 +102,9 @@ See `notes/history.md` for completed work (Stages 0-6).
   - Supports list, tuple, or single string syntax
 - [x] **`match` statement** ✓ (done in v0.9.4)
   - Literal, OR, capture, wildcard, sequence patterns
+  - Mapping patterns (`case {"x": x, "y": y}:`)
+  - Class patterns (`case Point(x=x, y=y):`)
   - Guard clauses supported
-  - Class/mapping patterns not yet supported
 - [ ] Multiple inheritance (MRO)
 
 ---
