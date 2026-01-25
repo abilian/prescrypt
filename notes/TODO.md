@@ -101,7 +101,8 @@ See `notes/history.md` for completed work (Stages 0-6).
   - Restricts attributes to declared slots using `Object.seal()`
   - Supports list, tuple, or single string syntax
 - [x] **`match` statement** ✓ (done in v0.9.4)
-  - Literal, OR, capture, wildcard, sequence patterns
+  - Literal, OR, capture, wildcard patterns
+  - Sequence patterns with starred capture (`case [first, *rest]:`)
   - Mapping patterns (`case {"x": x, "y": y}:`)
   - Class patterns (`case Point(x=x, y=y):`)
   - Guard clauses supported

@@ -22,12 +22,10 @@ def gen_match(node: ast.Match, codegen: CodeGen) -> list[str]:
     - MatchOr: alternatives (case 1 | 2:)
     - MatchAs: capture/wildcard (case n: or case _:)
     - MatchSequence: sequences (case [a, b]:)
+    - MatchStar: starred patterns (case [first, *rest]:)
     - MatchMapping: dictionaries (case {"x": x}:)
     - MatchClass: class instances (case Point(x=x):)
     - Guards: (case n if n > 0:)
-
-    Not yet supported:
-    - MatchStar: starred patterns in sequences (*rest)
     """
     code = []
 
@@ -172,8 +170,10 @@ def _gen_pattern_condition(
                 cls, pos_patterns, kwd_attrs, kwd_patterns, subject, codegen
             )
 
-        case ast.MatchStar():
-            msg = "Match star patterns not yet supported"
+        case ast.MatchStar(name=name):
+            # Star patterns are handled inside _gen_sequence_pattern
+            # If we get here, it's a star outside a sequence which is invalid
+            msg = "Star pattern (*) can only appear inside sequence patterns"
             raise JSError(msg, pattern)
 
         case _:
@@ -196,6 +196,10 @@ def _collect_pattern_names_set(pattern: ast.pattern, names: set[str]) -> None:
         case ast.MatchSequence(patterns=patterns):
             for p in patterns:
                 _collect_pattern_names_set(p, names)
+
+        case ast.MatchStar(name=name):
+            if name is not None:
+                names.add(name)
 
         case ast.MatchMapping(patterns=patterns, rest=rest):
             for p in patterns:
@@ -286,65 +290,128 @@ def _gen_sequence_pattern(
 ) -> tuple[str, list[str]]:
     """Generate condition and bindings for a sequence pattern.
 
-    Handles: case [a, b, c]:
+    Handles:
+    - case [a, b, c]: - fixed length
+    - case [first, *rest]: - starred at end
+    - case [*rest, last]: - starred at start
+    - case [first, *middle, last]: - starred in middle
     """
     conditions = []
     bindings = []
 
-    # Check it's an array with the right length
+    # Check it's an array
     conditions.append(f"Array.isArray({subject})")
-    conditions.append(f"{subject}.length === {len(patterns)}")
 
-    # Check each element
+    # Find star pattern position (if any)
+    star_index = None
+    star_name = None
     for i, p in enumerate(patterns):
-        elem_access = f"{subject}[{i}]"
+        if isinstance(p, ast.MatchStar):
+            star_index = i
+            star_name = p.name  # Can be None for case [a, *_, b]
+            break
 
-        match p:
-            case ast.MatchAs(pattern=None, name=None):
-                # Wildcard element: [_, b]
-                pass
+    if star_index is None:
+        # No star - exact length match
+        conditions.append(f"{subject}.length === {len(patterns)}")
+        _gen_sequence_elements(patterns, subject, 0, codegen, conditions, bindings)
+    else:
+        # Star pattern - minimum length check
+        before_star = patterns[:star_index]
+        after_star = patterns[star_index + 1 :]
+        min_length = len(before_star) + len(after_star)
 
-            case ast.MatchAs(pattern=None, name=name):
-                # Capture element: [a, b]
-                # Variable already registered by _collect_pattern_names
-                bindings.append(f"{name} = {elem_access};")
+        if min_length > 0:
+            conditions.append(f"{subject}.length >= {min_length}")
+        # else: no minimum needed, empty array matches [*rest]
 
-            case ast.MatchValue(value=value):
-                # Literal element: [1, b]
-                value_js = flatten(codegen.gen_expr(value))
-                conditions.append(
-                    f"{codegen.call_std_function('op_equals', [elem_access, value_js])}"
+        # Handle elements before star (positive indices)
+        _gen_sequence_elements(before_star, subject, 0, codegen, conditions, bindings)
+
+        # Handle elements after star (negative indices from end)
+        if after_star:
+            for i, p in enumerate(after_star):
+                # Use negative index: subject[subject.length - (len(after_star) - i)]
+                offset = len(after_star) - i
+                elem_access = f"{subject}[{subject}.length - {offset}]"
+                _gen_single_sequence_element(p, elem_access, codegen, conditions, bindings)
+
+        # Handle star capture
+        if star_name is not None:
+            # slice(start, end) where end is length - after_count
+            if after_star:
+                bindings.append(
+                    f"{star_name} = {subject}.slice({star_index}, {subject}.length - {len(after_star)});"
                 )
-
-            case ast.MatchOr(patterns=or_patterns):
-                # OR pattern in element: [1 | 2, b]
-                or_conds = []
-                for op in or_patterns:
-                    oc, _ = _gen_pattern_condition(op, elem_access, codegen)
-                    if oc:
-                        or_conds.append(oc)
-                if or_conds:
-                    conditions.append("(" + " || ".join(or_conds) + ")")
-
-            case ast.MatchSequence(patterns=nested_patterns):
-                # Nested sequence: [[a, b], c]
-                nested_cond, nested_bindings = _gen_sequence_pattern(
-                    nested_patterns, elem_access, codegen
-                )
-                if nested_cond:
-                    conditions.append(nested_cond)
-                bindings.extend(nested_bindings)
-
-            case _:
-                # Recurse for other patterns
-                elem_cond, elem_bindings = _gen_pattern_condition(
-                    p, elem_access, codegen
-                )
-                if elem_cond:
-                    conditions.append(elem_cond)
-                bindings.extend(elem_bindings)
+            else:
+                bindings.append(f"{star_name} = {subject}.slice({star_index});")
 
     return " && ".join(conditions), bindings
+
+
+def _gen_sequence_elements(
+    patterns: list[ast.pattern],
+    subject: str,
+    start_index: int,
+    codegen: CodeGen,
+    conditions: list[str],
+    bindings: list[str],
+) -> None:
+    """Generate conditions and bindings for a list of sequence elements."""
+    for i, p in enumerate(patterns):
+        elem_access = f"{subject}[{start_index + i}]"
+        _gen_single_sequence_element(p, elem_access, codegen, conditions, bindings)
+
+
+def _gen_single_sequence_element(
+    p: ast.pattern,
+    elem_access: str,
+    codegen: CodeGen,
+    conditions: list[str],
+    bindings: list[str],
+) -> None:
+    """Generate condition and binding for a single sequence element."""
+    match p:
+        case ast.MatchAs(pattern=None, name=None):
+            # Wildcard element: [_, b]
+            pass
+
+        case ast.MatchAs(pattern=None, name=name):
+            # Capture element: [a, b]
+            bindings.append(f"{name} = {elem_access};")
+
+        case ast.MatchValue(value=value):
+            # Literal element: [1, b]
+            value_js = flatten(codegen.gen_expr(value))
+            conditions.append(
+                f"{codegen.call_std_function('op_equals', [elem_access, value_js])}"
+            )
+
+        case ast.MatchOr(patterns=or_patterns):
+            # OR pattern in element: [1 | 2, b]
+            or_conds = []
+            for op in or_patterns:
+                oc, _ = _gen_pattern_condition(op, elem_access, codegen)
+                if oc:
+                    or_conds.append(oc)
+            if or_conds:
+                conditions.append("(" + " || ".join(or_conds) + ")")
+
+        case ast.MatchSequence(patterns=nested_patterns):
+            # Nested sequence: [[a, b], c]
+            nested_cond, nested_bindings = _gen_sequence_pattern(
+                nested_patterns, elem_access, codegen
+            )
+            if nested_cond:
+                conditions.append(nested_cond)
+            bindings.extend(nested_bindings)
+
+        case _:
+            # Recurse for other patterns
+            elem_cond, elem_bindings = _gen_pattern_condition(p, elem_access, codegen)
+            if elem_cond:
+                conditions.append(elem_cond)
+            bindings.extend(elem_bindings)
 
 
 def _gen_mapping_pattern(

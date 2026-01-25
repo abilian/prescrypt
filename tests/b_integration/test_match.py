@@ -287,6 +287,118 @@ result
         assert js_eval(py2js(code)) == 300
 
 
+class TestMatchStar:
+    """Test starred patterns in sequences."""
+
+    def test_star_at_end(self):
+        """Test [first, *rest] pattern."""
+        code = """
+x = [1, 2, 3, 4, 5]
+match x:
+    case [first, *rest]:
+        result = [first, rest]
+    case _:
+        result = None
+result
+"""
+        assert js_eval(py2js(code)) == [1, [2, 3, 4, 5]]
+
+    def test_star_at_start(self):
+        """Test [*rest, last] pattern."""
+        code = """
+x = [1, 2, 3, 4, 5]
+match x:
+    case [*rest, last]:
+        result = [rest, last]
+    case _:
+        result = None
+result
+"""
+        assert js_eval(py2js(code)) == [[1, 2, 3, 4], 5]
+
+    def test_star_in_middle(self):
+        """Test [first, *middle, last] pattern."""
+        code = """
+x = [1, 2, 3, 4, 5]
+match x:
+    case [first, *middle, last]:
+        result = [first, middle, last]
+    case _:
+        result = None
+result
+"""
+        assert js_eval(py2js(code)) == [1, [2, 3, 4], 5]
+
+    def test_star_empty_rest(self):
+        """Test star matching empty list."""
+        code = """
+x = [1, 2]
+match x:
+    case [first, *middle, last]:
+        result = [first, middle, last]
+    case _:
+        result = None
+result
+"""
+        assert js_eval(py2js(code)) == [1, [], 2]
+
+    def test_star_wildcard(self):
+        """Test [first, *_, last] pattern (ignore middle)."""
+        code = """
+x = [1, 2, 3, 4, 5]
+match x:
+    case [first, *_, last]:
+        result = [first, last]
+    case _:
+        result = None
+result
+"""
+        assert js_eval(py2js(code)) == [1, 5]
+
+    def test_star_single_element(self):
+        """Test star with single element list."""
+        code = """
+x = [42]
+match x:
+    case [only]:
+        result = f"one: {only}"
+    case [first, *rest]:
+        result = f"many: {first}"
+    case _:
+        result = "empty"
+result
+"""
+        assert js_eval(py2js(code)) == "one: 42"
+
+    def test_star_minimum_length(self):
+        """Test that star respects minimum length."""
+        code = """
+x = [1]
+match x:
+    case [a, b, *rest]:
+        result = "at least 2"
+    case [a]:
+        result = "exactly 1"
+    case _:
+        result = "other"
+result
+"""
+        assert js_eval(py2js(code)) == "exactly 1"
+
+    def test_star_with_literals(self):
+        """Test star with literal elements."""
+        code = """
+x = [0, 1, 2, 3]
+match x:
+    case [0, *rest]:
+        result = rest
+    case _:
+        result = []
+result
+"""
+        assert js_eval(py2js(code)) == [1, 2, 3]
+
+
 class TestMatchMapping:
     """Test dictionary/mapping patterns."""
 

@@ -130,4 +130,102 @@ print(parse_color("green"))
 print(parse_color("unknown"))
 
 
+# Singleton patterns (None, True, False)
+def check_value(v):
+    match v:
+        case None:
+            return "nothing"
+        case True:
+            return "yes"
+        case False:
+            return "no"
+        case _:
+            return "something else"
+
+print(check_value(None))
+print(check_value(True))
+print(check_value(False))
+print(check_value(42))
+
+
+# Class patterns
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+def describe_point(p):
+    match p:
+        case Point(x=0, y=0):
+            return "origin"
+        case Point(x=0, y=y):
+            return f"on y-axis at {y}"
+        case Point(x=x, y=0):
+            return f"on x-axis at {x}"
+        case Point(x=x, y=y):
+            return f"point at ({x}, {y})"
+        case _:
+            return "not a point"
+
+print(describe_point(Point(0, 0)))
+print(describe_point(Point(0, 5)))
+print(describe_point(Point(3, 0)))
+print(describe_point(Point(3, 4)))
+
+
+# Star patterns at different positions
+def first_and_last(items):
+    match items:
+        case []:
+            return "empty"
+        case [only]:
+            return f"single: {only}"
+        case [first, *_, last]:
+            return f"first={first}, last={last}"
+
+print(first_and_last([]))
+print(first_and_last([1]))
+print(first_and_last([1, 2]))
+print(first_and_last([1, 2, 3, 4, 5]))
+
+
+def get_tail(items):
+    match items:
+        case [*rest, last]:
+            return [rest, last]
+        case _:
+            return None
+
+print(get_tail([1, 2, 3]))
+
+
+# Nested sequence patterns
+def process_nested(data):
+    match data:
+        case [[a, b], c]:
+            return a + b + c
+        case [x, [y, z]]:
+            return x * (y + z)
+        case _:
+            return 0
+
+print(process_nested([[1, 2], 3]))
+print(process_nested([2, [3, 4]]))
+
+
+# Guard with sequence pattern
+def sum_if_positive(lst):
+    match lst:
+        case [a, b] if a > 0 and b > 0:
+            return a + b
+        case [a, b]:
+            return 0
+        case _:
+            return -1
+
+print(sum_if_positive([3, 4]))
+print(sum_if_positive([-1, 5]))
+print(sum_if_positive([1]))
+
+
 print("match tests done")
