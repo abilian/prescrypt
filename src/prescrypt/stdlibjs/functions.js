@@ -326,6 +326,10 @@ export const op_instantiate = function (ob, args) {
   if (ob.__init__) {
     ob.__init__.apply(ob, args);
   }
+  // Seal object if __slots__ is defined (prevents adding new properties)
+  if (ob.__slots__ !== undefined) {
+    Object.seal(ob);
+  }
 };
 
 // ---

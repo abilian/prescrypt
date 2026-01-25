@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.3 (in progress) | **Tests:** 2433 passing, 28 skipped | **Coverage:** 89%
+**Current Status:** v0.9.4 (in progress) | **Tests:** 2444 passing, 28 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
@@ -80,7 +80,9 @@ See `notes/history.md` for completed work (Stages 0-6).
 
 ### Build & Tooling
 - [ ] **Built-in bundling:** Bundle multi-file projects into a single JS file (currently requires external bundler like esbuild)
-- [ ] **Watch mode for CLI:** Auto-recompile on file changes
+- [x] **Watch mode for CLI:** Auto-recompile on file changes ✓ (done in v0.9.4)
+  - `py2js src/ -o dist/ --watch`
+  - Uses watchdog if available, falls back to polling
 - [x] **Reserved word handling:** Auto-rename JavaScript reserved words (`default`, `switch`, `interface`, etc.) - done in v0.9.3
 
 ### JS FFI Enhancements
@@ -92,10 +94,17 @@ See `notes/history.md` for completed work (Stages 0-6).
   - Supports aliases and `.new()` constructor
 
 ### Language Features
-- [ ] Dataclasses support
-- [ ] `__slots__` support
+- [x] **Dataclasses support** ✓ (done in v0.9.4)
+  - `@dataclass` generates `__init__`, `__repr__`, `__eq__`
+  - Supports default values, `eq=False`, `frozen=True`
+- [x] **`__slots__` support** ✓ (done in v0.9.4)
+  - Restricts attributes to declared slots using `Object.seal()`
+  - Supports list, tuple, or single string syntax
+- [x] **`match` statement** ✓ (done in v0.9.4)
+  - Literal, OR, capture, wildcard, sequence patterns
+  - Guard clauses supported
+  - Class/mapping patterns not yet supported
 - [ ] Multiple inheritance (MRO)
-- [ ] `match` statement (structural pattern matching)
 
 ---
 

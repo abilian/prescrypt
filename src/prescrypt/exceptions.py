@@ -44,8 +44,10 @@ class PrescryptError(Exception):
         message: str,
         node: ast.AST | None = None,
         location: SourceLocation | None = None,
+        hint: str | None = None,
     ):
         self.message = message
+        self.hint = hint
         # Location can be provided directly or extracted from node
         if location:
             self.location = location
@@ -61,31 +63,65 @@ class PrescryptError(Exception):
             return f"{self.location}: error: {self.message}"
         return f"error: {self.message}"
 
-    def format_with_context(self, source: str) -> str:
-        """Format error with source context."""
+    def format_with_context(self, source: str, context_lines: int = 1) -> str:
+        """Format error with source context.
+
+        Args:
+            source: The source code
+            context_lines: Number of lines to show before and after the error
+        """
         base = self.format()
         if not self.location or self.location.line == 0:
+            if self.hint:
+                return f"{base}\n\nHint: {self.hint}"
             return base
 
         lines = source.splitlines()
         if self.location.line > len(lines):
+            if self.hint:
+                return f"{base}\n\nHint: {self.hint}"
             return base
 
-        # Get source line
-        line_content = lines[self.location.line - 1]
-        line_num = str(self.location.line)
+        error_line = self.location.line
+
+        # Determine line range to display
+        start_line = max(1, error_line - context_lines)
+        end_line = min(len(lines), error_line + context_lines)
+
+        # Calculate width for line numbers
+        max_line_num = end_line
+        num_width = len(str(max_line_num))
 
         # Build output
-        result = [base]
-        result.append(f"  {line_num} | {line_content}")
+        result = [base, ""]
 
-        # Underline the error location
-        padding = " " * (len(line_num) + 3 + self.location.column)
-        if self.location.end_column and self.location.end_column > self.location.column:
-            underline = "^" * (self.location.end_column - self.location.column)
-        else:
-            underline = "^"
-        result.append(f"{padding}{underline}")
+        # Show context lines
+        for line_num in range(start_line, end_line + 1):
+            line_content = lines[line_num - 1]
+            prefix = ">" if line_num == error_line else " "
+            result.append(f"{prefix} {line_num:>{num_width}} | {line_content}")
+
+            # Add underline for error line
+            if line_num == error_line:
+                col = self.location.column
+                end_col = self.location.end_column
+
+                # Calculate underline length
+                if end_col and end_col > col:
+                    underline_len = end_col - col
+                else:
+                    # Underline to end of meaningful content or at least 1 char
+                    underline_len = max(1, len(line_content.rstrip()) - col)
+
+                # Build the underline
+                padding = " " * (num_width + 4 + col)  # prefix + space + num + " | "
+                underline = "^" * underline_len
+                result.append(f"{padding}{underline}")
+
+        # Add hint if present
+        if self.hint:
+            result.append("")
+            result.append(f"Hint: {self.hint}")
 
         return "\n".join(result)
 
@@ -102,8 +138,9 @@ class JSError(PrescryptError):
         message: str,
         node: ast.AST | None = None,
         location: SourceLocation | None = None,
+        hint: str | None = None,
     ):
-        super().__init__(message, node=node, location=location)
+        super().__init__(message, node=node, location=location, hint=hint)
 
 
 class UnsupportedFeatureError(PrescryptError):

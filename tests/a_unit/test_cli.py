@@ -63,7 +63,20 @@ class TestArgumentParser:
         """Parse verbose flag."""
         parser = create_parser()
         args = parser.parse_args(["input.py", "-v"])
-        assert args.verbose is True
+        assert args.verbose == 1
+
+        # Multiple -v increases verbosity
+        args = parser.parse_args(["input.py", "-vv"])
+        assert args.verbose == 2
+
+        args = parser.parse_args(["input.py", "-vvv"])
+        assert args.verbose == 3
+
+    def test_parser_debug(self):
+        """Parse debug flag."""
+        parser = create_parser()
+        args = parser.parse_args(["input.py", "--debug"])
+        assert args.debug is True
 
     def test_parser_quiet(self):
         """Parse quiet flag."""

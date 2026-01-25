@@ -5,6 +5,48 @@ All notable changes to Prescrypt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased (v0.9.4)
+
+### Added
+
+- **Watch mode**: Auto-recompile on file changes with `-w`/`--watch` flag
+  - `py2js src/ -o dist/ --watch` - watch directory for changes
+  - `py2js input.py --watch` - watch single file for changes
+  - Uses watchdog if available for efficient file system events
+  - Falls back to polling (1 second interval) if watchdog not installed
+  - Works with all existing options (source maps, module mode, etc.)
+- **Dataclass support**: `@dataclass` decorator generates `__init__`, `__repr__`, and `__eq__`
+  - Supports fields with and without default values
+  - Supports `@dataclass(eq=False)` to skip `__eq__` generation
+  - Supports `@dataclass(frozen=True)` for immutable instances
+  - Additional methods can be added to dataclasses
+  - Works with `@classmethod` and `@staticmethod` decorators
+- **`__slots__` support**: Restrict instance attributes for memory efficiency
+  - `__slots__ = ['x', 'y']` prevents adding new attributes after `__init__`
+  - Uses `Object.seal()` to enforce slot restrictions
+  - Supports list, tuple, or single string syntax
+- **Enhanced error messages**: Better error display with source context
+  - Shows surrounding code lines for context
+  - Highlights the error location with underlines
+  - Includes hints for common mistakes (e.g., multiple inheritance)
+- **Verbose/debug mode**: Show compilation stages and timing
+  - `-v` shows compilation stages with timing
+  - `-vv` also shows AST after each pass (truncated)
+  - `--debug` or `-vvv` for full debug output
+- **Match statement support** (partial): Python 3.10+ structural pattern matching
+  - Literal patterns: `case 0:`, `case "hello":`
+  - OR patterns: `case 1 | 2 | 3:`
+  - Capture patterns: `case n:`
+  - Wildcard: `case _:`
+  - Sequence patterns: `case [a, b]:`
+  - Singleton patterns: `case None:`, `case True:`, `case False:`
+  - Guard clauses: `case n if n > 0:`
+  - Not yet supported: class patterns, mapping patterns, starred patterns
+
+### Statistics
+
+- 2470 tests passing, 28 skipped
+
 ## [0.9.3] - 2026-01-24
 
 ### Added

@@ -211,7 +211,9 @@ def gen_complex_unpack(targets: list[ast.expr], js_value: str, codegen: CodeGen)
         if isinstance(t, ast.Starred):
             if starred_idx is not None:
                 msg = "Multiple starred expressions in assignment"
-                raise JSError(msg)
+                raise JSError(
+                    msg, t, hint="Only one *var expression is allowed per unpacking."
+                )
             starred_idx = i
 
     if starred_idx is not None:

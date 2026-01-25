@@ -49,6 +49,7 @@ from . import (
     control_flow,
     exceptions,  # noqa
     functions,
+    match,  # noqa
     simple_statements,
 )
 

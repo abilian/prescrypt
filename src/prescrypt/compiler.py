@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,6 +15,17 @@ from .stdlib_js import FUNCTION_PREFIX, METHOD_PREFIX, StdlibJs
 
 if TYPE_CHECKING:
     from .sourcemap import SourceMapGenerator
+
+
+def _format_time(seconds: float) -> str:
+    """Format time in human-readable units."""
+    if seconds < 0.001:
+        return f"{seconds * 1_000_000:.0f}µs"
+    elif seconds < 1:
+        return f"{seconds * 1000:.1f}ms"
+    else:
+        return f"{seconds:.2f}s"
+
 
 # Cache stdlib instances by prefix combination
 _stdlib_cache: dict[tuple[str, str], StdlibJs] = {}
@@ -42,6 +55,7 @@ class Compiler:
         source_dir: Path | None = None,
         module_paths: list[Path] | None = None,
         source_map: SourceMapGenerator | None = None,
+        verbosity: int = 0,
     ) -> str:
         """Compile Python source to JavaScript.
 
@@ -56,16 +70,54 @@ class Compiler:
             source_dir: Directory of the source file (for module resolution)
             module_paths: Additional directories to search for modules
             source_map: Optional SourceMapGenerator to populate with mappings
+            verbosity: Verbosity level (0=quiet, 1=stages, 2=AST, 3=debug)
 
         Returns:
             JavaScript code
         """
+        total_start = time.perf_counter()
+        timings: list[tuple[str, float]] = []
+
+        def stage(name: str):
+            """Record timing for a compilation stage."""
+            if verbosity >= 1:
+                timings.append((name, time.perf_counter()))
+
+        # Stage 1: Parse
+        stage("parse")
         tree = ast.parse(source)
+
+        if verbosity >= 2:
+            print("=== After parse ===", file=sys.stderr)
+            print(ast.dump(tree, indent=2)[:2000], file=sys.stderr)
+
+        # Stage 2: Desugar
+        stage("desugar")
         tree = desugar(tree)
+
+        if verbosity >= 2:
+            print("=== After desugar ===", file=sys.stderr)
+            print(ast.dump(tree, indent=2)[:2000], file=sys.stderr)
+
+        # Stage 3: Optimize
         if optimize:
+            stage("optimize")
             tree = fold_constants(tree)
+
+            if verbosity >= 2:
+                print("=== After optimize ===", file=sys.stderr)
+                print(ast.dump(tree, indent=2)[:2000], file=sys.stderr)
+
+        # Stage 4: Bind
+        stage("bind")
         Binder().visit(tree)
+
+        # Stage 5: Type inference
+        stage("infer")
         TypeInference().visit(tree)
+
+        # Stage 6: Code generation
+        stage("codegen")
         codegen = CodeGen(
             tree,
             function_prefix,
@@ -76,6 +128,18 @@ class Compiler:
             source_map,
         )
         js_code = codegen.gen()
+        stage("done")
+
+        # Print timing summary
+        if verbosity >= 1 and len(timings) > 1:
+            print("Compilation stages:", file=sys.stderr)
+            for i in range(len(timings) - 1):
+                name, start = timings[i]
+                _, end = timings[i + 1]
+                duration = end - start
+                print(f"  {name:12} {_format_time(duration)}", file=sys.stderr)
+            total_time = time.perf_counter() - total_start
+            print(f"  {'total':12} {_format_time(total_time)}", file=sys.stderr)
 
         if not include_stdlib:
             return js_code
@@ -146,6 +210,7 @@ def py2js(
     source_dir: Path | None = None,
     module_paths: list[Path] | None = None,
     source_map: SourceMapGenerator | None = None,
+    verbosity: int = 0,
 ) -> str:
     """Compile Python code to JavaScript.
 
@@ -160,6 +225,7 @@ def py2js(
         source_dir: Directory of the source file (for module resolution)
         module_paths: Additional directories to search for modules
         source_map: Optional SourceMapGenerator to populate with mappings
+        verbosity: Verbosity level (0=quiet, 1=stages, 2=AST, 3=debug)
 
     Returns:
         JavaScript code
@@ -176,4 +242,5 @@ def py2js(
         source_dir=source_dir,
         module_paths=module_paths,
         source_map=source_map,
+        verbosity=verbosity,
     )

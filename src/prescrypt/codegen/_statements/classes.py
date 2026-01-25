@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass as dc_dataclass
 
 from prescrypt.codegen.main import CodeGen, gen_stmt
 from prescrypt.codegen.utils import flatten, js_repr
@@ -11,8 +12,116 @@ from prescrypt.front import ast
 _VALID_BASE_CLASS_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_.]*$")
 
 
+@dc_dataclass
+class DataclassField:
+    """Represents a field in a dataclass."""
+
+    name: str
+    has_default: bool
+    default_value: ast.expr | None = None
+
+
+def _is_dataclass(node: ast.ClassDef) -> bool:
+    """Check if a class has a @dataclass decorator."""
+    for dec in node.decorator_list:
+        # @dataclass
+        if isinstance(dec, ast.Name) and dec.id == "dataclass":
+            return True
+        # @dataclass()
+        if isinstance(dec, ast.Call):
+            if isinstance(dec.func, ast.Name) and dec.func.id == "dataclass":
+                return True
+    return False
+
+
+def _get_dataclass_options(node: ast.ClassDef) -> dict:
+    """Extract dataclass options from decorator."""
+    options = {"eq": True, "repr": True, "frozen": False}
+
+    for dec in node.decorator_list:
+        if isinstance(dec, ast.Call):
+            if isinstance(dec.func, ast.Name) and dec.func.id == "dataclass":
+                for kw in dec.keywords:
+                    if kw.arg in options:
+                        if isinstance(kw.value, ast.Constant):
+                            options[kw.arg] = kw.value.value
+    return options
+
+
+def _extract_dataclass_fields(node: ast.ClassDef) -> list[DataclassField]:
+    """Extract field definitions from a dataclass body."""
+    fields = []
+    for stmt in node.body:
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+            field = DataclassField(
+                name=stmt.target.id,
+                has_default=stmt.value is not None,
+                default_value=stmt.value,
+            )
+            fields.append(field)
+    return fields
+
+
+def _extract_slots(node: ast.ClassDef) -> list[str] | None:
+    """Extract __slots__ from a class definition.
+
+    Returns a list of slot names, or None if no __slots__ defined.
+    """
+    for stmt in node.body:
+        # __slots__ = ['x', 'y']
+        if isinstance(stmt, ast.Assign):
+            for target in stmt.targets:
+                if isinstance(target, ast.Name) and target.id == "__slots__":
+                    return _parse_slots_value(stmt.value)
+
+        # __slots__: list[str] = ['x', 'y']
+        if isinstance(stmt, ast.AnnAssign):
+            if isinstance(stmt.target, ast.Name) and stmt.target.id == "__slots__":
+                if stmt.value:
+                    return _parse_slots_value(stmt.value)
+
+    return None
+
+
+def _parse_slots_value(node: ast.expr) -> list[str]:
+    """Parse the value of __slots__ assignment."""
+    slots = []
+
+    if isinstance(node, (ast.List, ast.Tuple)):
+        for elt in node.elts:
+            if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                slots.append(elt.value)
+            else:
+                msg = "__slots__ must contain only string literals"
+                raise JSError(msg, elt)
+    elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+        # Single slot as string: __slots__ = 'x'
+        slots.append(node.value)
+    else:
+        msg = "__slots__ must be a list, tuple, or string of attribute names"
+        raise JSError(msg, node)
+
+    return slots
+
+
+def _is_slots_assignment(stmt: ast.stmt) -> bool:
+    """Check if a statement is a __slots__ assignment."""
+    if isinstance(stmt, ast.Assign):
+        for target in stmt.targets:
+            if isinstance(target, ast.Name) and target.id == "__slots__":
+                return True
+    if isinstance(stmt, ast.AnnAssign):
+        if isinstance(stmt.target, ast.Name) and stmt.target.id == "__slots__":
+            return True
+    return False
+
+
 @gen_stmt.register
 def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
+    # Check for dataclass decorator
+    if _is_dataclass(node):
+        return gen_dataclass(node, codegen)
+
     name_node = node.name
     base_nodes = node.bases
     keyword_nodes = node.keywords
@@ -22,10 +131,18 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     # Checks
     if len(base_nodes) > 1:
         msg = "Multiple inheritance not (yet) supported"
-        raise JSError(msg, node)
+        raise JSError(
+            msg,
+            node,
+            hint="Use composition or mixins instead of multiple inheritance.",
+        )
     if keyword_nodes:
         msg = "Metaclasses not supported"
-        raise JSError(msg, node)
+        raise JSError(
+            msg,
+            node,
+            hint="JavaScript doesn't have metaclasses. Consider using decorators or factory functions.",
+        )
 
     # Get base class (not the constructor)
     base_class = "Object"
@@ -38,6 +155,9 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
         base_class = "Object"
     else:
         base_class += ".prototype"
+
+    # Extract __slots__ if present
+    slots = _extract_slots(node)
 
     # Define function that acts as class constructor
     code = []
@@ -53,6 +173,11 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     )
     codegen.call_std_function("op_instantiate", [])
 
+    # Add __slots__ to prototype if defined
+    if slots is not None:
+        slots_js = "[" + ", ".join(js_repr(s) for s in slots) + "]"
+        code.append(f"{node.name}.prototype.__slots__ = {slots_js};")
+
     # Collect property definitions
     properties = _collect_properties(body_nodes)
 
@@ -64,6 +189,9 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     for sub in body_nodes:
         # Skip property methods - they'll be emitted via Object.defineProperty
         if isinstance(sub, ast.FunctionDef) and _is_property_method(sub):
+            continue
+        # Skip __slots__ - already handled above
+        if _is_slots_assignment(sub):
             continue
         code += codegen.gen_stmt(sub)
 
@@ -226,3 +354,119 @@ def make_class_definition(
 
     lines.append("")
     return "\n".join(lines)
+
+
+def gen_dataclass(node: ast.ClassDef, codegen: CodeGen) -> list[str]:
+    """Generate JavaScript code for a dataclass.
+
+    Dataclasses auto-generate:
+    - __init__ with all fields as parameters
+    - __repr__ showing class name and all fields
+    - __eq__ comparing all fields (if eq=True)
+    """
+    name = node.name
+    options = _get_dataclass_options(node)
+    fields = _extract_dataclass_fields(node)
+
+    # Check for base class
+    base_class = "Object"
+    if node.bases:
+        if len(node.bases) > 1:
+            msg = "Dataclass with multiple inheritance not supported"
+            raise JSError(msg, node)
+        base_class = flatten(codegen.gen_expr(node.bases[0]))
+        if base_class.lower() == "object":
+            base_class = "Object"
+        else:
+            base_class += ".prototype"
+
+    code = []
+
+    # Separate fields with and without defaults
+    fields_no_default = [f for f in fields if not f.has_default]
+    fields_with_default = [f for f in fields if f.has_default]
+
+    # Generate parameter list (fields without defaults first)
+    params = []
+    for field in fields_no_default:
+        params.append(field.name)
+    for field in fields_with_default:
+        default_js = flatten(codegen.gen_expr(field.default_value))
+        params.append(f"{field.name} = {default_js}")
+
+    params_str = ", ".join(params)
+
+    # Generate constructor
+    decl = "export const " if codegen.should_export(name) else "var "
+    code.append(f"{decl}{name} = function ({params_str}) {{")
+    code.append(f"    if (!(this instanceof {name})) {{")
+    code.append(f"        return new {name}(...arguments);")
+    code.append("    }")
+
+    # Assign fields
+    for field in fields:
+        code.append(f"    this.{field.name} = {field.name};")
+
+    # Freeze if frozen=True
+    if options.get("frozen"):
+        code.append("    Object.freeze(this);")
+
+    code.append("};")
+
+    # Set up prototype chain
+    if base_class != "Object":
+        code.append(f"{name}.prototype = Object.create({base_class});")
+    code.append(f"{name}.prototype._base_class = {base_class};")
+    code.append(f"{name}.prototype.__name__ = {js_repr(name)};")
+
+    # Generate __repr__
+    if options.get("repr", True):
+        field_reprs = []
+        for field in fields:
+            field_reprs.append(f"'{field.name}=' + _pyfunc_repr(this.{field.name})")
+        if field_reprs:
+            separator = ' + ", " + '
+            repr_body = f"'{name}(' + {separator.join(field_reprs)} + ')'"
+        else:
+            repr_body = f"'{name}()'"
+        code.append(
+            f"{name}.prototype.__repr__ = function() {{ return {repr_body}; }};"
+        )
+        codegen.call_std_function("repr", [])
+
+    # Generate __eq__
+    if options.get("eq", True):
+        eq_checks = [f"other instanceof {name}"]
+        for field in fields:
+            eq_checks.append(
+                f"_pyfunc_op_equals(this.{field.name}, other.{field.name})"
+            )
+        eq_body = " && ".join(eq_checks)
+        code.append(
+            f"{name}.prototype.__eq__ = function(other) {{ return {eq_body}; }};"
+        )
+        codegen.call_std_function("op_equals", [])
+
+    # Generate __hash__ = None for mutable dataclasses (default)
+    if not options.get("frozen"):
+        code.append(f"{name}.prototype.__hash__ = null;")
+
+    # Process other methods in the body (non-field definitions)
+    codegen.add_var(name)
+    codegen.push_ns("class", name)
+
+    for stmt in node.body:
+        # Skip annotated assignments (these are field definitions)
+        if isinstance(stmt, ast.AnnAssign):
+            continue
+        # Skip docstrings
+        if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+            if isinstance(stmt.value.value, str):
+                continue
+        # Generate other methods
+        code += codegen.gen_stmt(stmt)
+
+    codegen.pop_ns()
+    code.append("")
+
+    return code

@@ -84,6 +84,7 @@ lint.extend-ignore = [
     "SIM105", # 	[ ] suppressible-exception
     "UP007", #  	[ ] non-pep604-annotation-union
     "PGH003",
+    "PERF203",
 ]
 
 [lint.extend-per-file-ignores]
