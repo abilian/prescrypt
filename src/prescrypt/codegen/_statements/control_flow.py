@@ -6,6 +6,130 @@ from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
 
+def _collect_assigned_names(stmts: list[ast.stmt]) -> set[str]:
+    """Collect all variable names assigned in a list of statements.
+
+    This is used to pre-declare variables before loop/block bodies,
+    matching Python's function-level scoping semantics.
+    """
+    names: set[str] = set()
+
+    def visit_expr(node):
+        """Visit an expression that may contain walrus operator."""
+        if isinstance(node, ast.NamedExpr):
+            names.add(node.target.id)
+            visit_expr(node.value)
+        elif isinstance(node, (ast.List, ast.Tuple)):
+            for elt in node.elts:
+                visit_expr(elt)
+        elif isinstance(node, ast.BinOp):
+            visit_expr(node.left)
+            visit_expr(node.right)
+        elif isinstance(node, ast.Compare):
+            visit_expr(node.left)
+            for comp in node.comparators:
+                visit_expr(comp)
+        elif isinstance(node, ast.BoolOp):
+            for val in node.values:
+                visit_expr(val)
+        elif isinstance(node, ast.IfExp):
+            visit_expr(node.test)
+            visit_expr(node.body)
+            visit_expr(node.orelse)
+        elif isinstance(node, ast.Call):
+            visit_expr(node.func)
+            for arg in node.args:
+                visit_expr(arg)
+
+    def visit_target(target):
+        """Visit an assignment target to collect names."""
+        if isinstance(target, ast.Name):
+            names.add(target.id)
+        elif isinstance(target, (ast.Tuple, ast.List)):
+            for elt in target.elts:
+                visit_target(elt)
+        # Subscript and Attribute don't create new names
+
+    def visit_stmt(stmt):
+        if isinstance(stmt, ast.Assign):
+            for target in stmt.targets:
+                visit_target(target)
+            visit_expr(stmt.value)
+        elif isinstance(stmt, ast.AnnAssign):
+            if stmt.target:
+                visit_target(stmt.target)
+        elif isinstance(stmt, ast.AugAssign):
+            visit_target(stmt.target)
+        elif isinstance(stmt, (ast.For, ast.AsyncFor)):
+            visit_target(stmt.target)
+            for s in stmt.body:
+                visit_stmt(s)
+            for s in stmt.orelse:
+                visit_stmt(s)
+        elif isinstance(stmt, (ast.While, ast.If)):
+            visit_expr(stmt.test)
+            for s in stmt.body:
+                visit_stmt(s)
+            for s in stmt.orelse:
+                visit_stmt(s)
+        elif isinstance(stmt, (ast.With, ast.AsyncWith)):
+            for item in stmt.items:
+                if item.optional_vars:
+                    visit_target(item.optional_vars)
+            for s in stmt.body:
+                visit_stmt(s)
+        elif isinstance(stmt, ast.Try):
+            for s in stmt.body:
+                visit_stmt(s)
+            for handler in stmt.handlers:
+                if handler.name:
+                    names.add(handler.name)
+                for s in handler.body:
+                    visit_stmt(s)
+            for s in stmt.orelse:
+                visit_stmt(s)
+            for s in stmt.finalbody:
+                visit_stmt(s)
+        elif isinstance(stmt, ast.Match):
+            # Match patterns can bind variables
+            for case in stmt.cases:
+                _collect_pattern_names(case.pattern, names)
+                for s in case.body:
+                    visit_stmt(s)
+        elif isinstance(stmt, ast.Expr):
+            visit_expr(stmt.value)
+
+    for stmt in stmts:
+        visit_stmt(stmt)
+
+    return names
+
+
+def _collect_pattern_names(pattern, names: set[str]) -> None:
+    """Collect variable names from a match pattern."""
+    if isinstance(pattern, ast.MatchAs):
+        if pattern.name:
+            names.add(pattern.name)
+        if pattern.pattern:
+            _collect_pattern_names(pattern.pattern, names)
+    elif isinstance(pattern, (ast.MatchOr, ast.MatchSequence)):
+        for p in pattern.patterns:
+            _collect_pattern_names(p, names)
+    elif isinstance(pattern, ast.MatchStar):
+        if pattern.name:
+            names.add(pattern.name)
+    elif isinstance(pattern, ast.MatchMapping):
+        for p in pattern.patterns:
+            _collect_pattern_names(p, names)
+        if pattern.rest:
+            names.add(pattern.rest)
+    elif isinstance(pattern, ast.MatchClass):
+        for p in pattern.patterns:
+            _collect_pattern_names(p, names)
+        for p in pattern.kwd_patterns:
+            _collect_pattern_names(p, names)
+
+
 @gen_stmt.register
 def gen_if(node: ast.If, codegen: CodeGen):
     test, body, orelse = node.test, node.body, node.orelse
@@ -123,6 +247,9 @@ def gen_for(node: ast.For, codegen: CodeGen):
     - for x in iterable
     - for i, x in enumerate(iterable)
     - for x in range(...)
+
+    Note: Loop variables are declared BEFORE the loop to match Python's
+    function-level scoping (variables are accessible after the loop).
     """
     target = node.target
     iter_node = node.iter
@@ -147,6 +274,19 @@ def gen_for(node: ast.For, codegen: CodeGen):
 
     code = []
 
+    # Collect all variables that will be assigned in the loop body
+    # Pre-declare them to match Python's function-level scoping
+    body_vars = _collect_assigned_names(body)
+    if orelse:
+        body_vars.update(_collect_assigned_names(orelse))
+
+    # Declare loop variables and body variables BEFORE the loop
+    all_vars = set(target_names) | body_vars
+    for name in sorted(all_vars):  # Sort for deterministic output
+        if not codegen.ns.is_known(name):
+            codegen.add_var(name)
+            code.append(codegen.lf(f"let {name};"))
+
     # Prepare variable to detect else
     if orelse:
         else_dummy = codegen.dummy("els")
@@ -163,17 +303,15 @@ def gen_for(node: ast.For, codegen: CodeGen):
     )
     codegen.indent()
 
-    # Assign loop variable(s)
+    # Assign loop variable(s) - no declaration needed, already declared above
     if len(target_names) == 1:
-        codegen.add_var(target_names[0])
-        code.append(codegen.lf(f"let {target_names[0]} = {d_seq}[{d_iter}];"))
+        code.append(codegen.lf(f"{target_names[0]} = {d_seq}[{d_iter}];"))
     else:
         # Tuple unpacking
         d_target = codegen.dummy("tgt")
         code.append(codegen.lf(f"let {d_target} = {d_seq}[{d_iter}];"))
         for i, name in enumerate(target_names):
-            codegen.add_var(name)
-            code.append(codegen.lf(f"let {name} = {d_target}[{i}];"))
+            code.append(codegen.lf(f"{name} = {d_target}[{i}];"))
 
     # Generate body
     for stmt in body:
@@ -235,23 +373,30 @@ def _make_iterable(codegen: CodeGen, name1, name2, newlines=True):
 
 @gen_stmt.register
 def gen_while(node: ast.While, codegen: CodeGen):
+    """Generate a while loop with Python-like scoping.
+
+    Variables assigned inside the loop are pre-declared to be accessible
+    after the loop ends.
+    """
     test_node, body_nodes, orelse_nodes = node.test, node.body, node.orelse
+
+    code = []
+
+    # Pre-declare variables from body to match Python's function-level scoping
+    body_vars = _collect_assigned_names(body_nodes)
+    if orelse_nodes:
+        body_vars.update(_collect_assigned_names(orelse_nodes))
+
+    for name in sorted(body_vars):
+        if not codegen.ns.is_known(name):
+            codegen.add_var(name)
+            code.append(codegen.lf(f"let {name};"))
+
+    # Generate test expression
     js_test = "".join(codegen.gen_expr(test_node))
 
     # Flush any pending declarations (e.g., from walrus operator in condition)
     pending_decls = codegen.flush_pending_declarations()
-
-    # Collect body and else-body
-    js_for_body = []
-    codegen.indent()
-    js_for_body = [codegen.gen_stmt(n) for n in body_nodes]
-    js_or_else = [codegen.gen_stmt(n) for n in orelse_nodes]
-    codegen.dedent()
-
-    # Init code
-    code = []
-
-    # Emit pending declarations first
     if pending_decls:
         code.append(pending_decls)
 
@@ -263,14 +408,18 @@ def gen_while(node: ast.While, codegen: CodeGen):
     # The loop itself
     code.append(codegen.lf("while (%s) {" % js_test))
     codegen.indent()
-    code += js_for_body
+    for stmt in body_nodes:
+        code.append(codegen.gen_stmt(stmt))
     codegen.dedent()
     code.append(codegen.lf("}"))
 
     # Handle else
     if orelse_nodes:
         code.append(" if (%s) {" % else_dummy)
-        code += js_or_else
+        codegen.indent()
+        for stmt in orelse_nodes:
+            code.append(codegen.gen_stmt(stmt))
+        codegen.dedent()
         code.append(codegen.lf("}"))
         # Update all breaks to set the dummy. We overwrite the
         # "break;" so it will not be detected by a parent loop

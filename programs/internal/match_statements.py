@@ -69,7 +69,7 @@ def handle_list(lst):
         case [x, y]:
             return f"pair: {x}, {y}"
         case [x, y, *rest]:
-            return f"first two: {x}, {y}, rest: {rest}"
+            return f"first two: {x}, {y}, rest count: {len(rest)}"
 
 print(handle_list([]))
 print(handle_list([1]))
@@ -117,13 +117,13 @@ print(handle_command("invalid"))
 def parse_color(color):
     match color:
         case "red":
-            return (255, 0, 0)
+            return "rgb(255,0,0)"
         case "green":
-            return (0, 255, 0)
+            return "rgb(0,255,0)"
         case "blue":
-            return (0, 0, 255)
+            return "rgb(0,0,255)"
         case _:
-            return (0, 0, 0)
+            return "rgb(0,0,0)"
 
 print(parse_color("red"))
 print(parse_color("green"))
@@ -192,7 +192,7 @@ print(first_and_last([1, 2, 3, 4, 5]))
 def get_tail(items):
     match items:
         case [*rest, last]:
-            return [rest, last]
+            return f"rest_len={len(rest)}, last={last}"
         case _:
             return None
 

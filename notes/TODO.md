@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.4 (in progress) | **Tests:** 2444 passing, 28 skipped | **Coverage:** 89%
+**Current Status:** v0.9.4 (in progress) | **Tests:** 2500 passing, 25 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
@@ -63,9 +63,9 @@ See `notes/history.md` for completed work (Stages 0-6).
 
 ## Known Issues
 
-### Variable Scoping (Low Priority)
+### Variable Scoping ✓ Fixed
 
-- [ ] **Loop variable redeclaration:** Variables declared in one loop aren't re-declared in subsequent loops with the same name, causing strict mode errors. Workaround: use different variable names.
+- [x] **Loop variable scoping:** Fixed in v0.9.4 - Loop variables and variables assigned inside loops are now properly hoisted to function scope, matching Python's scoping semantics.
 
 ### JS Interop (Fixed in v0.9.3)
 

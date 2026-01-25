@@ -45,9 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Class patterns: `case Point(x=x, y=y):`
   - Guard clauses: `case n if n > 0:`
 
+### Fixed
+
+- **Loop variable scoping**: Variables assigned inside loops are now accessible after the loop
+  - Loop variables (`for i in ...`) are hoisted to function scope
+  - Variables assigned inside loop bodies are pre-declared before the loop
+  - Matches Python's function-level scoping semantics
+
 ### Statistics
 
-- 2486 tests passing, 28 skipped
+- 2500 tests passing, 25 skipped
 
 ## [0.9.3] - 2026-01-24
 

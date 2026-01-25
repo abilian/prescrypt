@@ -63,11 +63,11 @@ class TestFStringFormatSpecs:
         result = js_eval(py2js(code))
         assert result.startswith("3.14159")
 
-    @pytest.mark.skip("Width padding not implemented")
     def test_width_padding(self):
         code = "x = 42; f'{x:5}'"
         result = js_eval(py2js(code))
-        assert len(result) >= 5
+        assert result == "   42"
+        assert len(result) == 5
 
     def test_zero_padding(self):
         code = "x = 42; f'{x:05}'"
@@ -130,12 +130,10 @@ class TestFStringExpressions:
 class TestFStringEdgeCases:
     """Test edge cases for f-strings."""
 
-    @pytest.mark.skip("Escaped braces not implemented")
     def test_escaped_braces(self):
         code = "f'{{literal braces}}'"
         assert js_eval(py2js(code)) == "{literal braces}"
 
-    @pytest.mark.skip("Escaped braces not implemented")
     def test_mixed_escaped_and_substitution(self):
         code = "x = 42; f'value: {{x}} = {x}'"
         assert js_eval(py2js(code)) == "value: {x} = 42"
