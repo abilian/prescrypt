@@ -20,6 +20,7 @@ def gen_constant(node: ast.Constant, codegen: CodeGen):
 
         case ast.Constant(float(f)):
             import math
+
             if math.isinf(f):
                 return "Infinity" if f > 0 else "-Infinity"
             if math.isnan(f):

@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.4 (in progress) | **Tests:** 2631 passing, 0 skipped | **Coverage:** 89%
+**Current Status:** v0.9.5 (in progress) | **Tests:** 2636 passing, 0 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
@@ -101,7 +101,10 @@ These issues were found while creating golden tests for the tryalgo algorithms:
 ## Future Enhancements
 
 ### Build & Tooling
-- [ ] **Built-in bundling:** Bundle multi-file projects into a single JS file (currently requires external bundler like esbuild)
+- [x] **Built-in bundling:** Bundle multi-file projects into a single JS file ✓ (done in v0.9.5)
+  - `py2js entry.py -o out.js --bundle -M src/`
+  - Recursively resolves imports and bundles all modules
+  - Combined tree-shaking across all modules
 - [x] **Watch mode for CLI:** Auto-recompile on file changes ✓ (done in v0.9.4)
   - `py2js src/ -o dist/ --watch`
   - Uses watchdog if available, falls back to polling

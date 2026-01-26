@@ -60,6 +60,12 @@ def _gen_import_from(node: ast.ImportFrom, codegen: CodeGen):
             codegen.add_js_ffi_global(local_name)
         return ""  # No output needed - names are used directly as JS globals
 
+    # Bundle mode - imports are handled externally, emit a comment
+    if codegen.bundle_mode:
+        names = ", ".join(alias.name for alias in node.names)
+        module_str = node.module or "."
+        return f"/* bundled: from {module_str} import {names} */\n"
+
     # In module mode, generate ES6 imports
     if codegen.module_mode:
         module = node.module or ""
@@ -121,6 +127,11 @@ def _gen_import(node: ast.Import, codegen: CodeGen):
     # If only js imports, return empty
     if not other_imports:
         return ""
+
+    # Bundle mode - imports are handled externally, emit a comment
+    if codegen.bundle_mode:
+        names = ", ".join(alias.name for alias in other_imports)
+        return f"/* bundled: import {names} */\n"
 
     # In module mode, generate ES6 imports for non-js imports
     if codegen.module_mode:

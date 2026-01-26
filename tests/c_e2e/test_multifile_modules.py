@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from prescrypt.main import compile_directory
+from prescrypt.main import bundle_file, compile_directory
 
 
 def run_node_module(dist_dir: Path, entry_point: str = "main.js") -> str:
@@ -522,3 +522,263 @@ print("main end")
             assert "main start" in output
             assert "value is 2" in output
             assert "main end" in output
+
+
+def run_node_script(script_path: Path) -> str:
+    """Run a Node.js script (not a module) and return stdout."""
+    result = subprocess.run(
+        ["node", str(script_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Node.js failed:\n{result.stderr}")
+
+    return result.stdout.strip()
+
+
+class TestBundling:
+    """Test bundling multiple modules into a single file."""
+
+    def test_simple_bundle(self):
+        """Test bundling two files into one."""
+        with TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            src_dir = tmppath / "src"
+            src_dir.mkdir()
+
+            (src_dir / "utils.py").write_text(
+                """
+def greet(name):
+    return "Hello, " + name + "!"
+"""
+            )
+
+            (src_dir / "main.py").write_text(
+                """
+from utils import greet
+
+message = greet("World")
+print(message)
+"""
+            )
+
+            out_file = tmppath / "out.js"
+
+            success = bundle_file(
+                src_dir / "main.py",
+                out_file,
+                module_paths=[src_dir],
+                quiet=True,
+            )
+            assert success
+
+            output = run_node_script(out_file)
+            assert output == "Hello, World!"
+
+    def test_bundle_combined_tree_shake(self):
+        """Test that stdlib is tree-shaken based on all bundled modules."""
+        with TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            src_dir = tmppath / "src"
+            src_dir.mkdir()
+
+            # base.py uses create_dict (for empty dict)
+            (src_dir / "base.py").write_text(
+                """
+def create_obj():
+    return {}
+
+class Animal:
+    def __init__(self, name):
+        self.name = name
+"""
+            )
+
+            # main.py uses op_setitem (for dict assignment)
+            (src_dir / "main.py").write_text(
+                """
+from base import Animal, create_obj
+
+def run():
+    obj = create_obj()
+    obj["key"] = "value"
+    animal = Animal("dog")
+    return animal.name
+
+print(run())
+"""
+            )
+
+            out_file = tmppath / "out.js"
+
+            success = bundle_file(
+                src_dir / "main.py",
+                out_file,
+                module_paths=[src_dir],
+                quiet=True,
+            )
+            assert success
+
+            # Read the output and verify both stdlib functions are present
+            js_code = out_file.read_text()
+            assert "_pyfunc_create_dict" in js_code
+            assert "_pyfunc_op_setitem" in js_code
+            assert "_pyfunc_op_instantiate" in js_code
+
+            output = run_node_script(out_file)
+            assert output == "dog"
+
+    def test_bundle_chained_imports(self):
+        """Test bundling with chained imports: A imports B, B imports C."""
+        with TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            src_dir = tmppath / "src"
+            src_dir.mkdir()
+
+            (src_dir / "level3.py").write_text(
+                """
+def base_value():
+    return 10
+"""
+            )
+
+            (src_dir / "level2.py").write_text(
+                """
+from level3 import base_value
+
+def doubled():
+    return base_value() * 2
+"""
+            )
+
+            (src_dir / "main.py").write_text(
+                """
+from level2 import doubled
+from level3 import base_value
+
+result = doubled() + base_value()
+print(result)
+"""
+            )
+
+            out_file = tmppath / "out.js"
+
+            success = bundle_file(
+                src_dir / "main.py",
+                out_file,
+                module_paths=[src_dir],
+                quiet=True,
+            )
+            assert success
+
+            output = run_node_script(out_file)
+            # doubled() returns 20, base_value() returns 10, result = 30
+            assert output == "30"
+
+    def test_bundle_class_inheritance(self):
+        """Test bundling with class inheritance across modules."""
+        with TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            src_dir = tmppath / "src"
+            src_dir.mkdir()
+
+            (src_dir / "base.py").write_text(
+                """
+class Animal:
+    def __init__(self, name):
+        self.name = name
+
+    def speak(self):
+        return "..."
+"""
+            )
+
+            (src_dir / "dog.py").write_text(
+                """
+from base import Animal
+
+class Dog(Animal):
+    def speak(self):
+        return self.name + " says woof!"
+"""
+            )
+
+            (src_dir / "main.py").write_text(
+                """
+from dog import Dog
+
+dog = Dog("Buddy")
+print(dog.speak())
+"""
+            )
+
+            out_file = tmppath / "out.js"
+
+            success = bundle_file(
+                src_dir / "main.py",
+                out_file,
+                module_paths=[src_dir],
+                quiet=True,
+            )
+            assert success
+
+            output = run_node_script(out_file)
+            assert output == "Buddy says woof!"
+
+    def test_bundle_nested_packages(self):
+        """Test bundling with nested package structure."""
+        with TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            src_dir = tmppath / "src"
+
+            # Create nested structure
+            (src_dir / "providers").mkdir(parents=True)
+
+            (src_dir / "providers" / "base.py").write_text(
+                """
+class CIProvider:
+    name = "base"
+
+    def get_builds(self):
+        return []
+"""
+            )
+
+            (src_dir / "providers" / "github.py").write_text(
+                """
+from providers.base import CIProvider
+
+class GitHubProvider(CIProvider):
+    name = "github"
+
+    def get_builds(self):
+        return ["build1", "build2"]
+"""
+            )
+
+            (src_dir / "main.py").write_text(
+                """
+from providers.github import GitHubProvider
+
+provider = GitHubProvider()
+print(provider.name)
+builds = provider.get_builds()
+print(len(builds))
+"""
+            )
+
+            out_file = tmppath / "out.js"
+
+            success = bundle_file(
+                src_dir / "main.py",
+                out_file,
+                module_paths=[src_dir],
+                quiet=True,
+            )
+            assert success
+
+            output = run_node_script(out_file)
+            assert output == "github\n2"

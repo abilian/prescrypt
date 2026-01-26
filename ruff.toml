@@ -8,7 +8,6 @@ include = [
     "pyproject.toml",
 ]
 exclude = [
-    # "tests/c_e2e",
     "programs",
     "tests/c_e2e/*/programs",
     "tests/c_e2e/tryalgo/tryalgo",

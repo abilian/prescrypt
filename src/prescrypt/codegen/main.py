@@ -43,6 +43,7 @@ class CodeGen:
         source_dir: Path | None = None,
         module_paths: list[Path] | None = None,
         source_map: SourceMapGenerator | None = None,
+        bundle_mode: bool = False,
     ):
         self.module = module
         self._stack = []
@@ -97,6 +98,9 @@ class CodeGen:
 
         # Pending variable declarations (for walrus operator in expressions)
         self._pending_declarations: list[str] = []
+
+        # Bundle mode - suppress import statements (they're bundled)
+        self.bundle_mode = bundle_mode
 
         self._init_dispatch()
 

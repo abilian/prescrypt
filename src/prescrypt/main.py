@@ -7,6 +7,7 @@ import sys
 import time
 from pathlib import Path
 
+from .bundler import bundle_files
 from .compiler import py2js
 from .exceptions import PrescryptError
 from .sourcemap import SourceMapGenerator, get_sourcemap_comment
@@ -84,6 +85,14 @@ Examples:
         action="store_true",
         default=False,
         help="Include full stdlib instead of only used functions",
+    )
+
+    parser.add_argument(
+        "-b",
+        "--bundle",
+        action="store_true",
+        default=False,
+        help="Bundle imported modules into a single output file with combined tree-shaking",
     )
 
     parser.add_argument(
@@ -239,6 +248,62 @@ def compile_file(
             print(f"Compiled {src_path} -> {dst_path}")
     elif not quiet:
         print(f"{src_path} -> {dst_path}")
+
+    return True
+
+
+def bundle_file(
+    src_path: Path,
+    dst_path: Path,
+    *,
+    module_paths: list[Path] | None = None,
+    optimize: bool = True,
+    verbosity: int = 0,
+    quiet: bool = False,
+) -> bool:
+    """Bundle a Python file and all its imports into a single JavaScript file.
+
+    Args:
+        src_path: Path to the entry Python source file
+        dst_path: Path to the output JavaScript file
+        module_paths: Additional directories to search for modules
+        optimize: Whether to apply compile-time optimizations
+        verbosity: Verbosity level (0=normal, 1=stages, 2=AST, 3=debug)
+        quiet: Suppress all output except errors
+
+    Returns:
+        True on success, False on error.
+    """
+    try:
+        dst = bundle_files(
+            entry_file=src_path,
+            module_paths=module_paths,
+            optimize=optimize,
+            verbosity=verbosity,
+        ).strip()
+    except PrescryptError as e:
+        print(e.format_with_context(""), file=sys.stderr)
+        return False
+    except Exception as e:
+        print(f"Error bundling {src_path}: {e}", file=sys.stderr)
+        if verbosity >= 2:
+            import traceback
+
+            traceback.print_exc()
+        return False
+
+    # Ensure output directory exists
+    dst_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Write output
+    try:
+        dst_path.write_text(dst + "\n")
+    except OSError as e:
+        print(f"Error writing {dst_path}: {e}", file=sys.stderr)
+        return False
+
+    if not quiet:
+        print(f"Bundled {src_path} -> {dst_path}")
 
     return True
 
@@ -577,6 +642,7 @@ def main():
     source_maps = args.source_maps
     watch = args.watch
     quiet = args.quiet
+    bundle = args.bundle
 
     # Determine verbosity level
     # --debug is equivalent to -vvv (level 3)
@@ -593,6 +659,30 @@ def main():
             output_path = output_path / input_path.with_suffix(".js").name
 
         # Initial compilation
+        if bundle:
+            # Bundle mode - compile entry file with all imports
+            if watch:
+                print(
+                    "Error: Watch mode is not supported with --bundle",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            if source_maps:
+                print(
+                    "Warning: Source maps not yet supported with --bundle",
+                    file=sys.stderr,
+                )
+            success = bundle_file(
+                input_path,
+                output_path,
+                module_paths=module_paths,
+                optimize=optimize,
+                verbosity=verbosity,
+                quiet=quiet,
+            )
+            sys.exit(0 if success else 1)
+
+        # Normal single-file compilation
         success = compile_file(
             input_path,
             output_path,
