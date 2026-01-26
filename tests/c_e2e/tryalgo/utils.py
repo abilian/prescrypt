@@ -14,6 +14,7 @@ def check(name, expr, expected):
     py_code += dedent(f"""
         result = {expr}
         check = (result == {expected!r})
+        result  # Return result for js_eval
     """)
 
     py_ctx = {}

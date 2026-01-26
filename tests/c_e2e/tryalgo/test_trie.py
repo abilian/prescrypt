@@ -13,7 +13,6 @@ EXAMPLES = list(
 )
 
 
-@pytest.mark.skip(reason="Code generation returns list instead of str")
 def test_trie():
     for w, closest in EXAMPLES:
         expr = f"spell_check(Trie({WORDS}), '{w}')"

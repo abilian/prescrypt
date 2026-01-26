@@ -3,6 +3,7 @@
 Python has function-level scoping, not block-level scoping like JavaScript.
 Variables assigned inside loops should be accessible after the loop ends.
 """
+
 from __future__ import annotations
 
 from prescrypt import py2js

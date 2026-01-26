@@ -11,6 +11,8 @@ class Matrix:
 
     def __matmul__(self, other):
         # Simple matrix multiplication
+        if not isinstance(other, Matrix):
+            return NotImplemented
         if self.cols != other.rows:
             raise ValueError("Incompatible dimensions")
         result = []

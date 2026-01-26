@@ -856,12 +856,18 @@ var _pyfunc_op_lt = function op_lt(a, b) {
 var _pyfunc_op_matmul = function (a, b) {
   // nargs: 2
   // Matrix multiplication operator @
-  // Delegates to __matmul__ method if available
+  // Delegates to __matmul__ method if available, then __rmatmul__
   if (typeof a.__matmul__ === 'function') {
-    return a.__matmul__(b);
+    const result = a.__matmul__(b);
+    if (result !== Symbol.for('NotImplemented')) {
+      return result;
+    }
   }
   if (typeof b.__rmatmul__ === 'function') {
-    return b.__rmatmul__(a);
+    const result = b.__rmatmul__(a);
+    if (result !== Symbol.for('NotImplemented')) {
+      return result;
+    }
   }
   throw new TypeError("unsupported operand type(s) for @");
 };
@@ -1658,10 +1664,14 @@ var _pyfunc_op_mod = function (left, right) {
   // Handles Python's % operator which can be either:
   // - String formatting: "hello %s" % "world"
   // - Numeric modulo: 7 % 3
+  // Note: Python's modulo always has the same sign as the divisor,
+  // while JavaScript's % has the same sign as the dividend.
+  // Python: -2 % 17 = 15, JS: -2 % 17 = -2
   if (typeof left === 'string') {
     return _pyfunc_string_mod(left, right);
   }
-  return left % right;
+  // Use Python-style modulo: ((a % b) + b) % b
+  return ((left % right) + right) % right;
 };
 var _pyfunc_property = function (fget, fset, fdel, doc) {
   // nargs: 0 1 2 3 4

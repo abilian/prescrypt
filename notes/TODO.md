@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.4 (in progress) | **Tests:** 2500 passing, 25 skipped | **Coverage:** 89%
+**Current Status:** v0.9.4 (in progress) | **Tests:** 2527 passing, 0 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 

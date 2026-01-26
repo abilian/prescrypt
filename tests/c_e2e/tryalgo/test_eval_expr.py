@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from unittest import skip
-
 import pytest
 
 from .utils import check
@@ -15,7 +13,6 @@ EXAMPLES = [
 ]
 
 
-@skip
 @pytest.mark.parametrize(("str_expr", "value"), EXAMPLES)
 def test_arithm_expr_eval(str_expr, value):
     cell = {"ZZ22": 3, "A47": 8}

@@ -5,7 +5,6 @@ import pytest
 from .utils import check
 
 
-@pytest.mark.skip(reason="Needs codegen fixes")
 def test_three_partition():
     expr = "three_partition([5, 5, 3, 2]) == (1, 2, 12)"
     check("three_partition", expr, True)

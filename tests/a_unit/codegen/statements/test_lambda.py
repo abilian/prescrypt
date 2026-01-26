@@ -5,7 +5,10 @@ import pytest
 from .utils import check_gen
 
 LAMBDAS = [
-    # ("f = lambda: 1", "f = () => 1;"),
+    ("f = lambda: 1", "const f = () => (1);"),
+    ("f = lambda x: x", "const f = (x) => (x);"),
+    ("f = lambda x, y: x + y", "const f = (x, y) => (_pyfunc_op_add(x, y));"),
+    ("f = lambda x=1: x", "const f = (x = 1) => (x);"),
 ]
 
 

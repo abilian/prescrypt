@@ -51,10 +51,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Loop variables (`for i in ...`) are hoisted to function scope
   - Variables assigned inside loop bodies are pre-declared before the loop
   - Matches Python's function-level scoping semantics
+- **`__rmatmul__` support**: Matrix multiplication operator `@` now correctly falls back to `__rmatmul__` when `__matmul__` returns `NotImplemented`
+  - Enables proper right-side operand dispatch for custom types
+- **Python-style modulo**: The `%` operator now matches Python's behavior for negative numbers
+  - Python: `-2 % 17 = 15`, JS (native): `-2 % 17 = -2`
+  - Now correctly uses floored division semantics
 
 ### Statistics
 
-- 2500 tests passing, 25 skipped
+- 2527 tests passing, 0 skipped
 
 ## [0.9.3] - 2026-01-24
 

@@ -43,10 +43,9 @@ def test_assignment_subscript():
     assert _py2js(prog) == expected
 
 
-@pytest.mark.skip("TODO")
 def test_multiple_assignment():
     prog = "a, b = 1, 2"
-    expected = "const a = 1;"
+    expected = "let [a, b] = [1, 2];"  # Tuple unpacking
     assert _py2js(prog) == expected
 
 

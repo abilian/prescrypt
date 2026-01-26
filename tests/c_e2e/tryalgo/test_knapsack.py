@@ -15,7 +15,6 @@ EXAMPLES = [
 ]
 
 
-@pytest.mark.skip(reason="Code generation returns list instead of str")
 @pytest.mark.parametrize(("p", "v", "cmax", "opt"), EXAMPLES)
 def test_knapsack(p, v, cmax, opt):
     kp1 = f"knapsack({p}, {v}, {cmax})[0]"

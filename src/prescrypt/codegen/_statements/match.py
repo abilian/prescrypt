@@ -163,7 +163,10 @@ def _gen_pattern_condition(
             return _gen_mapping_pattern(keys, patterns, rest, subject, codegen)
 
         case ast.MatchClass(
-            cls=cls, patterns=pos_patterns, kwd_attrs=kwd_attrs, kwd_patterns=kwd_patterns
+            cls=cls,
+            patterns=pos_patterns,
+            kwd_attrs=kwd_attrs,
+            kwd_patterns=kwd_patterns,
         ):
             # Class pattern: case Point(x=0, y=y):
             return _gen_class_pattern(
@@ -334,7 +337,9 @@ def _gen_sequence_pattern(
                 # Use negative index: subject[subject.length - (len(after_star) - i)]
                 offset = len(after_star) - i
                 elem_access = f"{subject}[{subject}.length - {offset}]"
-                _gen_single_sequence_element(p, elem_access, codegen, conditions, bindings)
+                _gen_single_sequence_element(
+                    p, elem_access, codegen, conditions, bindings
+                )
 
         # Handle star capture
         if star_name is not None:

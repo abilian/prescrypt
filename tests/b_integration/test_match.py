@@ -1,4 +1,5 @@
 """Tests for match statement support."""
+
 from __future__ import annotations
 
 from prescrypt import py2js
