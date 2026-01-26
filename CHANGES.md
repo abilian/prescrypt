@@ -5,7 +5,7 @@ All notable changes to Prescrypt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased (v0.9.4)
+## [0.9.4] - 2026-01-26
 
 ### Added
 
@@ -56,10 +56,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Python-style modulo**: The `%` operator now matches Python's behavior for negative numbers
   - Python: `-2 % 17 = 15`, JS (native): `-2 % 17 = -2`
   - Now correctly uses floored division semantics
+- **`int(boolean)` conversion**: `int(True)` now returns `1`, `int(False)` returns `0`
+  - Previously returned `NaN` due to using `parseInt()` on booleans
+  - Now uses explicit type checking in stdlib `int()` function
+- **`float('inf')` support**: `float('inf')`, `float('-inf')`, and `float('nan')` now work correctly
+  - Compile-time float constants (inf, -inf, nan) now emit proper JS (`Infinity`, `-Infinity`, `NaN`)
+  - Runtime `float()` function handles string arguments `'inf'`, `'-inf'`, `'nan'`, `'infinity'`
+- **`while array:` truthiness**: Empty arrays are now properly falsy in while conditions
+  - `while items:` correctly exits when list becomes empty
+  - While loops now use `gen_truthy()` for proper Python truthiness semantics
+- **`str.startswith(s, start, end)`**: Optional `start` and `end` parameters now work correctly
+  - `"XLII".startswith("II", 2)` now returns `True` (was returning `False`)
+  - Also fixed `str.endswith()` with optional parameters
+- **`in` operator for Sets**: `x in my_set` now works correctly
+  - `op_contains` now handles `Set` instances using `.has()` method
+
+### Added (stdlib)
+
+- **Set methods**: Full set of Python set methods
+  - `isdisjoint(other)`: Check if two sets have no common elements
+  - `issubset(other)`: Check if set is subset of other
+  - `issuperset(other)`: Check if set is superset of other
+  - `union(*others)`: Return union of sets
+  - `intersection(*others)`: Return intersection of sets
+  - `difference(*others)`: Return difference of sets
+  - `symmetric_difference(other)`: Return symmetric difference
+  - `add(elem)`: Add element to set
+  - `discard(elem)`: Remove element if present (no error if missing)
+- **Bisect module**: Binary search functions for sorted sequences
+  - `bisect_left(a, x, lo, hi)`: Find leftmost insertion point
+  - `bisect_right(a, x, lo, hi)`: Find rightmost insertion point
+  - `bisect(a, x, lo, hi)`: Alias for `bisect_right`
+  - `insort_left(a, x, lo, hi)`: Insert maintaining sorted order (left)
+  - `insort_right(a, x, lo, hi)`: Insert maintaining sorted order (right)
+  - `insort(a, x, lo, hi)`: Alias for `insort_right`
 
 ### Statistics
 
-- 2527 tests passing, 0 skipped
+- 2631 tests passing, 0 skipped
 
 ## [0.9.3] - 2026-01-24
 
