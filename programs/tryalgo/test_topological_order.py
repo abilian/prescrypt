@@ -18,7 +18,7 @@ def topological_order_dfs(graph):
         if times_seen[start] == -1:
             times_seen[start] = 0
             to_visit = [start]
-            while len(to_visit) > 0:
+            while to_visit:
                 node = to_visit[-1]
                 children = graph[node]
                 if times_seen[node] == len(children):
@@ -47,7 +47,7 @@ def topological_order(graph):
             indeg[neighbor] += 1
     Q = [node for node in V if indeg[node] == 0]
     order = []
-    while len(Q) > 0:
+    while Q:
         node = Q.pop()        # node without incoming arrows
         order.append(node)
         for neighbor in graph[node]:

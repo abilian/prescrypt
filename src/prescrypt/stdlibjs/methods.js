@@ -398,11 +398,22 @@ export const center = function (w, fill) {
 // ---
 
 // method: endswith
-export const endswith = function (x) {
-  // nargs: 1
+export const endswith = function (suffix, start, end) {
+  // nargs: 1 2 3
   if (this.constructor !== String) return this.KEY.apply(this, arguments);
-  let last_index = this.lastIndexOf(x);
-  return last_index == this.length - x.length && last_index >= 0;
+  // Handle optional start/end parameters like Python
+  let s = this;
+  if (start !== undefined) {
+    if (start < 0) start = Math.max(0, s.length + start);
+    if (end !== undefined) {
+      if (end < 0) end = Math.max(0, s.length + end);
+      s = s.slice(start, end);
+    } else {
+      s = s.slice(start);
+    }
+  }
+  let last_index = s.lastIndexOf(suffix);
+  return last_index === s.length - suffix.length && last_index >= 0;
 };
 
 // ---
@@ -827,10 +838,21 @@ export const splitlines = function (keepends) {
 // ---
 
 // method: startswith
-export const startswith = function (x) {
-  // nargs: 1
+export const startswith = function (prefix, start, end) {
+  // nargs: 1 2 3
   if (this.constructor !== String) return this.KEY.apply(this, arguments);
-  return this.indexOf(x) == 0;
+  // Handle optional start/end parameters like Python
+  let s = this;
+  if (start !== undefined) {
+    if (start < 0) start = Math.max(0, s.length + start);
+    if (end !== undefined) {
+      if (end < 0) end = Math.max(0, s.length + end);
+      s = s.slice(start, end);
+    } else {
+      s = s.slice(start);
+    }
+  }
+  return s.indexOf(prefix) === 0;
 };
 
 // ---
@@ -1117,6 +1139,138 @@ export const gen_close = function () {
   }
 
   this._closed = true;
+};
+
+// ---
+
+// method: isdisjoint
+export const isdisjoint = function (other) {
+  // nargs: 1
+  // Set.isdisjoint(other) - return True if two sets have null intersection
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  // Convert other to Set if it's not already
+  let otherSet = other instanceof Set ? other : new Set(other);
+  for (let elem of this) {
+    if (otherSet.has(elem)) return false;
+  }
+  return true;
+};
+
+// ---
+
+// method: issubset
+export const issubset = function (other) {
+  // nargs: 1
+  // Set.issubset(other) - return True if every element in the set is in other
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  let otherSet = other instanceof Set ? other : new Set(other);
+  for (let elem of this) {
+    if (!otherSet.has(elem)) return false;
+  }
+  return true;
+};
+
+// ---
+
+// method: issuperset
+export const issuperset = function (other) {
+  // nargs: 1
+  // Set.issuperset(other) - return True if every element in other is in the set
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  let otherSet = other instanceof Set ? other : new Set(other);
+  for (let elem of otherSet) {
+    if (!this.has(elem)) return false;
+  }
+  return true;
+};
+
+// ---
+
+// method: union
+export const union = function (...others) {
+  // nargs: 0+
+  // Set.union(*others) - return a new set with elements from the set and all others
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  let result = new Set(this);
+  for (let other of others) {
+    for (let elem of other) {
+      result.add(elem);
+    }
+  }
+  return result;
+};
+
+// ---
+
+// method: intersection
+export const intersection = function (...others) {
+  // nargs: 0+
+  // Set.intersection(*others) - return a new set with elements common to the set and all others
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  let result = new Set(this);
+  for (let other of others) {
+    let otherSet = other instanceof Set ? other : new Set(other);
+    for (let elem of result) {
+      if (!otherSet.has(elem)) {
+        result.delete(elem);
+      }
+    }
+  }
+  return result;
+};
+
+// ---
+
+// method: difference
+export const difference = function (...others) {
+  // nargs: 0+
+  // Set.difference(*others) - return a new set with elements in the set that are not in others
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  let result = new Set(this);
+  for (let other of others) {
+    for (let elem of other) {
+      result.delete(elem);
+    }
+  }
+  return result;
+};
+
+// ---
+
+// method: symmetric_difference
+export const symmetric_difference = function (other) {
+  // nargs: 1
+  // Set.symmetric_difference(other) - return a new set with elements in either set but not both
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  let otherSet = other instanceof Set ? other : new Set(other);
+  let result = new Set();
+  for (let elem of this) {
+    if (!otherSet.has(elem)) result.add(elem);
+  }
+  for (let elem of otherSet) {
+    if (!this.has(elem)) result.add(elem);
+  }
+  return result;
+};
+
+// ---
+
+// method: add
+// Note: Set.add is already a native method, so we delegate to the native implementation
+export const add = function (elem) {
+  // nargs: 1
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  return Set.prototype.add.call(this, elem);
+};
+
+// ---
+
+// method: discard
+export const discard = function (elem) {
+  // nargs: 1
+  // Set.discard(elem) - remove element if present (no error if not)
+  if (!(this instanceof Set)) return this.KEY.apply(this, arguments);
+  this.delete(elem);
 };
 
 // ---

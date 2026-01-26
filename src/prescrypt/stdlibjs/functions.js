@@ -1042,17 +1042,41 @@ export const id = function (x) {
 
 // function: int
 export const int = function (x, base) {
-  // nargs: 1 2
+  // nargs: 0 1 2
+  if (x === undefined) return 0;
   if (base !== undefined) {
     return parseInt(x, base);
   }
+  // Handle booleans explicitly (Number(true)=1, Number(false)=0)
+  if (typeof x === 'boolean') {
+    return x ? 1 : 0;
+  }
+  // Handle strings
+  if (typeof x === 'string') {
+    x = x.trim();
+    if (x === '') throw new ValueError('invalid literal for int() with base 10');
+    let result = parseInt(x, 10);
+    if (isNaN(result)) throw new ValueError('invalid literal for int() with base 10: \'' + x + '\'');
+    return result;
+  }
+  // Handle numbers - truncate toward zero (like Python)
   return x < 0 ? Math.ceil(x) : Math.floor(x);
 };
 
 // ---
 
 // function: float
-export const float = Number; // nargs: 1;
+export const float = function (x) {
+  // nargs: 0 1
+  if (x === undefined) return 0.0;
+  if (typeof x === 'string') {
+    x = x.trim().toLowerCase();
+    if (x === 'inf' || x === '+inf' || x === 'infinity' || x === '+infinity') return Infinity;
+    if (x === '-inf' || x === '-infinity') return -Infinity;
+    if (x === 'nan') return NaN;
+  }
+  return Number(x);
+};
 
 // ---
 
@@ -2042,6 +2066,8 @@ export const op_contains = function op_contains(a, b) {
       if (FUNCTION_PREFIXop_equals(a, b[i])) return true;
     }
     return false;
+  } else if (b instanceof Set) {
+    return b.has(a);
   } else if (b.constructor === Object) {
     for (let k in b) {
       if (a == k) return true;
@@ -2453,6 +2479,86 @@ export const call_kwargs = function (func, args, kwargs) {
     }
     return func.apply(null, args);
   }
+};
+
+// ---
+
+// function: bisect_left
+export const bisect_left = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Locate the insertion point for x in a to maintain sorted order.
+  // If x is already in a, the insertion point will be before (to the left of) any existing entries.
+  lo = lo === undefined ? 0 : lo;
+  hi = hi === undefined ? a.length : hi;
+
+  while (lo < hi) {
+    let mid = Math.floor((lo + hi) / 2);
+    if (a[mid] < x) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+};
+
+// ---
+
+// function: bisect_right
+export const bisect_right = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Locate the insertion point for x in a to maintain sorted order.
+  // If x is already in a, the insertion point will be after (to the right of) any existing entries.
+  lo = lo === undefined ? 0 : lo;
+  hi = hi === undefined ? a.length : hi;
+
+  while (lo < hi) {
+    let mid = Math.floor((lo + hi) / 2);
+    if (x < a[mid]) {
+      hi = mid;
+    } else {
+      lo = mid + 1;
+    }
+  }
+  return lo;
+};
+
+// ---
+
+// function: bisect
+export const bisect = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Alias for bisect_right (same as Python's bisect module)
+  return FUNCTION_PREFIXbisect_right(a, x, lo, hi);
+};
+
+// ---
+
+// function: insort_left
+export const insort_left = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Insert x in a in sorted order.
+  lo = FUNCTION_PREFIXbisect_left(a, x, lo, hi);
+  a.splice(lo, 0, x);
+};
+
+// ---
+
+// function: insort_right
+export const insort_right = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Insert x in a in sorted order.
+  lo = FUNCTION_PREFIXbisect_right(a, x, lo, hi);
+  a.splice(lo, 0, x);
+};
+
+// ---
+
+// function: insort
+export const insort = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Alias for insort_right (same as Python's bisect module)
+  FUNCTION_PREFIXinsort_right(a, x, lo, hi);
 };
 
 // ---

@@ -151,6 +151,45 @@ var _pyfunc_ValueError = (function() {
   return ValueError;
 })();
 var _pyfunc_abs = Math.abs;;
+var _pyfunc_bisect_left = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Locate the insertion point for x in a to maintain sorted order.
+  // If x is already in a, the insertion point will be before (to the left of) any existing entries.
+  lo = lo === undefined ? 0 : lo;
+  hi = hi === undefined ? a.length : hi;
+
+  while (lo < hi) {
+    let mid = Math.floor((lo + hi) / 2);
+    if (a[mid] < x) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+};
+var _pyfunc_bisect_right = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Locate the insertion point for x in a to maintain sorted order.
+  // If x is already in a, the insertion point will be after (to the right of) any existing entries.
+  lo = lo === undefined ? 0 : lo;
+  hi = hi === undefined ? a.length : hi;
+
+  while (lo < hi) {
+    let mid = Math.floor((lo + hi) / 2);
+    if (x < a[mid]) {
+      hi = mid;
+    } else {
+      lo = mid + 1;
+    }
+  }
+  return lo;
+};
+var _pyfunc_bisect = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Alias for bisect_right (same as Python's bisect module)
+  return _pyfunc_bisect_right(a, x, lo, hi);
+};
 var _pyfunc_bytes_repr = function (bytes) {
   // nargs: 1
   // Return Python-style repr for bytes: b'...'
@@ -317,7 +356,17 @@ var _pyfunc_filter = function (func, iter) {
   }
   return iter.filter(func);
 };
-var _pyfunc_float = Number;;
+var _pyfunc_float = function (x) {
+  // nargs: 0 1
+  if (x === undefined) return 0.0;
+  if (typeof x === 'string') {
+    x = x.trim().toLowerCase();
+    if (x === 'inf' || x === '+inf' || x === 'infinity' || x === '+infinity') return Infinity;
+    if (x === '-inf' || x === '-infinity') return -Infinity;
+    if (x === 'nan') return NaN;
+  }
+  return Number(x);
+};
 var _pyfunc_hasattr = function (obj, name) {
   // nargs: 2
   // Check if object has attribute
@@ -335,11 +384,42 @@ var _pyfunc_hasattr = function (obj, name) {
   }
   return name in obj || obj[name] !== undefined;
 };
+var _pyfunc_insort_left = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Insert x in a in sorted order.
+  lo = _pyfunc_bisect_left(a, x, lo, hi);
+  a.splice(lo, 0, x);
+};
+var _pyfunc_insort_right = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Insert x in a in sorted order.
+  lo = _pyfunc_bisect_right(a, x, lo, hi);
+  a.splice(lo, 0, x);
+};
+var _pyfunc_insort = function (a, x, lo, hi) {
+  // nargs: 2 3 4
+  // Alias for insort_right (same as Python's bisect module)
+  _pyfunc_insort_right(a, x, lo, hi);
+};
 var _pyfunc_int = function (x, base) {
-  // nargs: 1 2
+  // nargs: 0 1 2
+  if (x === undefined) return 0;
   if (base !== undefined) {
     return parseInt(x, base);
   }
+  // Handle booleans explicitly (Number(true)=1, Number(false)=0)
+  if (typeof x === 'boolean') {
+    return x ? 1 : 0;
+  }
+  // Handle strings
+  if (typeof x === 'string') {
+    x = x.trim();
+    if (x === '') throw new ValueError('invalid literal for int() with base 10');
+    let result = parseInt(x, 10);
+    if (isNaN(result)) throw new ValueError('invalid literal for int() with base 10: \'' + x + '\'');
+    return result;
+  }
+  // Handle numbers - truncate toward zero (like Python)
   return x < 0 ? Math.ceil(x) : Math.floor(x);
 };
 var _pyfunc_int_from_bytes = function (bytes, byteorder, signed) {
@@ -502,6 +582,8 @@ var _pyfunc_op_contains = function op_contains(a, b) {
       if (_pyfunc_op_equals(a, b[i])) return true;
     }
     return false;
+  } else if (b instanceof Set) {
+    return b.has(a);
   } else if (b.constructor === Object) {
     for (let k in b) {
       if (a == k) return true;
@@ -1949,6 +2031,11 @@ var _pyfunc_string_mod = function (format_str, args) {
     }
   );
 };
+var _pymeth_add = function (elem) {
+  // nargs: 1
+  if (!(this instanceof Set)) return this.add.apply(this, arguments);
+  return Set.prototype.add.call(this, elem);
+};
 var _pymeth_append = function (x) {
   // nargs: 1
   if (!Array.isArray(this)) {
@@ -2039,11 +2126,40 @@ var _pymeth_count = function (x, start, stop) {
     return count;
   } else return this.count.apply(this, arguments);
 };
-var _pymeth_endswith = function (x) {
+var _pymeth_difference = function (...others) {
+  // nargs: 0+
+  // Set.difference(*others) - return a new set with elements in the set that are not in others
+  if (!(this instanceof Set)) return this.difference.apply(this, arguments);
+  let result = new Set(this);
+  for (let other of others) {
+    for (let elem of other) {
+      result.delete(elem);
+    }
+  }
+  return result;
+};
+var _pymeth_discard = function (elem) {
   // nargs: 1
+  // Set.discard(elem) - remove element if present (no error if not)
+  if (!(this instanceof Set)) return this.discard.apply(this, arguments);
+  this.delete(elem);
+};
+var _pymeth_endswith = function (suffix, start, end) {
+  // nargs: 1 2 3
   if (this.constructor !== String) return this.endswith.apply(this, arguments);
-  let last_index = this.lastIndexOf(x);
-  return last_index == this.length - x.length && last_index >= 0;
+  // Handle optional start/end parameters like Python
+  let s = this;
+  if (start !== undefined) {
+    if (start < 0) start = Math.max(0, s.length + start);
+    if (end !== undefined) {
+      if (end < 0) end = Math.max(0, s.length + end);
+      s = s.slice(start, end);
+    } else {
+      s = s.slice(start);
+    }
+  }
+  let last_index = s.lastIndexOf(suffix);
+  return last_index === s.length - suffix.length && last_index >= 0;
 };
 var _pymeth_expandtabs = function (tabsize) {
   // nargs: 0 1
@@ -2242,6 +2358,21 @@ var _pymeth_insert = function (i, x) {
   i = i < 0 ? this.length + i : i;
   this.splice(i, 0, x);
 };
+var _pymeth_intersection = function (...others) {
+  // nargs: 0+
+  // Set.intersection(*others) - return a new set with elements common to the set and all others
+  if (!(this instanceof Set)) return this.intersection.apply(this, arguments);
+  let result = new Set(this);
+  for (let other of others) {
+    let otherSet = other instanceof Set ? other : new Set(other);
+    for (let elem of result) {
+      if (!otherSet.has(elem)) {
+        result.delete(elem);
+      }
+    }
+  }
+  return result;
+};
 var _pymeth_isalnum = function () {
   // nargs: 0
   if (this.constructor !== String) return this.isalnum.apply(this, arguments);
@@ -2263,6 +2394,17 @@ var _pymeth_isdigit = function () {
   if (this.constructor !== String) return this.isdigit.apply(this, arguments);
 
   return Boolean(/^[0-9]+$/.test(this));
+};
+var _pymeth_isdisjoint = function (other) {
+  // nargs: 1
+  // Set.isdisjoint(other) - return True if two sets have null intersection
+  if (!(this instanceof Set)) return this.isdisjoint.apply(this, arguments);
+  // Convert other to Set if it's not already
+  let otherSet = other instanceof Set ? other : new Set(other);
+  for (let elem of this) {
+    if (otherSet.has(elem)) return false;
+  }
+  return true;
 };
 var _pymeth_isidentifier = function () {
   // nargs: 0
@@ -2289,6 +2431,26 @@ var _pymeth_isspace = function () {
   if (this.constructor !== String) return this.isspace.apply(this, arguments);
 
   return Boolean(/^\s+$/.test(this));
+};
+var _pymeth_issubset = function (other) {
+  // nargs: 1
+  // Set.issubset(other) - return True if every element in the set is in other
+  if (!(this instanceof Set)) return this.issubset.apply(this, arguments);
+  let otherSet = other instanceof Set ? other : new Set(other);
+  for (let elem of this) {
+    if (!otherSet.has(elem)) return false;
+  }
+  return true;
+};
+var _pymeth_issuperset = function (other) {
+  // nargs: 1
+  // Set.issuperset(other) - return True if every element in other is in the set
+  if (!(this instanceof Set)) return this.issuperset.apply(this, arguments);
+  let otherSet = other instanceof Set ? other : new Set(other);
+  for (let elem of otherSet) {
+    if (!this.has(elem)) return false;
+  }
+  return true;
 };
 var _pymeth_istitle = function () {
   // nargs: 0
@@ -2673,10 +2835,21 @@ var _pymeth_splitlines = function (keepends) {
   else if (!parts.length) parts.push("");
   return parts;
 };
-var _pymeth_startswith = function (x) {
-  // nargs: 1
+var _pymeth_startswith = function (prefix, start, end) {
+  // nargs: 1 2 3
   if (this.constructor !== String) return this.startswith.apply(this, arguments);
-  return this.indexOf(x) == 0;
+  // Handle optional start/end parameters like Python
+  let s = this;
+  if (start !== undefined) {
+    if (start < 0) start = Math.max(0, s.length + start);
+    if (end !== undefined) {
+      if (end < 0) end = Math.max(0, s.length + end);
+      s = s.slice(start, end);
+    } else {
+      s = s.slice(start);
+    }
+  }
+  return s.indexOf(prefix) === 0;
 };
 var _pymeth_strip = function (chars) {
   // nargs: 0 1
@@ -2711,6 +2884,20 @@ var _pymeth_swapcase = function () {
     else res.push(c.toUpperCase());
   }
   return res.join("");
+};
+var _pymeth_symmetric_difference = function (other) {
+  // nargs: 1
+  // Set.symmetric_difference(other) - return a new set with elements in either set but not both
+  if (!(this instanceof Set)) return this.symmetric_difference.apply(this, arguments);
+  let otherSet = other instanceof Set ? other : new Set(other);
+  let result = new Set();
+  for (let elem of this) {
+    if (!otherSet.has(elem)) result.add(elem);
+  }
+  for (let elem of otherSet) {
+    if (!this.has(elem)) result.add(elem);
+  }
+  return result;
 };
 var _pymeth_title = function () {
   // nargs: 0
@@ -2786,6 +2973,18 @@ var _pymeth_translate = function (table) {
     else if (c !== null) res.push(c);
   }
   return res.join("");
+};
+var _pymeth_union = function (...others) {
+  // nargs: 0+
+  // Set.union(*others) - return a new set with elements from the set and all others
+  if (!(this instanceof Set)) return this.union.apply(this, arguments);
+  let result = new Set(this);
+  for (let other of others) {
+    for (let elem of other) {
+      result.add(elem);
+    }
+  }
+  return result;
 };
 var _pymeth_update = function (other) {
   // nargs: 1

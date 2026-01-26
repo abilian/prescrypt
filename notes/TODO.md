@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.4 (in progress) | **Tests:** 2527 passing, 0 skipped | **Coverage:** 89%
+**Current Status:** v0.9.4 (in progress) | **Tests:** 2631 passing, 0 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
@@ -75,6 +75,28 @@ See `notes/history.md` for completed work (Stages 0-6).
 ### Compatibility
 
 - [ ] **Python 3.14 support:** Test and fix any import errors on Python 3.14.
+
+### Runtime & Stdlib Issues (discovered during tryalgo tests)
+
+These issues were found while creating golden tests for the tryalgo algorithms:
+
+- [x] **`int(boolean)` returns NaN:** Fixed - `int()` now handles booleans properly using type checking.
+
+- [x] **`while array:` always truthy:** Fixed - `while` loops now use `gen_truthy()` for proper Python truthiness semantics.
+
+- [x] **`float('inf')` not defined:** Fixed - both compile-time constants and `float('inf')` now produce `Infinity` in JS.
+
+- [x] **`str.startswith(s, offset)` broken:** Fixed - `startswith()` and `endswith()` now support optional `start` and `end` parameters.
+
+- [ ] **`min()`/`max()` on tuple generators:** `min((x, i) for i, x in enumerate(arr))` returns `-Infinity` instead of finding the minimum tuple. Tuple comparison needs proper lexicographic implementation.
+  - Workaround: Rewrite algorithm with explicit loops
+
+- [ ] **Large integer precision loss:** JavaScript numbers lose precision beyond 2^53. Modular arithmetic with large numbers gives wrong results.
+  - Note: This is a fundamental JS limitation. Consider documenting or using BigInt for specific cases.
+
+- [x] **`set.isdisjoint()` not implemented:** Fixed - added `isdisjoint()`, `issubset()`, `issuperset()`, `union()`, `intersection()`, `difference()`, `symmetric_difference()`, `add()`, `discard()`. Also fixed `in` operator for sets.
+
+- [x] **`bisect_left`/`bisect_right` not implemented:** Fixed - added `bisect_left`, `bisect_right`, `bisect`, `insort_left`, `insort_right`, `insort` functions.
 
 ## Future Enhancements
 

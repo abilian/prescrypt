@@ -57,13 +57,11 @@ def function_int(codegen: CodeGen, args, _kwargs):
         case []:
             return "0"
         case [arg]:
-            js_arg = unify(codegen.gen_expr(arg))
-            return f"parseInt({js_arg})"
+            # Use stdlib int() which handles booleans, strings, and numbers properly
+            return codegen.call_std_function("int", args)
         case [arg, base]:
             # int(x, base) - e.g., int('ff', 16)
-            js_arg = unify(codegen.gen_expr(arg))
-            js_base = unify(codegen.gen_expr(base))
-            return f"parseInt({js_arg}, {js_base})"
+            return codegen.call_std_function("int", args)
         case _:
             msg = "int() takes at most 2 arguments"
             raise JSError(msg)
@@ -74,8 +72,8 @@ def function_float(codegen: CodeGen, args, _kwargs):
         case []:
             return "0.0"
         case [arg]:
-            js_arg = unify(codegen.gen_expr(arg))
-            return f"parseFloat({js_arg})"
+            # Use stdlib float() which handles 'inf', '-inf', 'nan' properly
+            return codegen.call_std_function("float", args)
         case _:
             msg = "float() at most one argument"
             raise JSError(msg)

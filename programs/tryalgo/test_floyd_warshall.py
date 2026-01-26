@@ -26,8 +26,7 @@ def floyd_warshall(weight):
 
 # --- Tests ---
 
-# Use large number instead of float('inf') for JS compatibility
-INF = 999999999
+INF = float('inf')
 
 # Test 1: Simple graph with 4 vertices
 # Graph:

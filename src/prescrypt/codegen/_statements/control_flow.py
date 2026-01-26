@@ -392,8 +392,8 @@ def gen_while(node: ast.While, codegen: CodeGen):
             codegen.add_var(name)
             code.append(codegen.lf(f"let {name};"))
 
-    # Generate test expression
-    js_test = "".join(codegen.gen_expr(test_node))
+    # Generate test expression with proper Python truthiness
+    js_test = flatten(codegen.gen_truthy(test_node))
 
     # Flush any pending declarations (e.g., from walrus operator in condition)
     pending_decls = codegen.flush_pending_declarations()

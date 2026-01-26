@@ -22,13 +22,9 @@ def roman2int(s):
     for pos in range(3, -1, -1):
         for digit in range(9, -1, -1):
             r = roman[pos][digit]
-            # Work around: use slicing instead of startswith with offset
-            if len(r) > 0 and s[beg:beg+len(r)] == r:
+            if s.startswith(r, beg):
                 beg += len(r)
                 val += digit * pos10
-                break
-            if len(r) == 0:
-                # Empty string always matches (digit 0)
                 break
         pos10 //= 10
     return val

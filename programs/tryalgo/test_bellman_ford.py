@@ -4,8 +4,7 @@ from __future__ import annotations
 
 # --- Bellman-Ford function (simplified from bellman_ford.py) ---
 
-# Use large number instead of float('inf') for JS compatibility
-INF = 999999999
+INF = float('inf')
 
 
 def bellman_ford(graph, weight, source):
