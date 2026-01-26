@@ -2,6 +2,10 @@
 
 Discovers test programs from the filesystem using patterns from test-config.toml.
 No database dependency - runs Python at test time to get expected output.
+
+Tests are split into two categories:
+- internal: Core language feature tests (programs/internal/*.py)
+- tryalgo: Algorithm tests (programs/tryalgo/test_*.py)
 """
 
 from __future__ import annotations
@@ -56,8 +60,11 @@ def _matches_patterns(path: str, patterns: list[str]) -> bool:
 
 
 @cache
-def discover_programs() -> list[str]:
+def discover_programs(category: str | None = None) -> list[str]:
     """Discover test programs from filesystem using config patterns.
+
+    Args:
+        category: Filter by category ("internal", "tryalgo", or None for all)
 
     Returns list of paths relative to programs_dir.
     """
@@ -80,6 +87,12 @@ def discover_programs() -> list[str]:
 
         # Must not match any exclude pattern
         if _matches_patterns(rel_path, config.exclude_patterns):
+            continue
+
+        # Filter by category if specified
+        if category == "internal" and not rel_path.startswith("internal/"):
+            continue
+        if category == "tryalgo" and not rel_path.startswith("tryalgo/"):
             continue
 
         programs.append(rel_path)
@@ -117,7 +130,20 @@ def known_failures():
 
 def pytest_generate_tests(metafunc):
     """Generate test parameters from discovered programs."""
-    if "program_path" in metafunc.fixturenames:
+    if "internal_program" in metafunc.fixturenames:
+        programs = discover_programs("internal")
+        if programs:
+            metafunc.parametrize("internal_program", programs, ids=programs)
+        else:
+            metafunc.parametrize("internal_program", [])
+    elif "tryalgo_program" in metafunc.fixturenames:
+        programs = discover_programs("tryalgo")
+        if programs:
+            metafunc.parametrize("tryalgo_program", programs, ids=programs)
+        else:
+            metafunc.parametrize("tryalgo_program", [])
+    elif "program_path" in metafunc.fixturenames:
+        # Legacy: all programs
         programs = discover_programs()
         if programs:
             metafunc.parametrize("program_path", programs, ids=programs)
@@ -125,7 +151,7 @@ def pytest_generate_tests(metafunc):
             metafunc.parametrize("program_path", [])
 
 
-def test_program(program_path: str, known_failures: set[str]):
+def _run_program_test(program_path: str, known_failures: set[str]):
     """Test a single program through the Prescrypt pipeline.
 
     1. Run Python to get expected output
@@ -192,3 +218,18 @@ def test_program(program_path: str, known_failures: set[str]):
 
     finally:
         tmp_path.unlink(missing_ok=True)
+
+
+def test_internal_program(internal_program: str, known_failures: set[str]):
+    """Test an internal (core language feature) program."""
+    _run_program_test(internal_program, known_failures)
+
+
+def test_tryalgo_program(tryalgo_program: str, known_failures: set[str]):
+    """Test a tryalgo (algorithm) program."""
+    _run_program_test(tryalgo_program, known_failures)
+
+
+def test_program(program_path: str, known_failures: set[str]):
+    """Test a single program (legacy - all programs)."""
+    _run_program_test(program_path, known_failures)

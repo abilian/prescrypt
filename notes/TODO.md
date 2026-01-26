@@ -132,11 +132,11 @@ See `demos/README.md` for documentation.
 See `local-notes/proposals/web-framework-proposal.md` for full plan.
 
 ### Prerequisites (Prescrypt improvements)
-- [ ] Enhanced JS FFI (`from js import document, fetch`)
+- [x] Enhanced JS FFI (`from js import document, fetch`) ✓ (done in v0.9.3)
 - [ ] Event handler compilation with `event` parameter
 - [ ] Async/await with `fetch` (test and polish)
 - [ ] Module splitting (`@client` code to separate JS file)
-- [ ] Dataclass support
+- [x] Dataclass support ✓ (done in v0.9.4)
 
 ### Framework Phases
 - [ ] Phase 1: Foundation (client-side examples)

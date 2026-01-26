@@ -16,7 +16,7 @@ python = "python3"
 programs_dir = "programs"
 
 # Glob patterns to include
-include = ["internal/**/*.py"]
+include = ["internal/**/*.py", "tryalgo/test_*.py"]
 
 # Glob patterns to exclude (applied after include)
 exclude = [
