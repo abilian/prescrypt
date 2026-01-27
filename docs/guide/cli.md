@@ -23,6 +23,8 @@ py2js <input> [options]
 | `-o`, `--output <path>` | Output file or directory |
 | `-m`, `--module-mode` | Enable ES6 module mode with exports |
 | `-M`, `--module-path <dir>` | Additional module search path (repeatable) |
+| `-b`, `--bundle` | Bundle all imports into a single output file |
+| `-w`, `--watch` | Watch for changes and recompile automatically |
 
 ### Optimization
 
@@ -88,6 +90,51 @@ let message = greet("World");
 export function greet(name) { ... }
 export let message = greet("World");
 ```
+
+### Bundling
+
+Bundle multiple Python modules into a single JavaScript file:
+
+```bash
+# Bundle entry file with all its imports
+py2js main.py -o bundle.js --bundle -M src/
+
+# The bundler:
+# - Recursively resolves all imports
+# - Topologically sorts modules (dependencies first)
+# - Combines tree-shaking across all modules
+```
+
+**Example project structure:**
+```
+src/
+├── main.py           # Entry point
+├── utils.py          # Imported by main.py
+└── providers/
+    ├── base.py       # Imported by github.py
+    └── github.py     # Imported by main.py
+```
+
+**Bundle command:**
+```bash
+py2js src/main.py -o dist/bundle.js --bundle -M src/
+```
+
+This produces a single `bundle.js` with all modules combined and only the stdlib functions used by ANY module included.
+
+### Watch Mode
+
+Automatically recompile when files change:
+
+```bash
+# Watch single file
+py2js app.py --watch
+
+# Watch directory
+py2js src/ -o dist/ --watch
+```
+
+Uses `watchdog` for efficient file system events if installed, otherwise falls back to polling.
 
 ### Optimization Control
 

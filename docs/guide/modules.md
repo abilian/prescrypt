@@ -234,6 +234,66 @@ def func_b():
 !!! warning "Circular Import Limitations"
     Circular imports can cause issues if you try to use imported values at module initialization time. Call imported functions inside other functions to avoid problems.
 
+## Bundling
+
+For environments that require a single JavaScript file (browser extensions, embedded scripts, etc.), use the `--bundle` flag:
+
+```bash
+py2js main.py -o bundle.js --bundle -M src/
+```
+
+### How Bundling Works
+
+1. **Import Resolution**: Recursively finds all imported modules
+2. **Dependency Sorting**: Orders modules so dependencies come first
+3. **Combined Tree-Shaking**: Includes only stdlib functions used by ANY module
+4. **Single Output**: Produces one self-contained JavaScript file
+
+### Example
+
+**Project structure:**
+```
+src/
+├── main.py
+├── utils.py
+└── models/
+    └── user.py
+```
+
+**main.py:**
+```python
+from utils import helper
+from models.user import User
+
+user = User("Alice")
+print(helper(user.name))
+```
+
+**Bundle command:**
+```bash
+py2js src/main.py -o dist/bundle.js --bundle -M src/
+```
+
+**Output:** A single `bundle.js` containing:
+
+- Tree-shaken stdlib (only functions used by any module)
+- `models/user.py` code
+- `utils.py` code
+- `main.py` code
+
+### When to Use Bundling
+
+| Use Case | Approach |
+|----------|----------|
+| Browser extension (MV3) | `--bundle` (single file required) |
+| Embedded script | `--bundle` (self-contained) |
+| Node.js application | Directory mode (ES6 modules) |
+| Library for npm | Directory mode with `-m` |
+
+!!! note "Bundling vs Module Mode"
+    - `--bundle`: Single file, no ES6 imports, combined tree-shaking
+    - `-m` (module mode): Multiple files, ES6 imports/exports, per-file tree-shaking
+
 ## Best Practices
 
 !!! tip "Organize by Feature"

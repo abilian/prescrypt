@@ -395,6 +395,57 @@ py2js src/ -o dist/
 # src/utils/parser.py → dist/utils/parser.js
 ```
 
+## Bundling for Single-File Output
+
+For environments that require a single JavaScript file (browser extensions, embedded scripts, serverless functions), use the `--bundle` flag:
+
+```bash
+# Bundle everything into one file
+py2js src/main.py -o dist/bundle.js --bundle -M src/
+```
+
+This produces a single `bundle.js` containing:
+
+- All stdlib functions used by ANY module (combined tree-shaking)
+- All imported modules in dependency order
+- No ES6 import statements (self-contained)
+
+### When to Bundle vs Directory Compile
+
+| Scenario | Command | Output |
+|----------|---------|--------|
+| Node.js app | `py2js src/ -o dist/` | Multiple ES6 modules |
+| Browser (modern) | `py2js src/ -o dist/` | Multiple ES6 modules |
+| Browser extension | `py2js src/main.py -o bundle.js --bundle -M src/` | Single file |
+| Embedded script | `py2js src/main.py -o bundle.js --bundle -M src/` | Single file |
+| npm library | `py2js src/ -o dist/ -m` | Multiple ES6 modules with exports |
+
+### Bundle Output Structure
+
+The bundled output looks like:
+
+```javascript
+// Tree-shaken stdlib (only functions used by any module)
+var _pyfunc_str = function(x) { ... };
+var _pyfunc_create_dict = function() { ... };
+// ... other used functions
+
+// === Module: utils/formatter.py ===
+var format_result = function(value) { ... };
+
+// === Module: utils/parser.py ===
+var parse_expression = function(expr) { ... };
+
+// === Module: operations/basic.py ===
+var add = function(a, b) { ... };
+// ...
+
+// === Module: main.py ===
+/* bundled: from operations import add, subtract, ... */
+var calculate = function(expression) { ... };
+// ...
+```
+
 ## Testing Multi-file Projects
 
 Create a test file:
