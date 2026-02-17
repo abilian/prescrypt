@@ -5,6 +5,45 @@ All notable changes to Prescrypt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.6] - 2026-02-17
+
+### Added
+
+- **Expanded stdlib builtins**: Added more Python builtin functions
+  - `all()`, `any()` - test iterables for truthiness
+  - `ascii()` - return ASCII-safe repr
+  - `bin()`, `oct()`, `hex()` - integer base conversion
+  - `callable()` - check if object is callable
+  - `delattr()`, `hasattr()`, `getattr()`, `setattr()` - attribute access
+  - `dir()` - list object attributes
+  - `divmod()` - return quotient and remainder
+  - `eval()` - evaluate expressions (limited to JSON-like literals)
+  - `filter()` - filter iterable by predicate
+  - `format()` - format values with format spec
+  - `globals()`, `locals()` - namespace access (limited)
+  - `hash()` - hash values
+  - `id()` - object identity
+  - `input()` - read user input (browser: prompt, Node: sync-prompt)
+  - `iter()` - create iterator
+  - `map()` - apply function to iterable
+  - `pow()` - power with optional modulo
+  - `vars()` - object attributes as dict
+
+### Internal
+
+- **Code quality improvements** (from code review 2026-W8):
+  - Added `gen_expr_str()` and `gen_expr_unified()` utility methods to CodeGen
+  - Consolidated JS FFI detection (`is_js_ffi_chain`, `strip_js_ffi_prefix`) into CodeGen class
+  - Added type decision helpers (`can_use_native_add`, `get_mult_strategy`, `can_use_native_compare`)
+  - Cached `ModuleResolver` instances for faster multi-file compilation
+  - Added CodeGen class documentation for Binder contract
+  - Removed unused `Function` AST node and `is_captured` Variable field
+  - Fixed potential shell injection in dev tool (`mro_graph.py`)
+
+### Statistics
+
+- 2639 tests passing, 0 skipped
+
 ## [0.9.5] - 2026-01-28
 
 ### Added
@@ -28,17 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Operator nodes (`Add`, `Mult`, `Eq`, etc.) no longer receive `lineno`/`col_offset` kwargs
   - The AST converter now only passes positional attributes to nodes that support them
   - Tested and passing all 2639 tests on Python 3.14.2
-
-### Internal
-
-- **Code quality improvements** (from code review 2026-W8):
-  - Added `gen_expr_str()` and `gen_expr_unified()` utility methods to CodeGen
-  - Consolidated JS FFI detection (`is_js_ffi_chain`, `strip_js_ffi_prefix`) into CodeGen class
-  - Added type decision helpers (`can_use_native_add`, `get_mult_strategy`, `can_use_native_compare`)
-  - Cached `ModuleResolver` instances for faster multi-file compilation
-  - Added CodeGen class documentation for Binder contract
-  - Removed unused `Function` AST node and `is_captured` Variable field
-  - Fixed potential shell injection in dev tool (`mro_graph.py`)
 
 ### Statistics
 
