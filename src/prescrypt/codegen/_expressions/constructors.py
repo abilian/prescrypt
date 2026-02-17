@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.utils import flatten, unify
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
@@ -12,7 +11,7 @@ def gen_list(node: ast.List, codegen: CodeGen):
 
     Lists display as [1, 2, 3] while tuples display as (1, 2, 3).
     """
-    elements = [flatten(codegen.gen_expr(el)) for el in node.elts]
+    elements = [codegen.gen_expr_str(el) for el in node.elts]
     array_code = "[" + ", ".join(elements) + "]"
     # Mark as list so repr() uses [] instead of ()
     return f"Object.assign({array_code}, {{_is_list: true}})"
@@ -20,14 +19,14 @@ def gen_list(node: ast.List, codegen: CodeGen):
 
 @gen_expr.register
 def gen_tuple(node: ast.Tuple, codegen: CodeGen):
-    elements = [flatten(codegen.gen_expr(el)) for el in node.elts]
+    elements = [codegen.gen_expr_str(el) for el in node.elts]
     return "[" + ", ".join(elements) + "]"
 
 
 @gen_expr.register
 def gen_set(node: ast.Set, codegen: CodeGen):
     """Generate Set literal: {1, 2, 3} -> new Set([1, 2, 3])"""
-    elements = [flatten(codegen.gen_expr(el)) for el in node.elts]
+    elements = [codegen.gen_expr_str(el) for el in node.elts]
     return f"new Set([{', '.join(elements)}])"
 
 
@@ -54,12 +53,12 @@ def _gen_dict_with_unpacking(
                 pair_args = []
                 for k, v in current_pairs:
                     pair_args.extend(
-                        [unify(gen_expr(k, codegen)), unify(gen_expr(v, codegen))]
+                        [codegen.gen_expr_unified(k), codegen.gen_expr_unified(v)]
                     )
                 fragments.append(codegen.call_std_function("create_dict", pair_args))
                 current_pairs = []
             # Add the dict being unpacked directly
-            fragments.append(unify(gen_expr(val, codegen)))
+            fragments.append(codegen.gen_expr_unified(val))
         else:
             # Regular key-value pair
             current_pairs.append((key, val))
@@ -68,7 +67,7 @@ def _gen_dict_with_unpacking(
     if current_pairs:
         pair_args = []
         for k, v in current_pairs:
-            pair_args.extend([unify(gen_expr(k, codegen)), unify(gen_expr(v, codegen))])
+            pair_args.extend([codegen.gen_expr_unified(k), codegen.gen_expr_unified(v)])
         fragments.append(codegen.call_std_function("create_dict", pair_args))
 
     if len(fragments) == 1:
@@ -85,8 +84,8 @@ def _gen_dict_fallback(
     func_args = []
     for key, val in zip(keys, values):
         func_args += [
-            unify(gen_expr(key, codegen)),
-            unify(gen_expr(val, codegen)),
+            codegen.gen_expr_unified(key),
+            codegen.gen_expr_unified(val),
         ]
     # Use call_std_function for usage tracking
     return codegen.call_std_function("create_dict", func_args)

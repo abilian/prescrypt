@@ -37,6 +37,54 @@ class TestNumericBuiltins:
         assert js_eval(py2js("min([3, 1, 4, 1, 5])")) == 1
         assert js_eval(py2js("max([3, 1, 4, 1, 5])")) == 5
 
+    def test_min_max_tuples(self):
+        """Test min/max with tuple comparison (lexicographic)."""
+        # Tuple comparison
+        code = """
+arr = [3, 1, 4, 1, 5]
+result = min((x, i) for i, x in enumerate(arr))
+result
+"""
+        result = js_eval(py2js(code))
+        assert result == [1, 1]  # (1, 1) - smallest value is 1 at index 1
+
+        code = """
+arr = [3, 1, 4, 1, 5]
+result = max((x, i) for i, x in enumerate(arr))
+result
+"""
+        result = js_eval(py2js(code))
+        assert result == [5, 4]  # (5, 4) - largest value is 5 at index 4
+
+        # Multiple tuple arguments
+        code = "min((1, 2), (1, 1), (2, 0))"
+        result = js_eval(py2js(code))
+        assert result == [1, 1]  # (1, 1) is smallest lexicographically
+
+    def test_min_max_with_key(self):
+        """Test min/max with key function."""
+        code = "min([3, 1, 4], key=lambda x: -x)"
+        result = js_eval(py2js(code))
+        assert result == 4  # -4 is smallest, so 4 is returned
+
+        code = "max([3, 1, 4], key=lambda x: -x)"
+        result = js_eval(py2js(code))
+        assert result == 1  # -1 is largest, so 1 is returned
+
+        code = "min(['abc', 'a', 'ab'], key=len)"
+        result = js_eval(py2js(code))
+        assert result == "a"
+
+    def test_min_max_with_default(self):
+        """Test min/max with default value for empty iterables."""
+        code = "min([], default=42)"
+        result = js_eval(py2js(code))
+        assert result == 42
+
+        code = "max([], default=-1)"
+        result = js_eval(py2js(code))
+        assert result == -1
+
 
 class TestStringConversions:
     """Test string conversion builtins."""

@@ -48,13 +48,11 @@ class Variable:
         type: The kind of binding ("variable", "function", "class", "module",
               "global", "nonlocal")
         is_const: True if the variable is only assigned once (can use `const`)
-        is_captured: True if the variable is referenced from a nested scope
     """
 
     name: str
     type: str
     is_const: bool = True
-    is_captured: bool = False
 
     @property
     def declaration_kind(self) -> DeclarationKind:

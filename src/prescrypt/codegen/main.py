@@ -31,6 +31,30 @@ def gen_stmt(node: ast.stmt, gen: CodeGen) -> str:
 
 
 class CodeGen:
+    """JavaScript code generator for Prescrypt AST.
+
+    This class generates JavaScript code from a Prescrypt AST module.
+    It uses singledispatch to route AST node types to appropriate handlers.
+
+    Binder Contract:
+        For optimal code generation, the AST module should be processed
+        by the Binder pass before being passed to CodeGen. The Binder
+        attaches a `_scope` attribute to scope-creating nodes (Module,
+        FunctionDef, ClassDef, etc.) containing variable binding information.
+
+        If `_scope` is not set, CodeGen will still work but will use
+        default "let" declarations for all variables instead of
+        const/let optimization based on reassignment analysis.
+
+    Attributes:
+        module: The AST module being compiled.
+        ns: The current namespace being generated into.
+        function_prefix: Prefix for stdlib function names (default: "_pyfunc_").
+        method_prefix: Prefix for stdlib method names (default: "_pymeth_").
+        module_mode: If True, emit ES6 exports for module-level definitions.
+        bundle_mode: If True, suppress import statements (for bundling).
+    """
+
     module: ast.Module
     ns: NameSpace
 
@@ -101,6 +125,9 @@ class CodeGen:
 
         # Bundle mode - suppress import statements (they're bundled)
         self.bundle_mode = bundle_mode
+
+        # Cached module resolver (created lazily)
+        self._resolver: ModuleResolver | None = None
 
         self._init_dispatch()
 
@@ -209,16 +236,71 @@ class CodeGen:
         """Check if a name is any kind of JS FFI root (module ref or direct global)."""
         return name in self._js_ffi_names or name in self._js_ffi_globals
 
+    def is_js_ffi_chain(self, node: ast.AST) -> bool:
+        """Check if an AST node is part of a JS FFI chain.
+
+        This includes:
+        - js.X.Y.Z chains (from 'import js')
+        - document.X.Y chains (from 'from js import document')
+        - Chained calls: js.fetch().then()
+        - Chained subscripts: js.chrome.storage["local"]
+        """
+        match node:
+            case ast.Name(id=name):
+                return self.is_js_ffi_chain_root(name)
+            case ast.Attribute(value=value):
+                return self.is_js_ffi_chain(value)
+            case ast.Call(func=func):
+                return self.is_js_ffi_chain(func)
+            case ast.Subscript(value=value):
+                return self.is_js_ffi_chain(value)
+            case _:
+                return False
+
+    def strip_js_ffi_prefix(self, node: ast.AST) -> str:
+        """Convert js.X.Y to X.Y (strip the FFI module prefix).
+
+        For 'import js' chains: js.console.log -> console.log
+        For 'from js import X' chains: document.body -> document.body (no stripping)
+        For Call chains: js.fetch('/api') -> fetch('/api')
+        """
+        match node:
+            case ast.Name(id=name):
+                if self.is_js_ffi_name(name):
+                    # Module ref like 'js' - strip it
+                    return ""
+                if self.is_js_ffi_global(name):
+                    # Direct global like 'document' - keep it
+                    return name
+                return ""
+            case ast.Attribute(value=value, attr=attr):
+                base = self.strip_js_ffi_prefix(value)
+                if base:
+                    return f"{base}.{attr}"
+                return attr
+            case ast.Call():
+                # For Call nodes, generate the full expression
+                # This preserves the call with its arguments
+                return flatten(self.gen_expr(node))
+            case _:
+                return ""
+
     #
     # Module Resolution
     #
     def get_resolver(self) -> ModuleResolver:
-        """Get a module resolver for this compilation context."""
-        return ModuleResolver(
-            source_dir=self._source_dir,
-            module_paths=self._module_paths,
-            verify_exists=True,  # Verify module paths to distinguish packages from modules
-        )
+        """Get a module resolver for this compilation context.
+
+        The resolver is cached for the lifetime of this CodeGen instance
+        to avoid redundant instantiation during multi-file compilation.
+        """
+        if self._resolver is None:
+            self._resolver = ModuleResolver(
+                source_dir=self._source_dir,
+                module_paths=self._module_paths,
+                verify_exists=True,  # Verify module paths to distinguish packages from modules
+            )
+        return self._resolver
 
     def resolve_module(self, module: str, level: int = 0) -> str:
         """Resolve a Python module name to a JavaScript import path.
@@ -299,6 +381,24 @@ class CodeGen:
     def gen_expr(self, node: ast.expr):
         return gen_expr(node, self)
 
+    def gen_expr_str(self, node: ast.expr) -> str:
+        """Generate expression and flatten result to a single string.
+
+        This is a convenience method that combines gen_expr() with flatten(),
+        useful when you need the result as a simple string rather than
+        potentially nested lists.
+        """
+        return flatten(self.gen_expr(node))
+
+    def gen_expr_unified(self, node: ast.expr) -> str:
+        """Generate expression, flatten, and wrap in parens if needed.
+
+        This is a convenience method that combines gen_expr() with unify(),
+        useful when the expression will be used in a context where operator
+        precedence matters (e.g., as operand in a binary operation).
+        """
+        return unify(self.gen_expr(node))
+
     def gen_stmt(self, node: ast.stmt):
         return gen_stmt(node, self)
 
@@ -320,12 +420,22 @@ class CodeGen:
     #
     # Stdlib
     #
-    def call_std_function(self, name: str, args: list[str | ast.expr]) -> str:
-        """Generate a function call from the Prescrypt standard library."""
+    def call_std_function(
+        self, name: str, args: list[str | ast.expr], inline_args: str | None = None
+    ) -> str:
+        """Generate a function call from the Prescrypt standard library.
+
+        Args:
+            name: The stdlib function name (without prefix)
+            args: List of arguments (AST nodes or JS strings)
+            inline_args: Optional pre-formatted JS arguments string (bypasses gen_js_args)
+        """
         # Track usage for tree-shaking
         self._used_std_functions.add(name)
 
         mangled_name = self.function_prefix + name
+        if inline_args is not None:
+            return f"{mangled_name}({inline_args})"
         js_args = list(self.gen_js_args(args))
         return f"{mangled_name}({', '.join(js_args)})"
 

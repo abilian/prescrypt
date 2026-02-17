@@ -4,32 +4,10 @@ from attr import define
 
 from prescrypt.codegen.main import CodeGen, gen_expr
 from prescrypt.codegen.stdlib_py import stdlib
-from prescrypt.codegen.utils import flatten, unify
+from prescrypt.codegen.utils import flatten
 from prescrypt.front import ast
 from prescrypt.front.passes.types import JSObject
 from prescrypt.stdlib_js import StdlibJs
-
-
-def _is_js_ffi_chain(node: ast.AST, codegen: CodeGen) -> bool:
-    """Check if an AST node is part of a JS FFI chain.
-
-    This includes:
-    - js.X.Y.Z chains (from 'import js')
-    - document.X.Y chains (from 'from js import document')
-    """
-    match node:
-        case ast.Name(id=name):
-            return codegen.is_js_ffi_chain_root(name)
-        case ast.Attribute(value=value):
-            return _is_js_ffi_chain(value, codegen)
-        case ast.Call(func=func):
-            # js.fetch().then() - the base is still a JS FFI chain
-            return _is_js_ffi_chain(func, codegen)
-        case ast.Subscript(value=value):
-            # js.chrome.storage["local"] - the base is still a JS FFI chain
-            return _is_js_ffi_chain(value, codegen)
-        case _:
-            return False
 
 
 @gen_expr.register
@@ -68,12 +46,12 @@ class FuncCall:
                 # - items[0]() - subscript call
                 # - (foo if cond else bar)() - conditional call
                 # - (lambda x: x)() - lambda call
-                js_func = flatten(self.codegen.gen_expr(func))
+                js_func = self.codegen.gen_expr_str(func)
                 return f"({js_func}){self.gen_args()}"
 
             case ast.Constant():
                 # Calling a literal like 1() - valid Python that raises TypeError at runtime
-                js_func = flatten(self.codegen.gen_expr(func))
+                js_func = self.codegen.gen_expr_str(func)
                 return f"({js_func}){self.gen_args()}"
 
             case _:
@@ -118,16 +96,16 @@ class FuncCall:
         # Check if this is a JS FFI chain (js.X.Y.method())
         # or if the value is typed as JS/JSObject
         # If so, don't apply Python stdlib transformations
-        is_js_ffi = _is_js_ffi_chain(value, self.codegen)
+        is_js_ffi = self.codegen.is_js_ffi_chain(value)
         is_js_typed = getattr(value, "_type", None) is JSObject
 
         if is_js_ffi or is_js_typed:
             # JS FFI: bypass Python stdlib and handle specially
-            obj_js = unify(self.gen_expr(value))
+            obj_js = self.codegen.gen_expr_unified(value)
 
             # Handle .new() -> new Constructor()
             if method_name == "new":
-                js_args = ", ".join(flatten(self.gen_expr(arg)) for arg in args)
+                js_args = ", ".join(self.codegen.gen_expr_str(arg) for arg in args)
                 return f"new {obj_js}({js_args})"
 
             # All other methods: pass through directly to JS
@@ -138,9 +116,9 @@ class FuncCall:
         if isinstance(value, ast.Name):
             obj_for_handler = value.id
         else:
-            obj_for_handler = unify(self.gen_expr(value))
+            obj_for_handler = self.codegen.gen_expr_unified(value)
 
-        obj_js = unify(self.gen_expr(value))
+        obj_js = self.codegen.gen_expr_unified(value)
 
         if builtin_meth := stdlib_py.get_method(method_name):
             if res := builtin_meth(self.codegen, obj_for_handler, args, keywords):
@@ -229,7 +207,7 @@ class FuncCall:
         for arg in args:
             match arg:
                 case ast.Starred(value):
-                    starname = flatten(self.gen_expr(value))
+                    starname = self.codegen.gen_expr_str(value)
                     arglists.append(starname)
                     argswithcommas = []
                     arglists.append(argswithcommas)
@@ -276,12 +254,12 @@ class FuncCall:
         kwargs = []
         for keyword in keywords:
             if not keyword.arg:  # **xx
-                kwargs.append(unify(self.gen_expr(keyword.value)))
+                kwargs.append(self.codegen.gen_expr_unified(keyword.value))
             else:  # foo=xx
                 if not (kwargs and isinstance(kwargs[-1], list)):
                     kwargs.append([])
                 kwargs[-1].append(
-                    f"{keyword.arg}: {unify(self.gen_expr(keyword.value))}"
+                    f"{keyword.arg}: {self.codegen.gen_expr_unified(keyword.value)}"
                 )
 
         # Resolve sequneces of loose kwargs

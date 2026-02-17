@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 
 from prescrypt.codegen.main import CodeGen, gen_stmt
-from prescrypt.codegen.utils import flatten
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
@@ -43,7 +42,7 @@ def gen_match(node: ast.Match, codegen: CodeGen) -> list[str]:
             code.append(f"let {var_name};")
 
     # Generate subject expression once and store in temp variable
-    subject_js = flatten(codegen.gen_expr(node.subject))
+    subject_js = codegen.gen_expr_str(node.subject)
     subject_var = codegen.dummy("match_subject")
     code.append(f"let {subject_var} = {subject_js};")
 
@@ -57,7 +56,7 @@ def gen_match(node: ast.Match, codegen: CodeGen) -> list[str]:
             # For guards, we need to substitute pattern-bound names with subject
             # e.g., `case n if n > 0:` should use subject_var, not n
             guard_substitutions = _get_pattern_substitutions(case.pattern, subject_var)
-            guard_js = flatten(codegen.gen_expr(case.guard))
+            guard_js = codegen.gen_expr_str(case.guard)
             # Apply substitutions
             for var_name, replacement in guard_substitutions.items():
                 # Simple word-boundary replacement
@@ -108,7 +107,7 @@ def _gen_pattern_condition(
     match pattern:
         case ast.MatchValue(value=value):
             # Literal value: case 0:
-            value_js = flatten(codegen.gen_expr(value))
+            value_js = codegen.gen_expr_str(value)
             return f"{codegen.call_std_function('op_equals', [subject, value_js])}", []
 
         case ast.MatchSingleton(value=value):
@@ -387,7 +386,7 @@ def _gen_single_sequence_element(
 
         case ast.MatchValue(value=value):
             # Literal element: [1, b]
-            value_js = flatten(codegen.gen_expr(value))
+            value_js = codegen.gen_expr_str(value)
             conditions.append(
                 f"{codegen.call_std_function('op_equals', [elem_access, value_js])}"
             )
@@ -439,7 +438,7 @@ def _gen_mapping_pattern(
 
     # Check each key exists and matches pattern
     for key, pattern in zip(keys, patterns):
-        key_js = flatten(codegen.gen_expr(key))
+        key_js = codegen.gen_expr_str(key)
         key_access = f"{subject}[{key_js}]"
 
         # Check key exists
@@ -456,7 +455,7 @@ def _gen_mapping_pattern(
 
             case ast.MatchValue(value=value):
                 # Literal: {"type": "point"}
-                value_js = flatten(codegen.gen_expr(value))
+                value_js = codegen.gen_expr_str(value)
                 conditions.append(
                     f"{codegen.call_std_function('op_equals', [key_access, value_js])}"
                 )
@@ -473,7 +472,7 @@ def _gen_mapping_pattern(
     # Handle **rest capture
     if rest is not None:
         # Collect remaining keys into a new object
-        key_exprs = [flatten(codegen.gen_expr(k)) for k in keys]
+        key_exprs = [codegen.gen_expr_str(k) for k in keys]
         exclude_set = "{" + ", ".join(key_exprs) + "}"
         bindings.append(
             f"{rest} = Object.fromEntries("
@@ -499,7 +498,7 @@ def _gen_class_pattern(
     bindings = []
 
     # Get class name for isinstance check
-    cls_js = flatten(codegen.gen_expr(cls))
+    cls_js = codegen.gen_expr_str(cls)
 
     # Check it's an instance of the class
     conditions.append(f"({subject} instanceof {cls_js})")
@@ -524,7 +523,7 @@ def _gen_class_pattern(
 
                 case ast.MatchValue(value=value):
                     # Literal
-                    value_js = flatten(codegen.gen_expr(value))
+                    value_js = codegen.gen_expr_str(value)
                     conditions.append(
                         f"{codegen.call_std_function('op_equals', [attr_access, value_js])}"
                     )
@@ -553,7 +552,7 @@ def _gen_class_pattern(
 
             case ast.MatchValue(value=value):
                 # Literal: Point(x=0)
-                value_js = flatten(codegen.gen_expr(value))
+                value_js = codegen.gen_expr_str(value)
                 conditions.append(
                     f"{codegen.call_std_function('op_equals', [attr_access, value_js])}"
                 )

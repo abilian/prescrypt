@@ -1,7 +1,14 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.type_utils import get_type, is_numeric, is_primitive, is_string
+from prescrypt.codegen.type_utils import (
+    can_use_native_add,
+    can_use_native_compare,
+    get_mult_strategy,
+    get_type,
+    is_numeric,
+    is_string,
+)
 from prescrypt.codegen.utils import flatten, unify
 from prescrypt.constants import ATTRIBUTE_MAP, BINARY_OP, BOOL_OP, COMP_OP, UNARY_OP
 from prescrypt.front import ast
@@ -23,12 +30,12 @@ def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
             return f"{name}.{attr}"
 
     # Check for chained JS FFI access: js.console.log -> console.log
-    if _is_js_ffi_chain(value_node, codegen):
-        base_name = _strip_js_ffi_prefix(value_node, codegen)
+    if codegen.is_js_ffi_chain(value_node):
+        base_name = codegen.strip_js_ffi_prefix(value_node)
         return f"{base_name}.{attr}"
 
     # Generate the base expression
-    base_name = unify(codegen.gen_expr(value_node))
+    base_name = codegen.gen_expr_unified(value_node)
 
     # Wrap numeric literals in parentheses for method calls: 10.to_bytes() -> (10).to_bytes()
     if isinstance(value_node, ast.Constant) and isinstance(
@@ -50,55 +57,17 @@ def gen_attribute(node: ast.Attribute, codegen: CodeGen) -> str:
         return f"{base_name}.{attr}"
 
 
-def _is_js_ffi_chain(node: ast.AST, codegen: CodeGen) -> bool:
-    """Check if an AST node is part of a JS FFI chain.
-
-    This includes:
-    - js.X.Y.Z chains (from 'import js')
-    - document.X.Y chains (from 'from js import document')
-    """
-    if isinstance(node, ast.Name):
-        return codegen.is_js_ffi_chain_root(node.id)
-    if isinstance(node, ast.Attribute):
-        return _is_js_ffi_chain(node.value, codegen)
-    return False
-
-
-def _strip_js_ffi_prefix(node: ast.AST, codegen: CodeGen) -> str:
-    """Convert js.X.Y to X.Y (strip the FFI module prefix).
-
-    For 'import js' chains: js.console.log -> console.log
-    For 'from js import X' chains: document.body -> document.body (no stripping)
-    """
-    if isinstance(node, ast.Name):
-        name = node.id
-        if codegen.is_js_ffi_name(name):
-            # Module ref like 'js' - strip it
-            return ""
-        if codegen.is_js_ffi_global(name):
-            # Direct global like 'document' - keep it
-            return name
-        return ""
-    if isinstance(node, ast.Attribute):
-        base = _strip_js_ffi_prefix(node.value, codegen)
-        if base:
-            return f"{base}.{node.attr}"
-        else:
-            return node.attr
-    return ""
-
-
 @gen_expr.register
 def gen_subscript(node: ast.Subscript, codegen: CodeGen):
     value, slice_node = node.value, node.slice
-    js_value = flatten(codegen.gen_expr(value))
+    js_value = codegen.gen_expr_str(value)
 
     # Handle slice expressions: a[1:5], a[:], a[::2]
     if isinstance(slice_node, ast.Slice):
         return gen_slice_expr(js_value, slice_node, codegen)
 
     # Handle regular index access
-    js_slice = flatten(codegen.gen_expr(slice_node))
+    js_slice = codegen.gen_expr_str(slice_node)
 
     # Check context: Load (reading) vs Store (writing) vs Del (deleting)
     if isinstance(node.ctx, ast.Store):
@@ -123,22 +92,22 @@ def gen_slice_expr(js_value: str, slice_node: ast.Slice, codegen: CodeGen) -> st
             return f"{js_value}.slice()"
         elif lower is None:
             # a[:5] -> a.slice(0, 5)
-            js_upper = flatten(codegen.gen_expr(upper))
+            js_upper = codegen.gen_expr_str(upper)
             return f"{js_value}.slice(0, {js_upper})"
         elif upper is None:
             # a[1:] -> a.slice(1)
-            js_lower = flatten(codegen.gen_expr(lower))
+            js_lower = codegen.gen_expr_str(lower)
             return f"{js_value}.slice({js_lower})"
         else:
             # a[1:5] -> a.slice(1, 5)
-            js_lower = flatten(codegen.gen_expr(lower))
-            js_upper = flatten(codegen.gen_expr(upper))
+            js_lower = codegen.gen_expr_str(lower)
+            js_upper = codegen.gen_expr_str(upper)
             return f"{js_value}.slice({js_lower}, {js_upper})"
 
     # Step present: use runtime helper
-    js_lower = flatten(codegen.gen_expr(lower)) if lower else "null"
-    js_upper = flatten(codegen.gen_expr(upper)) if upper else "null"
-    js_step = flatten(codegen.gen_expr(step))
+    js_lower = codegen.gen_expr_str(lower) if lower else "null"
+    js_upper = codegen.gen_expr_str(upper) if upper else "null"
+    js_step = codegen.gen_expr_str(step)
     return codegen.call_std_function("slice", [js_value, js_lower, js_upper, js_step])
 
 
@@ -153,7 +122,7 @@ def gen_unary_op(node: ast.UnaryOp, codegen: CodeGen) -> str | list:
             return ["!", codegen.gen_truthy(operand)]
         case ast.Invert():
             js_op = UNARY_OP[op]
-            right = unify(codegen.gen_expr(operand))
+            right = codegen.gen_expr_unified(operand)
             return [js_op, right]
         case _:  # pragma: no cover
             msg = f"Unknown unary operator {op!r} (should not happen)"
@@ -168,7 +137,7 @@ def gen_bool_op(node: ast.BoolOp, codegen: CodeGen) -> str | list:
     js_op = f" {BOOL_OP[op]} "
     if type(op) == ast.Or:  # allow foo = bar or []
         js_values = [unify(codegen.gen_truthy(val)) for val in values[:-1]]
-        js_values += [unify(codegen.gen_expr(values[-1]))]
+        js_values += [codegen.gen_expr_unified(values[-1])]
     else:
         js_values = [unify(codegen.gen_truthy(val)) for val in values]
     return js_op.join(js_values)
@@ -192,40 +161,35 @@ def gen_bin_op(node: ast.BinOp, codegen: CodeGen) -> str | list:
     # use runtime op_mod which handles both string formatting and numeric modulo
     if isinstance(op, ast.Mod):
         if is_string(left_type) or not is_numeric(left_type):
-            js_left = unify(codegen.gen_expr(left_node))
-            js_right = unify(codegen.gen_expr(right_node))
+            js_left = codegen.gen_expr_unified(left_node)
+            js_right = codegen.gen_expr_unified(right_node)
             return codegen.call_std_function("op_mod", [js_left, js_right])
 
-    js_left = unify(codegen.gen_expr(left_node))
-    js_right = unify(codegen.gen_expr(right_node))
+    js_left = codegen.gen_expr_unified(left_node)
+    js_right = codegen.gen_expr_unified(right_node)
 
     match op:
         case ast.Add():
             # Optimize when both types are known and compatible
-            if is_numeric(left_type) and is_numeric(right_type):
-                # Both numeric: safe to use native +
-                return f"({js_left} + {js_right})"
-            elif is_string(left_type) and is_string(right_type):
-                # Both strings: safe to use native +
+            if can_use_native_add(left_type, right_type):
                 return f"({js_left} + {js_right})"
             else:
                 # Unknown or mixed types: use helper for Python semantics
                 return codegen.call_std_function("op_add", [js_left, js_right])
 
         case ast.Mult():
-            # Optimize when both types are known
-            if is_numeric(left_type) and is_numeric(right_type):
-                # Both numeric: safe to use native *
-                return f"({js_left} * {js_right})"
-            elif is_string(left_type) and is_numeric(right_type):
-                # String repeat: "x" * 3 -> "x".repeat(3)
-                return f"{js_left}.repeat({js_right})"
-            elif is_numeric(left_type) and is_string(right_type):
-                # String repeat: 3 * "x" -> "x".repeat(3)
-                return f"{js_right}.repeat({js_left})"
-            else:
-                # Unknown or mixed types: use helper
-                return codegen.call_std_function("op_mul", [js_left, js_right])
+            # Optimize based on operand types
+            match get_mult_strategy(left_type, right_type):
+                case "native":
+                    return f"({js_left} * {js_right})"
+                case "repeat_left":
+                    # String repeat: "x" * 3 -> "x".repeat(3)
+                    return f"{js_left}.repeat({js_right})"
+                case "repeat_right":
+                    # String repeat: 3 * "x" -> "x".repeat(3)
+                    return f"{js_right}.repeat({js_left})"
+                case _:
+                    return codegen.call_std_function("op_mul", [js_left, js_right])
 
         case ast.Pow():
             return ["Math.pow(", js_left, ", ", js_right, ")"]
@@ -251,8 +215,8 @@ def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
     left_type = get_type(left_node)
     right_type = get_type(comparator_nodes[0])
 
-    js_left = unify(codegen.gen_expr(left_node))
-    js_right = unify(codegen.gen_expr(comparator_nodes[0]))
+    js_left = codegen.gen_expr_unified(left_node)
+    js_right = codegen.gen_expr_unified(comparator_nodes[0])
 
     # We've desugar'd chained comparisons, so we only have one op
     assert len(ops) == 1
@@ -260,7 +224,7 @@ def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
 
     if type(op) in (ast.Eq, ast.NotEq):
         # Optimize when both types are primitives: use === instead of helper
-        if is_primitive(left_type) and is_primitive(right_type):
+        if can_use_native_compare(left_type, right_type):
             if type(op) == ast.NotEq:
                 return f"({js_left} !== {js_right})"
             else:
@@ -281,7 +245,7 @@ def gen_compare(node: ast.Compare, codegen: CodeGen) -> str | list:
 
     elif type(op) in (ast.Lt, ast.Gt, ast.LtE, ast.GtE):
         # Optimize when both types are primitives: use native operators
-        if is_primitive(left_type) and is_primitive(right_type):
+        if can_use_native_compare(left_type, right_type):
             js_op = COMP_OP[op]
             return f"{js_left} {js_op} {js_right}"
         else:

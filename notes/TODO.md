@@ -1,6 +1,6 @@
 # Prescrypt TODO
 
-**Current Status:** v0.9.5 (in progress) | **Tests:** 2636 passing, 0 skipped | **Coverage:** 89%
+**Current Status:** v0.9.5 (in progress) | **Tests:** 2639 passing, 0 skipped | **Coverage:** 89%
 
 See `notes/history.md` for completed work (Stages 0-6).
 
@@ -74,7 +74,7 @@ See `notes/history.md` for completed work (Stages 0-6).
 
 ### Compatibility
 
-- [ ] **Python 3.14 support:** Test and fix any import errors on Python 3.14.
+- [x] **Python 3.14 support:** Fixed deprecation warnings in AST conversion. Operator nodes no longer receive `lineno`/`col_offset` kwargs. All 2639 tests pass on Python 3.14.2.
 
 ### Runtime & Stdlib Issues (discovered during tryalgo tests)
 
@@ -88,8 +88,7 @@ These issues were found while creating golden tests for the tryalgo algorithms:
 
 - [x] **`str.startswith(s, offset)` broken:** Fixed - `startswith()` and `endswith()` now support optional `start` and `end` parameters.
 
-- [ ] **`min()`/`max()` on tuple generators:** `min((x, i) for i, x in enumerate(arr))` returns `-Infinity` instead of finding the minimum tuple. Tuple comparison needs proper lexicographic implementation.
-  - Workaround: Rewrite algorithm with explicit loops
+- [x] **`min()`/`max()` on tuple generators:** Fixed - `min()` and `max()` now use proper lexicographic comparison for tuples/arrays, support `key` function, and support `default` for empty iterables.
 
 - [ ] **Large integer precision loss:** JavaScript numbers lose precision beyond 2^53. Modular arithmetic with large numbers gives wrong results.
   - Note: This is a fundamental JS limitation. Consider documenting or using BigInt for specific cases.
@@ -98,40 +97,87 @@ These issues were found while creating golden tests for the tryalgo algorithms:
 
 - [x] **`bisect_left`/`bisect_right` not implemented:** Fixed - added `bisect_left`, `bisect_right`, `bisect`, `insort_left`, `insort_right`, `insort` functions.
 
-## Future Enhancements
+## Recently Completed (v0.9.5 internal)
 
-### Build & Tooling
-- [x] **Built-in bundling:** Bundle multi-file projects into a single JS file ✓ (done in v0.9.5)
+### Code Quality Improvements ✓ (from code review 2026-W8)
+
+- [x] **Utility methods for codegen:** Added `gen_expr_str()` and `gen_expr_unified()` to CodeGen (replaced 132 occurrences of `flatten(codegen.gen_expr(...))`)
+- [x] **JS FFI consolidation:** Moved `is_js_ffi_chain()` and `strip_js_ffi_prefix()` from duplicated module functions into CodeGen class
+- [x] **Type decision helpers:** Added `can_use_native_add()`, `get_mult_strategy()`, `can_use_native_compare()` to `type_utils.py`
+- [x] **ModuleResolver caching:** Cached resolver instances in CodeGen for faster multi-file compilation
+- [x] **Documentation:** Added comprehensive CodeGen class docstring documenting Binder contract
+- [x] **Removed unused code:** Removed `Function` AST node and `is_captured` Variable field
+- [x] **Security fix:** Fixed shell injection in `mro_graph.py` (dev tool)
+
+---
+
+## Next Up (v0.9.6 → v1.0)
+
+### High Priority
+
+| Task | Effort | Description |
+|------|--------|-------------|
+| ~~Python 3.14 compatibility~~ | ~~Low~~ | ~~Test and fix any import/AST changes~~ ✓ Done |
+| CodeWriter refactor | High | Replace string returns with buffer-based writer |
+
+### Medium Priority
+
+| Task | Effort | Description |
+|------|--------|-------------|
+| Precedence-based parentheses | Medium | Replace regex-based `unify()` with proper precedence |
+| Stdlib manifest | Low | Replace regex parsing with explicit TOML manifest |
+| Event handler `event` param | Low | Auto-pass `event` to handler functions |
+| Async/await polish | Medium | Test and document `fetch` patterns |
+| Security tests | Low | Add tests for string escaping, identifier mangling |
+
+### Lower Priority
+
+| Task | Effort | Description |
+|------|--------|-------------|
+| Multiple inheritance (MRO) | High | Complex - may not be worth it |
+| VSCode extension | Medium | Syntax highlighting, error display |
+| Interactive docs | Medium | Compile examples in browser |
+
+---
+
+## Completed Features
+
+<details>
+<summary>Build & Tooling ✓ (click to expand)</summary>
+
+- [x] **Built-in bundling** ✓ (v0.9.5)
   - `py2js entry.py -o out.js --bundle -M src/`
   - Recursively resolves imports and bundles all modules
   - Combined tree-shaking across all modules
-- [x] **Watch mode for CLI:** Auto-recompile on file changes ✓ (done in v0.9.4)
+- [x] **Watch mode for CLI** ✓ (v0.9.4)
   - `py2js src/ -o dist/ --watch`
   - Uses watchdog if available, falls back to polling
-- [x] **Reserved word handling:** Auto-rename JavaScript reserved words (`default`, `switch`, `interface`, etc.) - done in v0.9.3
+- [x] **Reserved word handling** ✓ (v0.9.3)
+  - Auto-rename JavaScript reserved words (`default`, `switch`, `interface`, etc.)
 
-### JS FFI Enhancements
-- [x] **`JS` type annotation:** Mark variables as JavaScript objects to bypass Python stdlib transformations ✓
-  - Example: `result: JS = callback()` - compiler treats `result.get()` as JS method, not `_pymeth_get`
-  - Useful for stored references, callback return values, and any JS object not from direct `js.X` chain
-- [x] **`from js import document, fetch`:** Direct imports from `js` module ✓
-  - Imported names work as native JS globals
-  - Supports aliases and `.new()` constructor
+</details>
 
-### Language Features
-- [x] **Dataclasses support** ✓ (done in v0.9.4)
+<details>
+<summary>JS FFI Enhancements ✓ (click to expand)</summary>
+
+- [x] **`JS` type annotation** ✓ (v0.9.3)
+  - `result: JS = callback()` - compiler treats `result.get()` as JS method
+- [x] **`from js import document, fetch`** ✓ (v0.9.3)
+  - Direct imports work as native JS globals
+
+</details>
+
+<details>
+<summary>Language Features ✓ (click to expand)</summary>
+
+- [x] **Dataclasses support** ✓ (v0.9.4)
   - `@dataclass` generates `__init__`, `__repr__`, `__eq__`
-  - Supports default values, `eq=False`, `frozen=True`
-- [x] **`__slots__` support** ✓ (done in v0.9.4)
-  - Restricts attributes to declared slots using `Object.seal()`
-  - Supports list, tuple, or single string syntax
-- [x] **`match` statement** ✓ (done in v0.9.4)
-  - Literal, OR, capture, wildcard patterns
-  - Sequence patterns with starred capture (`case [first, *rest]:`)
-  - Mapping patterns (`case {"x": x, "y": y}:`)
-  - Class patterns (`case Point(x=x, y=y):`)
-  - Guard clauses supported
-- [ ] Multiple inheritance (MRO)
+- [x] **`__slots__` support** ✓ (v0.9.4)
+  - Restricts attributes using `Object.seal()`
+- [x] **`match` statement (full)** ✓ (v0.9.4)
+  - All patterns: literal, OR, capture, wildcard, sequence, starred, mapping, class, guards
+
+</details>
 
 ---
 

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_stmt
-from prescrypt.codegen.utils import js_repr, unify
+from prescrypt.codegen.utils import js_repr
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
@@ -36,7 +36,7 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
             if id.islower():  # raise an (error) object
                 if cause_node is not None:
                     # raise obj from cause -> obj.__cause__ = cause; throw obj
-                    js_cause = unify(codegen.gen_expr(cause_node))
+                    js_cause = codegen.gen_expr_unified(cause_node)
                     return [
                         codegen.lf(f"{id}.__cause__ = {js_cause};"),
                         codegen.lf(f"throw {id};"),
@@ -46,7 +46,7 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
         case ast.Call(func, args, keywords):
             assert isinstance(func, ast.Name)
             err_cls = func.id
-            err_args = [unify(codegen.gen_expr(arg)) for arg in args]
+            err_args = [codegen.gen_expr_unified(arg) for arg in args]
         case _:
             err_msg = "".join(codegen.gen_expr(exc_node))
             err_args = [err_msg] if err_msg else []
@@ -63,7 +63,7 @@ def gen_raise(node: ast.Raise, codegen: CodeGen):
 
     # Handle exception chaining: raise X from Y
     if cause_node is not None:
-        js_cause = unify(codegen.gen_expr(cause_node))
+        js_cause = codegen.gen_expr_unified(cause_node)
         tmp_var = codegen.dummy("exc")
         return [
             codegen.lf(f"let {tmp_var} = {exc_code};"),
@@ -211,7 +211,7 @@ def gen_excepthandler(node: ast.ExceptHandler, codegen: CodeGen):
             exc_name = type_node.id
         else:
             # For more complex expressions, fall back to generated code
-            exc_name = unify(codegen.gen_expr(type_node))
+            exc_name = codegen.gen_expr_unified(type_node)
     else:
         exc_name = ""
 
@@ -219,7 +219,7 @@ def gen_excepthandler(node: ast.ExceptHandler, codegen: CodeGen):
     if exc_name and exc_name != "Exception":
         # Check both name property (for op_error exceptions) and instanceof (for class-based exceptions)
         # Also generate the JS identifier for the isinstance check
-        js_exc_type = unify(codegen.gen_expr(type_node)) if type_node else ""
+        js_exc_type = codegen.gen_expr_unified(type_node) if type_node else ""
         code.append(
             f'if ({err_name} instanceof Error && ({err_name}.name === "{exc_name}" || {err_name} instanceof {js_exc_type})) {{'
         )

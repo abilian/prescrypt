@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.utils import flatten
 from prescrypt.front import ast
 
 
@@ -26,7 +25,7 @@ def gen_starred(node: ast.Starred, codegen: CodeGen) -> str:
 
     Used for spread in function calls, list literals, etc.
     """
-    value = flatten(codegen.gen_expr(node.value))
+    value = codegen.gen_expr_str(node.value)
     return f"...{value}"
 
 
@@ -50,7 +49,7 @@ def gen_namedexpr(node: ast.NamedExpr, codegen: CodeGen) -> str:
         raise JSError(msg)
 
     name = target.id
-    js_value = flatten(codegen.gen_expr(node.value))
+    js_value = codegen.gen_expr_str(node.value)
 
     # Check if variable needs declaration
     # Use is_known_in_any_scope to handle comprehensions where walrus operator
@@ -77,7 +76,7 @@ def gen_yield(node: ast.Yield, codegen: CodeGen) -> str:
     if node.value is None:
         return "yield"
 
-    value = flatten(codegen.gen_expr(node.value))
+    value = codegen.gen_expr_str(node.value)
     return f"yield {value}"
 
 
@@ -91,5 +90,5 @@ def gen_yield_from(node: ast.YieldFrom, codegen: CodeGen) -> str:
     The yield* expression delegates to another iterator/generator.
     The return value of yield from is the value passed to the final StopIteration.
     """
-    value = flatten(codegen.gen_expr(node.value))
+    value = codegen.gen_expr_str(node.value)
     return f"yield* {value}"

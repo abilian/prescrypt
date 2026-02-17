@@ -6,7 +6,6 @@ Converts Python lambda expressions to JavaScript arrow functions.
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.utils import flatten
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
@@ -19,7 +18,7 @@ def gen_lambda(node: ast.Lambda, codegen: CodeGen) -> str:
     JavaScript: (x, y = 1) => (x + y)
     """
     params = gen_lambda_params(node.args, codegen)
-    body = flatten(codegen.gen_expr(node.body))
+    body = codegen.gen_expr_str(node.body)
 
     return f"({params}) => ({body})"
 
@@ -44,7 +43,7 @@ def gen_lambda_params(args: ast.arguments, codegen: CodeGen) -> str:
         # Check for default value
         default_idx = i - (num_args - num_defaults)
         if default_idx >= 0:
-            default = flatten(codegen.gen_expr(args.defaults[default_idx]))
+            default = codegen.gen_expr_str(args.defaults[default_idx])
             parts.append(f"{name} = {default}")
         else:
             parts.append(name)
@@ -60,7 +59,7 @@ def gen_lambda_params(args: ast.arguments, codegen: CodeGen) -> str:
             name = arg.arg
             # kw_defaults may contain None for args without defaults
             if i < len(args.kw_defaults) and args.kw_defaults[i] is not None:
-                default = flatten(codegen.gen_expr(args.kw_defaults[i]))
+                default = codegen.gen_expr_str(args.kw_defaults[i])
                 parts.append(f"{name} = {default}")
             else:
                 parts.append(name)

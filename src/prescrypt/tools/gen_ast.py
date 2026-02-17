@@ -25,9 +25,6 @@ ellipsis = type(...)
 '''
 
 POSTAMBLE = """\
-class Function(FunctionDef):
-    _fields = ("name", "args", "body")
-
 
 from .converter import parse  # noqa
 """

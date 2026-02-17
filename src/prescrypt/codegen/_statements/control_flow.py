@@ -260,13 +260,13 @@ def gen_for(node: ast.For, codegen: CodeGen):
     if isinstance(target, ast.Name):
         target_names = [target.id]
     elif isinstance(target, ast.Tuple):
-        target_names = [flatten(codegen.gen_expr(t)) for t in target.elts]
+        target_names = [codegen.gen_expr_str(t) for t in target.elts]
     else:
         msg = "Invalid iterator target in for-loop"
         raise JSError(msg, target)
 
     # Generate the iterable expression
-    js_iter = flatten(codegen.gen_expr(iter_node))
+    js_iter = codegen.gen_expr_str(iter_node)
 
     # Create dummy variables for iteration
     d_seq = codegen.dummy("seq")
@@ -485,7 +485,7 @@ def gen_with(node: ast.With, codegen: CodeGen):
     code = []
 
     # Generate the context expression
-    js_context = flatten(codegen.gen_expr(context_expr))
+    js_context = codegen.gen_expr_str(context_expr)
 
     # Always create a context manager variable for cleanup
     ctx_var = codegen.dummy("ctx")

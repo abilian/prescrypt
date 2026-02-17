@@ -147,7 +147,7 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     # Get base class (not the constructor)
     base_class = "Object"
     if base_nodes:
-        base_class = flatten(codegen.gen_expr(base_nodes[0]))
+        base_class = codegen.gen_expr_str(base_nodes[0])
     if not _VALID_BASE_CLASS_RE.match(base_class):
         msg = "Base classes must be simple names"
         raise JSError(msg, base_nodes[0])
@@ -207,7 +207,7 @@ def gen_classdef(node: ast.ClassDef, codegen: CodeGen):
     # Apply decorators (in reverse order, innermost first)
     if decorator_nodes:
         for decorator in reversed(decorator_nodes):
-            dec_code = flatten(codegen.gen_expr(decorator))
+            dec_code = codegen.gen_expr_str(decorator)
             code.append(f"{class_name} = {dec_code}({class_name});\n")
 
     return code
@@ -374,7 +374,7 @@ def gen_dataclass(node: ast.ClassDef, codegen: CodeGen) -> list[str]:
         if len(node.bases) > 1:
             msg = "Dataclass with multiple inheritance not supported"
             raise JSError(msg, node)
-        base_class = flatten(codegen.gen_expr(node.bases[0]))
+        base_class = codegen.gen_expr_str(node.bases[0])
         if base_class.lower() == "object":
             base_class = "Object"
         else:
@@ -391,7 +391,7 @@ def gen_dataclass(node: ast.ClassDef, codegen: CodeGen) -> list[str]:
     for field in fields_no_default:
         params.append(field.name)
     for field in fields_with_default:
-        default_js = flatten(codegen.gen_expr(field.default_value))
+        default_js = codegen.gen_expr_str(field.default_value)
         params.append(f"{field.name} = {default_js}")
 
     params_str = ", ".join(params)

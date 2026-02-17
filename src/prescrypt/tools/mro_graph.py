@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import ast
 import itertools
-import os
+import subprocess
 from pathlib import Path
 
 PSVIEWER = "gv"  # you may change these with
@@ -53,7 +53,9 @@ class MROgraph:
         self.labels = options.get("labels", 2)
         caption = options.get("caption", False)
         setup = options.get("setup", "")
-        name, dotformat = os.path.splitext(filename)
+        filepath = Path(filename)
+        name = filepath.stem
+        dotformat = filepath.suffix
         format = dotformat[1:]
         fontopt = "fontname=" + if_(format == "ps", PSFONT, PNGFONT)
         nodeopt = f" node [{fontopt}];\n"
@@ -69,10 +71,13 @@ class MROgraph:
             name, setupcode, "\n".join(codeiter)
         )
 
-        Path("tmp/ast.dot").write_text(self.dotcode)
+        dot_file = Path("tmp/ast.dot")
+        dot_file.parent.mkdir(exist_ok=True)
+        dot_file.write_text(self.dotcode)
 
-        os.system(f"dot -Tpng tmp/ast.dot > {filename}")
-        os.system(f"open {filename}")
+        # Use subprocess with argument list to avoid shell injection
+        subprocess.run(["dot", "-Tpng", str(dot_file), "-o", filename], check=True)
+        subprocess.run(["open", filename], check=True)
 
     def genMROcode(self, cls):
         "Generates the dot code for the MRO of a given class"

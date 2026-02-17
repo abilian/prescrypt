@@ -60,3 +60,45 @@ def is_list(t) -> bool:
 def is_known(t) -> bool:
     """Check if type is known (not Unknown)."""
     return t is not Unknown
+
+
+# Decision helpers for native operator usage
+
+
+def can_use_native_add(left_type, right_type) -> bool:
+    """Check if native + can be used for Add operation.
+
+    Native + is safe when:
+    - Both types are numeric (including Bool)
+    - Both types are String
+    """
+    return bool(
+        (is_numeric(left_type) and is_numeric(right_type))
+        or (is_string(left_type) and is_string(right_type))
+    )
+
+
+def get_mult_strategy(left_type, right_type) -> str:
+    """Determine multiplication strategy based on operand types.
+
+    Returns:
+        "native" - Use native * (both numeric)
+        "repeat_left" - Use left.repeat(right) (string * int)
+        "repeat_right" - Use right.repeat(left) (int * string)
+        "helper" - Use runtime helper (unknown types)
+    """
+    if is_numeric(left_type) and is_numeric(right_type):
+        return "native"
+    if is_string(left_type) and is_numeric(right_type):
+        return "repeat_left"
+    if is_numeric(left_type) and is_string(right_type):
+        return "repeat_right"
+    return "helper"
+
+
+def can_use_native_compare(left_type, right_type) -> bool:
+    """Check if native comparison operators can be used.
+
+    Native ===, !==, <, >, <=, >= are safe when both types are primitives.
+    """
+    return is_primitive(left_type) and is_primitive(right_type)

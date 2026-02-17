@@ -2083,6 +2083,186 @@ export const op_contains = function op_contains(a, b) {
 
 // ---
 
+// function: compare
+// Lexicographic comparison for Python-style ordering
+// Returns: -1 if a < b, 0 if a == b, 1 if a > b
+export const compare = function compare(a, b) {
+  // nargs: 2
+  // Handle null/undefined
+  if (a === null || a === undefined) {
+    if (b === null || b === undefined) return 0;
+    return -1;
+  }
+  if (b === null || b === undefined) return 1;
+
+  // Arrays/tuples: lexicographic comparison
+  if (Array.isArray(a) && Array.isArray(b)) {
+    const minLen = Math.min(a.length, b.length);
+    for (let i = 0; i < minLen; i++) {
+      const cmp = compare(a[i], b[i]);
+      if (cmp !== 0) return cmp;
+    }
+    // All elements equal so far - shorter array is "less"
+    if (a.length < b.length) return -1;
+    if (a.length > b.length) return 1;
+    return 0;
+  }
+
+  // Check for __lt__ and __gt__ methods
+  if (a != null && typeof a.__lt__ === 'function') {
+    if (a.__lt__(b)) return -1;
+    if (typeof a.__gt__ === 'function' && a.__gt__(b)) return 1;
+    return 0;
+  }
+
+  // Primitive comparison
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+};
+
+// ---
+
+// function: min
+// Python-compatible min() with key function and default support
+export const min = function min() {
+  // nargs: 1+
+  // min(iterable, *, key=None, default=<no default>)
+  // min(arg1, arg2, *args, key=None)
+  if (arguments.length === 0) {
+    throw new TypeError("min expected at least 1 argument, got 0");
+  }
+
+  let items;
+  let key = null;
+  let defaultValue = undefined;
+  let hasDefault = false;
+
+  // Check if last argument is an options object with key/default
+  const lastArg = arguments[arguments.length - 1];
+  let argsEnd = arguments.length;
+
+  // Handle kwargs-style object at end (from **kwargs unpacking)
+  if (lastArg != null && typeof lastArg === 'object' && !Array.isArray(lastArg) &&
+      !(lastArg[Symbol.iterator]) && (lastArg.key !== undefined || lastArg.default !== undefined)) {
+    if (lastArg.key !== undefined) key = lastArg.key;
+    if (lastArg.default !== undefined) {
+      defaultValue = lastArg.default;
+      hasDefault = true;
+    }
+    argsEnd--;
+  }
+
+  if (argsEnd === 1) {
+    // Single argument - treat as iterable
+    const arg = arguments[0];
+    if (arg != null && typeof arg[Symbol.iterator] === 'function') {
+      items = [...arg];
+    } else if (Array.isArray(arg)) {
+      items = arg;
+    } else {
+      throw new TypeError("'" + typeof arg + "' object is not iterable");
+    }
+  } else {
+    // Multiple arguments - compare them directly
+    items = [];
+    for (let i = 0; i < argsEnd; i++) {
+      items.push(arguments[i]);
+    }
+  }
+
+  if (items.length === 0) {
+    if (hasDefault) return defaultValue;
+    throw new ValueError("min() arg is an empty sequence");
+  }
+
+  let result = items[0];
+  let resultKey = key ? key(result) : result;
+
+  for (let i = 1; i < items.length; i++) {
+    const item = items[i];
+    const itemKey = key ? key(item) : item;
+    if (FUNCTION_PREFIXcompare(itemKey, resultKey) < 0) {
+      result = item;
+      resultKey = itemKey;
+    }
+  }
+
+  return result;
+};
+
+// ---
+
+// function: max
+// Python-compatible max() with key function and default support
+export const max = function max() {
+  // nargs: 1+
+  // max(iterable, *, key=None, default=<no default>)
+  // max(arg1, arg2, *args, key=None)
+  if (arguments.length === 0) {
+    throw new TypeError("max expected at least 1 argument, got 0");
+  }
+
+  let items;
+  let key = null;
+  let defaultValue = undefined;
+  let hasDefault = false;
+
+  // Check if last argument is an options object with key/default
+  const lastArg = arguments[arguments.length - 1];
+  let argsEnd = arguments.length;
+
+  // Handle kwargs-style object at end (from **kwargs unpacking)
+  if (lastArg != null && typeof lastArg === 'object' && !Array.isArray(lastArg) &&
+      !(lastArg[Symbol.iterator]) && (lastArg.key !== undefined || lastArg.default !== undefined)) {
+    if (lastArg.key !== undefined) key = lastArg.key;
+    if (lastArg.default !== undefined) {
+      defaultValue = lastArg.default;
+      hasDefault = true;
+    }
+    argsEnd--;
+  }
+
+  if (argsEnd === 1) {
+    // Single argument - treat as iterable
+    const arg = arguments[0];
+    if (arg != null && typeof arg[Symbol.iterator] === 'function') {
+      items = [...arg];
+    } else if (Array.isArray(arg)) {
+      items = arg;
+    } else {
+      throw new TypeError("'" + typeof arg + "' object is not iterable");
+    }
+  } else {
+    // Multiple arguments - compare them directly
+    items = [];
+    for (let i = 0; i < argsEnd; i++) {
+      items.push(arguments[i]);
+    }
+  }
+
+  if (items.length === 0) {
+    if (hasDefault) return defaultValue;
+    throw new ValueError("max() arg is an empty sequence");
+  }
+
+  let result = items[0];
+  let resultKey = key ? key(result) : result;
+
+  for (let i = 1; i < items.length; i++) {
+    const item = items[i];
+    const itemKey = key ? key(item) : item;
+    if (FUNCTION_PREFIXcompare(itemKey, resultKey) > 0) {
+      result = item;
+      resultKey = itemKey;
+    }
+  }
+
+  return result;
+};
+
+// ---
+
 // function: op_add
 export const op_add = function (a, b) {
   // nargs: 2

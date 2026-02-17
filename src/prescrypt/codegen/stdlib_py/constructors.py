@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen
 from prescrypt.codegen.type_utils import get_type
-from prescrypt.codegen.utils import unify
 from prescrypt.exceptions import JSError
 from prescrypt.front.passes.types import Float, Int, String
 
@@ -16,7 +15,7 @@ def function_str(codegen: CodeGen, args, _kwargs):
             return '""'
         case [arg]:
             arg_type = get_type(arg)
-            js_arg = unify(codegen.gen_expr(arg))
+            js_arg = codegen.gen_expr_unified(arg)
 
             if arg_type is String:
                 # Already a string, return as-is
@@ -85,7 +84,7 @@ def function_dict(codegen: CodeGen, args, kwargs):
             return "({})"
         case [], [*_]:
             js_kwargs = [
-                f"{kw.arg}: {unify(codegen.gen_expr(kw.value))}" for kw in kwargs
+                f"{kw.arg}: {codegen.gen_expr_unified(kw.value)}" for kw in kwargs
             ]
             return "({%s})" % ", ".join(js_kwargs)
         case [arg], []:
@@ -95,7 +94,7 @@ def function_dict(codegen: CodeGen, args, kwargs):
             # Merge positional arg with kwargs using Object.assign
             js_arg = codegen.call_std_function("dict", [arg])
             js_kwargs = [
-                f"{kw.arg}: {unify(codegen.gen_expr(kw.value))}" for kw in kwargs
+                f"{kw.arg}: {codegen.gen_expr_unified(kw.value)}" for kw in kwargs
             ]
             return f"Object.assign({js_arg}, {{{', '.join(js_kwargs)}}})"
         case _:
@@ -108,7 +107,7 @@ def function_list(codegen: CodeGen, args, _kwargs):
         case []:
             return "[]"
         case [*_]:
-            js_args = [unify(codegen.gen_expr(arg)) for arg in args]
+            js_args = [codegen.gen_expr_unified(arg) for arg in args]
             return codegen.call_std_function("list", js_args)
 
 
@@ -121,7 +120,7 @@ def function_set(codegen: CodeGen, args, _kwargs):
         case []:
             return "new Set()"
         case [arg]:
-            js_arg = unify(codegen.gen_expr(arg))
+            js_arg = codegen.gen_expr_unified(arg)
             return f"new Set({js_arg})"
         case _:
             msg = "set() takes at most one argument"

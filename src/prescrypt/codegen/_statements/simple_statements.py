@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_stmt
-from prescrypt.codegen.utils import flatten
 from prescrypt.front import ast
 
 
@@ -12,7 +11,7 @@ def _gen_pass(node: ast.Pass, codegen: CodeGen):
 
 @gen_stmt.register
 def _gen_expr(node: ast.Expr, codegen: CodeGen):
-    js_expr = flatten(codegen.gen_expr(node.value))
+    js_expr = codegen.gen_expr_str(node.value)
     # Flush any pending declarations (e.g., from walrus operator)
     pending_decls = codegen.flush_pending_declarations()
     if pending_decls:
@@ -24,7 +23,7 @@ def _gen_expr(node: ast.Expr, codegen: CodeGen):
 def _gen_return(node: ast.Return, codegen: CodeGen):
     if node.value is None:
         return "return null;\n"
-    js_value = flatten(codegen.gen_expr(node.value))
+    js_value = codegen.gen_expr_str(node.value)
     return f"return {js_value};\n"
 
 

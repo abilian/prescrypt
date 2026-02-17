@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
 from prescrypt.codegen.type_utils import get_type, is_primitive
-from prescrypt.codegen.utils import js_repr, unify
+from prescrypt.codegen.utils import js_repr
 from prescrypt.exceptions import JSError
 from prescrypt.front import ast
 
@@ -77,7 +77,7 @@ def _try_optimize_fstring(node: ast.JoinedStr, codegen: CodeGen) -> str | None:
                     return None
 
                 # Generate the value expression
-                js_value = unify(codegen.gen_expr(value))
+                js_value = codegen.gen_expr_unified(value)
                 parts.append(js_value)
 
             case _:

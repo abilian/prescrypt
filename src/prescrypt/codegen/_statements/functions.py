@@ -227,7 +227,7 @@ class BaseFunDef:
                 code = [func_def]
                 # Apply decorators in reverse order
                 for dec in reversed(applicable):
-                    dec_name = flatten(self.codegen.gen_expr(dec))
+                    dec_name = self.codegen.gen_expr_str(dec)
                     code.append(f"{name} = {dec_name}({name});\n")
                 return "".join(code)
 

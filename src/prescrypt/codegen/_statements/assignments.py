@@ -21,14 +21,14 @@ def gen_slice_assign(
         raise JSError(msg)
 
     # Generate splice call: arr.splice(start, deleteCount, ...items)
-    js_start = flatten(codegen.gen_expr(lower)) if lower else "0"
+    js_start = codegen.gen_expr_str(lower) if lower else "0"
     if upper is None:
         # a[1:] = [...] -> splice from start to end
         return (
             f"{js_obj}.splice({js_start}, {js_obj}.length - {js_start}, ...{js_value});"
         )
     else:
-        js_end = flatten(codegen.gen_expr(upper))
+        js_end = codegen.gen_expr_str(upper)
         # a[1:3] = [...] -> splice(1, 2, ...items)
         return f"{js_obj}.splice({js_start}, {js_end} - {js_start}, ...{js_value});"
 
@@ -39,7 +39,7 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
 
     target_nodes, value_node = node.targets, node.value
 
-    js_value = flatten(codegen.gen_expr(value_node))
+    js_value = codegen.gen_expr_str(value_node)
 
     # Multiple targets: a = b = c = 3
     if len(target_nodes) > 1:
@@ -82,18 +82,18 @@ def gen_assign(node: ast.Assign, codegen: CodeGen):
                     return f"{codegen.with_prefix(id)} = {js_value};"
 
         case ast.Attribute(value, attr):
-            js_target = flatten(codegen.gen_expr(target_node))
+            js_target = codegen.gen_expr_str(target_node)
             return f"{js_target} = {js_value};"
 
         case ast.Subscript(value, slice_node):
-            js_obj = flatten(codegen.gen_expr(value))
+            js_obj = codegen.gen_expr_str(value)
 
             # Handle slice assignment: a[1:3] = [10, 20]
             if isinstance(slice_node, ast.Slice):
                 return gen_slice_assign(js_obj, slice_node, js_value, codegen)
 
             # Use op_setitem for regular index assignment
-            js_key = flatten(codegen.gen_expr(slice_node))
+            js_key = codegen.gen_expr_str(slice_node)
             return f"{codegen.call_std_function('op_setitem', [js_obj, js_key, js_value])};"
 
         case _:
@@ -140,14 +140,14 @@ def gen_multi_target_assign(
                         lines.append(f"{name} = {js_value};")
 
             case ast.Subscript(value, slice_node):
-                js_obj = flatten(codegen.gen_expr(value))
-                js_key = flatten(codegen.gen_expr(slice_node))
+                js_obj = codegen.gen_expr_str(value)
+                js_key = codegen.gen_expr_str(slice_node)
                 lines.append(
                     f"{codegen.call_std_function('op_setitem', [js_obj, js_key, js_value])};"
                 )
 
             case ast.Attribute(value, attr):
-                js_obj = flatten(codegen.gen_expr(value))
+                js_obj = codegen.gen_expr_str(value)
                 lines.append(f"{js_obj}.{attr} = {js_value};")
 
             case _:
@@ -394,7 +394,7 @@ def gen_annassign(node: ast.AnnAssign, codegen: CodeGen) -> str:
 
     if node.value is not None:
         # Has value: x: int = 5
-        js_value = flatten(codegen.gen_expr(node.value))
+        js_value = codegen.gen_expr_str(node.value)
 
         if codegen.ns.type == "class":
             # Class-level attribute
@@ -439,7 +439,7 @@ def gen_delete(node: ast.Delete, codegen: CodeGen) -> str:
             # del obj[key] - need different handling for list vs dict
             value = target.value
             slice_node = target.slice
-            js_value = flatten(codegen.gen_expr(value))
+            js_value = codegen.gen_expr_str(value)
 
             if isinstance(slice_node, ast.Slice):
                 # del lst[:] or del lst[start:end] - clear or remove range
@@ -450,16 +450,16 @@ def gen_delete(node: ast.Delete, codegen: CodeGen) -> str:
                     code.append(codegen.lf(f"{js_value}.splice(0, {js_value}.length);"))
                 elif lower is None:
                     # del lst[:n] -> lst.splice(0, n)
-                    js_upper = flatten(codegen.gen_expr(upper))
+                    js_upper = codegen.gen_expr_str(upper)
                     code.append(codegen.lf(f"{js_value}.splice(0, {js_upper});"))
                 elif upper is None:
                     # del lst[n:] -> lst.splice(n)
-                    js_lower = flatten(codegen.gen_expr(lower))
+                    js_lower = codegen.gen_expr_str(lower)
                     code.append(codegen.lf(f"{js_value}.splice({js_lower});"))
                 else:
                     # del lst[start:end] -> lst.splice(start, end - start)
-                    js_lower = flatten(codegen.gen_expr(lower))
-                    js_upper = flatten(codegen.gen_expr(upper))
+                    js_lower = codegen.gen_expr_str(lower)
+                    js_upper = codegen.gen_expr_str(upper)
                     code.append(
                         codegen.lf(
                             f"{js_value}.splice({js_lower}, {js_upper} - {js_lower});"
@@ -468,7 +468,7 @@ def gen_delete(node: ast.Delete, codegen: CodeGen) -> str:
             else:
                 # del obj[key] or del lst[idx]
                 # Use op_delitem for __delitem__ support
-                js_key = flatten(codegen.gen_expr(slice_node))
+                js_key = codegen.gen_expr_str(slice_node)
                 code.append(
                     codegen.lf(
                         codegen.call_std_function("op_delitem", [js_value, js_key])
@@ -477,7 +477,7 @@ def gen_delete(node: ast.Delete, codegen: CodeGen) -> str:
                 )
         elif isinstance(target, ast.Attribute):
             # del obj.attr - use runtime helper to check for property deleters
-            js_obj = flatten(codegen.gen_expr(target.value))
+            js_obj = codegen.gen_expr_str(target.value)
             attr_name = target.attr
             code.append(
                 codegen.lf(

@@ -13,10 +13,14 @@ def convert(node: ast.AST) -> my_ast.AST:
 
     fields = cls._fields
     # Arguments for the new node constructor
-    kwargs = {
-        "lineno": getattr(node, "lineno", 0),
-        "col_offset": getattr(node, "col_offset", 0),
-    }
+    # Only include lineno/col_offset for nodes that have _attributes including them
+    # (Python 3.14+ deprecates passing these to nodes that don't support them)
+    kwargs = {}
+    node_attrs = getattr(cls, "_attributes", ())
+    if "lineno" in node_attrs:
+        kwargs["lineno"] = getattr(node, "lineno", 0)
+    if "col_offset" in node_attrs:
+        kwargs["col_offset"] = getattr(node, "col_offset", 0)
     children = []
     for k in fields:
         v = getattr(node, k)

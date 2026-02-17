@@ -18,7 +18,7 @@ def function_isinstance(codegen: CodeGen, args, kwargs):
         msg = "isinstance() expects two arguments."
         raise JSError(msg)
 
-    ob = unify(codegen.gen_expr(args[0]))
+    ob = codegen.gen_expr_unified(args[0])
 
     BASIC_TYPES = (
         "number",
@@ -54,7 +54,7 @@ def function_isinstance(codegen: CodeGen, args, kwargs):
     if isinstance(type_arg, ast.Name) and type_arg.id in MAP:
         cls = type_arg.id
     else:
-        cls = unify(codegen.gen_expr(type_arg))
+        cls = codegen.gen_expr_unified(type_arg)
         if cls[0] in "\"'":
             cls = cls[1:-1]  # remove quotes
 
@@ -93,8 +93,8 @@ def function_issubclass(codegen: CodeGen, args, kwargs):
         msg = "issubclass() expects two arguments."
         raise JSError(msg)
 
-    cls1 = unify(codegen.gen_expr(args[0]))
-    cls2 = unify(codegen.gen_expr(args[1]))
+    cls1 = codegen.gen_expr_unified(args[0])
+    cls2 = codegen.gen_expr_unified(args[1])
     if cls2 == "object":
         cls2 = "Object"
     return f"({cls1}.prototype instanceof {cls2})"
@@ -105,9 +105,9 @@ def function_print(codegen: CodeGen, args, kwargs):
     sep, end = '" "', ""
     for kw in kwargs:
         if kw.arg == "sep":
-            sep = flatten(codegen.gen_expr(kw.value))
+            sep = codegen.gen_expr_str(kw.value)
         elif kw.arg == "end":
-            end = flatten(codegen.gen_expr(kw.value))
+            end = codegen.gen_expr_str(kw.value)
         elif kw.arg in ("file", "flush"):
             msg = "print() file and flush args not supported"
             raise JSError(msg)
@@ -124,7 +124,7 @@ def function_print(codegen: CodeGen, args, kwargs):
             js_arg = codegen.call_std_function("str", [arg])
         elif is_primitive(arg_type):
             # Numbers and strings: console.log handles them natively
-            js_arg = unify(codegen.gen_expr(arg))
+            js_arg = codegen.gen_expr_unified(arg)
         else:
             # Unknown or complex types: use _pyfunc_str for Python-style output
             js_arg = function_str(codegen, [arg], [])
@@ -150,35 +150,67 @@ def function_len(codegen: CodeGen, args, kwargs):
 
 
 def function_max(codegen: CodeGen, args, kwargs):
+    """Generate code for max() function.
+
+    Supports:
+    - max(iterable) - find max in iterable
+    - max(a, b, c, ...) - find max among arguments
+    - key=func - use func to extract comparison key
+    - default=value - return if iterable is empty
+    """
     match args:
         case []:
             msg = "max() needs at least one argument"
             raise JSError(msg)
-        case [arg]:
-            js_arg = flatten(codegen.gen_expr(arg))
-            return f"Math.max.apply(null, {js_arg})"
-        case [*_]:
-            js_args = ", ".join([unify(codegen.gen_expr(arg)) for arg in args])
-            return f"Math.max({js_args})"
+        case _:
+            # Use stdlib max() which handles all cases
+            js_args = ", ".join([codegen.gen_expr_unified(arg) for arg in args])
+            if kwargs:
+                # kwargs is a list of keyword AST nodes
+                kw_parts = []
+                for kw in kwargs:
+                    js_value = codegen.gen_expr_unified(kw.value)
+                    kw_parts.append(f"{kw.arg}: {js_value}")
+                kw_obj = "{" + ", ".join(kw_parts) + "}"
+                return codegen.call_std_function(
+                    "max", [], inline_args=f"{js_args}, {kw_obj}"
+                )
+            return codegen.call_std_function("max", [], inline_args=js_args)
 
 
 def function_min(codegen: CodeGen, args, kwargs):
+    """Generate code for min() function.
+
+    Supports:
+    - min(iterable) - find min in iterable
+    - min(a, b, c, ...) - find min among arguments
+    - key=func - use func to extract comparison key
+    - default=value - return if iterable is empty
+    """
     match args:
         case []:
             msg = "min() needs at least one argument"
             raise JSError(msg)
-        case [arg]:
-            js_arg = flatten(codegen.gen_expr(arg))
-            return f"Math.min.apply(null, {js_arg})"
-        case [*_]:
-            js_args = ", ".join([unify(codegen.gen_expr(arg)) for arg in args])
-            return f"Math.min({js_args})"
+        case _:
+            # Use stdlib min() which handles all cases
+            js_args = ", ".join([codegen.gen_expr_unified(arg) for arg in args])
+            if kwargs:
+                # kwargs is a list of keyword AST nodes
+                kw_parts = []
+                for kw in kwargs:
+                    js_value = codegen.gen_expr_unified(kw.value)
+                    kw_parts.append(f"{kw.arg}: {js_value}")
+                kw_obj = "{" + ", ".join(kw_parts) + "}"
+                return codegen.call_std_function(
+                    "min", [], inline_args=f"{js_args}, {kw_obj}"
+                )
+            return codegen.call_std_function("min", [], inline_args=js_args)
 
 
 def function_callable(codegen: CodeGen, args, kwargs):
     match args:
         case [arg]:
-            js_arg = unify(codegen.gen_expr(arg))
+            js_arg = codegen.gen_expr_unified(arg)
             return f'(typeof {js_arg} === "function")'
         case _:
             msg = "callable() needs exactly one argument"
@@ -188,7 +220,7 @@ def function_callable(codegen: CodeGen, args, kwargs):
 def function_chr(codegen: CodeGen, args, kwargs) -> str:
     match args:
         case [arg]:
-            js_arg = flatten(codegen.gen_expr(arg))
+            js_arg = codegen.gen_expr_str(arg)
             return f"String.fromCharCode({js_arg})"
         case _:
             msg = "chr() needs exactly one argument"
@@ -198,7 +230,7 @@ def function_chr(codegen: CodeGen, args, kwargs) -> str:
 def function_ord(codegen: CodeGen, args, kwargs) -> str:
     match args:
         case [arg]:
-            js_arg = flatten(codegen.gen_expr(arg))
+            js_arg = codegen.gen_expr_str(arg)
             # Wrap in parentheses to handle literals like ord(1)
             return f"({js_arg}).charCodeAt(0)"
         case _:
@@ -277,8 +309,8 @@ def function_super(codegen: CodeGen, args, kwargs):
                 return codegen.call_std_function("super_proxy", ["this", "null"])
         case [cls_arg, obj_arg]:
             # Two-argument super(cls, obj) - explicit form
-            js_cls = unify(codegen.gen_expr(cls_arg))
-            js_obj = unify(codegen.gen_expr(obj_arg))
+            js_cls = codegen.gen_expr_unified(cls_arg)
+            js_obj = codegen.gen_expr_unified(obj_arg)
             # Wrap js_cls in parentheses to handle literals like super(1, x)
             return codegen.call_std_function(
                 "super_proxy", [js_obj, f"({js_cls}).prototype"]

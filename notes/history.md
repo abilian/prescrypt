@@ -412,6 +412,7 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 | 6.10 | 2224 | Strict mode fix, MkDocs docs |
 | 7 | 1207 | Type-informed code generation |
 | 8 | 2622 | Language feature completeness (MatMult, Ellipsis, generators) |
+| 9 | 2639 | Code quality improvements, utility consolidation |
 
 **Total lines cleaned:** 330+
 **Coverage:** 83%
@@ -579,3 +580,68 @@ This document records completed work on the Prescrypt Python-to-JavaScript trans
 **Test adjustments (fundamental language differences):**
 - Float display (`4.0` vs `4`): JS doesn't distinguish; tests use non-whole numbers
 - ZeroDivisionError: JS returns Infinity; tests use explicit value checks
+
+---
+
+## Stage 9: Code Quality Improvements (2026-W8)
+
+**Goal:** Improve code quality, reduce duplication, and consolidate utility functions based on code review findings.
+
+**Completed:**
+
+- **Utility methods for codegen** (`codegen/main.py`):
+  - Added `gen_expr_str(node)` - generates expression and flattens to string
+  - Added `gen_expr_unified(node)` - generates expression, flattens, and wraps in parens if needed
+  - Replaced 132 occurrences of `flatten(codegen.gen_expr(...))` pattern across 13 files
+  - Cleaner, more maintainable code with fewer intermediate allocations
+
+- **JS FFI consolidation** (`codegen/main.py`):
+  - Moved `is_js_ffi_chain()` from duplicate module functions into CodeGen class
+  - Moved `strip_js_ffi_prefix()` into CodeGen class
+  - Updated `calls.py` and `ops.py` to use new methods
+  - Fixed edge case: `ast.Call()` nodes now handled in `strip_js_ffi_prefix()` for chained calls like `js.fetch('/api').then(callback)`
+
+- **Type decision helpers** (`codegen/type_utils.py`):
+  - Added `can_use_native_add(left_type, right_type)` - returns True for numeric+numeric or string+string
+  - Added `get_mult_strategy(left_type, right_type)` - returns "native", "repeat_left", "repeat_right", or "helper"
+  - Added `can_use_native_compare(left_type, right_type)` - returns True for primitive types
+  - Centralizes type-based codegen decisions, improves maintainability
+
+- **ModuleResolver caching** (`codegen/main.py`):
+  - Added `_resolver` field to CodeGen class
+  - `get_resolver()` now returns cached instance instead of creating new one each call
+  - Improves compilation speed for multi-file projects
+
+- **Documentation** (`codegen/main.py`):
+  - Added comprehensive class docstring to CodeGen documenting Binder contract
+  - Documents that `_scope` attribute must be set on Module by Binder pass
+  - Explains relationship between semantic scope (Binder) and codegen scope (NameSpace)
+
+- **Removed unused code**:
+  - Removed `Function(FunctionDef)` class from `front/ast/ast.py` (never used)
+  - Removed `is_captured: bool` field from `Variable` class in `front/ast/scope.py`
+
+- **Security fix** (`tools/mro_graph.py`):
+  - Replaced `os.system()` with `subprocess.run()` to prevent shell injection
+  - Dev tool only, but important for security hygiene
+
+**Files Modified:**
+| File | Changes |
+|------|---------|
+| `codegen/main.py` | Added utility methods, JS FFI methods, resolver caching, docstring |
+| `codegen/type_utils.py` | Added type decision helpers |
+| `codegen/_expressions/ops.py` | Use CodeGen methods, type helpers |
+| `codegen/_expressions/calls.py` | Use CodeGen.is_js_ffi_chain() |
+| `codegen/_expressions/*.py` (10 files) | Use gen_expr_str(), gen_expr_unified() |
+| `codegen/_statements/*.py` (7 files) | Use gen_expr_str(), gen_expr_unified() |
+| `codegen/stdlib_py/*.py` (2 files) | Use gen_expr_str() |
+| `front/ast/ast.py` | Removed unused Function class |
+| `front/ast/scope.py` | Removed unused is_captured field |
+| `tools/mro_graph.py` | Fixed shell injection vulnerability |
+
+**Test Results:** 2639 passing (0 skipped)
+
+**Metrics:**
+- Code duplication reduced: 132 flatten/unify calls → utility methods
+- JS FFI function duplicates: 2 files → 1 (in CodeGen)
+- Lines of unused code removed: ~30

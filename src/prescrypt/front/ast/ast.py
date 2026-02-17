@@ -579,8 +579,4 @@ class MatchOr(_ast.MatchOr, pattern, AST):
     patterns: list[pattern]
 
 
-class Function(FunctionDef):
-    _fields = ("name", "args", "body")
-
-
 from .converter import parse  # noqa

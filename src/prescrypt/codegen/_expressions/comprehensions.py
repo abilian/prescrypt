@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from prescrypt.codegen.main import CodeGen, gen_expr
-from prescrypt.codegen.utils import flatten, unify
 from prescrypt.front import ast
 
 
@@ -10,7 +9,7 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
     elt_node, generator_nodes = node.elt, node.generators
 
     codegen.push_ns("function", "<listcomp>")
-    js_elt = flatten(codegen.gen_expr(elt_node))
+    js_elt = codegen.gen_expr_str(elt_node)
     js_code = [
         "(function list_comprehension (iter0) {",
         "const res = []; res._is_list = true;",
@@ -23,13 +22,13 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
         target_node = comprehension.target
         match target_node:
             case ast.Tuple(elts=target_elts):
-                target = [flatten(codegen.gen_expr(t)) for t in target_elts]
+                target = [codegen.gen_expr_str(t) for t in target_elts]
             case _:
-                target = [flatten(codegen.gen_expr(target_node))]
+                target = [codegen.gen_expr_str(target_node)]
 
         # comprehension(target_node, iter_node, if_nodes)
         if iter > 0:  # first one is passed to function as an arg
-            cc.append(f"let iter# = {flatten(codegen.gen_expr(comprehension.iter))};")
+            cc.append(f"let iter# = {codegen.gen_expr_str(comprehension.iter)};")
 
         cc.append(
             'if ((typeof iter# === "object") && '
@@ -43,7 +42,7 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
         if if_nodes:
             cc.append("if (!(")
             for if_node in if_nodes:
-                cc += unify(codegen.gen_expr(if_node))
+                cc += codegen.gen_expr_unified(if_node)
                 cc.append("&&")
             cc.pop(-1)  # pop '&&'
             cc.append(")) {continue;}")
@@ -61,7 +60,7 @@ def gen_list_comp(node: ast.ListComp, codegen: CodeGen) -> list[str]:
 
     # Finalize
     js_code.append("return res;})")  # end function
-    iter0 = flatten(codegen.gen_expr(generator_nodes[0].iter))
+    iter0 = codegen.gen_expr_str(generator_nodes[0].iter)
     js_code.append(f".call(this, {iter0})")  # call funct with iter as 1st arg
 
     codegen.pop_ns()
@@ -123,7 +122,7 @@ def gen_generator_exp(node: ast.GeneratorExp, codegen: CodeGen) -> list[str]:
         loop_target = _gen_loop_target(comprehension.target, codegen)
 
         # Get iterable
-        js_iter = flatten(codegen.gen_expr(comprehension.iter))
+        js_iter = codegen.gen_expr_str(comprehension.iter)
 
         # Use for...of for proper iteration (works with generators, arrays, etc.)
         js_code.append(f"for (let {loop_target} of {js_iter}) {{")
@@ -131,11 +130,11 @@ def gen_generator_exp(node: ast.GeneratorExp, codegen: CodeGen) -> list[str]:
         # Add if conditions
         if_nodes = comprehension.ifs
         for if_node in if_nodes:
-            js_condition = flatten(codegen.gen_expr(if_node))
+            js_condition = codegen.gen_expr_str(if_node)
             js_code.append(f"if (!({js_condition})) continue;")
 
     # Yield the element expression
-    js_elt = flatten(codegen.gen_expr(elt_node))
+    js_elt = codegen.gen_expr_str(elt_node)
     js_code.append(f"yield {js_elt};")
 
     # Close all for loops
@@ -154,7 +153,7 @@ def gen_set_comp(node: ast.SetComp, codegen: CodeGen) -> list[str]:
     elt_node, generator_nodes = node.elt, node.generators
 
     codegen.push_ns("function", "<setcomp>")
-    js_elt = flatten(codegen.gen_expr(elt_node))
+    js_elt = codegen.gen_expr_str(elt_node)
     js_code = ["(function set_comprehension (iter0) {", "const res = new Set();"]
 
     for iter, comprehension in enumerate(generator_nodes):
@@ -164,13 +163,13 @@ def gen_set_comp(node: ast.SetComp, codegen: CodeGen) -> list[str]:
         target_node = comprehension.target
         match target_node:
             case ast.Tuple(elts=target_elts):
-                target = [flatten(codegen.gen_expr(t)) for t in target_elts]
+                target = [codegen.gen_expr_str(t) for t in target_elts]
             case _:
-                target = [flatten(codegen.gen_expr(target_node))]
+                target = [codegen.gen_expr_str(target_node)]
 
         # comprehension(target_node, iter_node, if_nodes)
         if iter > 0:  # first one is passed to function as an arg
-            cc.append(f"let iter# = {flatten(codegen.gen_expr(comprehension.iter))};")
+            cc.append(f"let iter# = {codegen.gen_expr_str(comprehension.iter)};")
 
         cc.append(
             'if ((typeof iter# === "object") && '
@@ -184,7 +183,7 @@ def gen_set_comp(node: ast.SetComp, codegen: CodeGen) -> list[str]:
         if if_nodes:
             cc.append("if (!(")
             for if_node in if_nodes:
-                cc += unify(codegen.gen_expr(if_node))
+                cc += codegen.gen_expr_unified(if_node)
                 cc.append("&&")
             cc.pop(-1)  # pop '&&'
             cc.append(")) {continue;}")
@@ -202,7 +201,7 @@ def gen_set_comp(node: ast.SetComp, codegen: CodeGen) -> list[str]:
 
     # Finalize
     js_code.append("return res;})")  # end function
-    iter0 = flatten(codegen.gen_expr(generator_nodes[0].iter))
+    iter0 = codegen.gen_expr_str(generator_nodes[0].iter)
     js_code.append(f".call(this, {iter0})")  # call funct with iter as 1st arg
 
     codegen.pop_ns()
@@ -215,8 +214,8 @@ def gen_dict_comp(node: ast.DictComp, codegen: CodeGen) -> list[str]:
     key_node, value_node, generator_nodes = node.key, node.value, node.generators
 
     codegen.push_ns("function", "<dictcomp>")
-    js_key = flatten(codegen.gen_expr(key_node))
-    js_value = flatten(codegen.gen_expr(value_node))
+    js_key = codegen.gen_expr_str(key_node)
+    js_value = codegen.gen_expr_str(value_node)
     js_code = ["(function dict_comprehension (iter0) {", "const res = {};"]
 
     for iter, comprehension in enumerate(generator_nodes):
@@ -226,13 +225,13 @@ def gen_dict_comp(node: ast.DictComp, codegen: CodeGen) -> list[str]:
         target_node = comprehension.target
         match target_node:
             case ast.Tuple(elts=target_elts):
-                target = [flatten(codegen.gen_expr(t)) for t in target_elts]
+                target = [codegen.gen_expr_str(t) for t in target_elts]
             case _:
-                target = [flatten(codegen.gen_expr(target_node))]
+                target = [codegen.gen_expr_str(target_node)]
 
         # comprehension(target_node, iter_node, if_nodes)
         if iter > 0:  # first one is passed to function as an arg
-            cc.append(f"let iter# = {flatten(codegen.gen_expr(comprehension.iter))};")
+            cc.append(f"let iter# = {codegen.gen_expr_str(comprehension.iter)};")
 
         cc.append(
             'if ((typeof iter# === "object") && '
@@ -246,7 +245,7 @@ def gen_dict_comp(node: ast.DictComp, codegen: CodeGen) -> list[str]:
         if if_nodes:
             cc.append("if (!(")
             for if_node in if_nodes:
-                cc += unify(codegen.gen_expr(if_node))
+                cc += codegen.gen_expr_unified(if_node)
                 cc.append("&&")
             cc.pop(-1)  # pop '&&'
             cc.append(")) {continue;}")
@@ -264,7 +263,7 @@ def gen_dict_comp(node: ast.DictComp, codegen: CodeGen) -> list[str]:
 
     # Finalize
     js_code.append("return res;})")  # end function
-    iter0 = flatten(codegen.gen_expr(generator_nodes[0].iter))
+    iter0 = codegen.gen_expr_str(generator_nodes[0].iter)
     js_code.append(f".call(this, {iter0})")  # call funct with iter as 1st arg
 
     codegen.pop_ns()
