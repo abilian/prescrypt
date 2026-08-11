@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import pytest
 
+from prescrypt import py2js
 from prescrypt.codegen.main import CodeGen
 from prescrypt.front import ast
 from prescrypt.front.passes.binder import Binder
 from prescrypt.front.passes.desugar import desugar
+from prescrypt.testing import js_eval
 from prescrypt.testing.data import EXPRESSIONS
 
 
@@ -55,3 +57,27 @@ def _py2js(prog):
     Binder().visit(tree)  # Run Binder to get scope info
     codegen = CodeGen(tree)
     return codegen.gen().strip()
+
+
+class TestAugmentedAssignmentDispatch:
+    """`x op= y` must read the target the same way `x = x op y` does."""
+
+    def test_subscript_uses_dunder_getitem(self):
+        code = """
+class Box:
+    def __init__(self):
+        self.data = {}
+
+    def __getitem__(self, k):
+        return self.data.get(k, 0)
+
+    def __setitem__(self, k, v):
+        self.data[k] = v
+
+b = Box()
+b[1] += 5
+c = Box()
+c[1] = c[1] + 5
+[b.data[1], c.data[1]]
+"""
+        assert js_eval(py2js(code)) == [5, 5]

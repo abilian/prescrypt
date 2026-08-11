@@ -119,18 +119,23 @@ class Desugarer(ast.NodeTransformer):
     def visit_AugAssign(self, node: ast.AugAssign):
         """
         Transforms `a += b` in `a = a + b`.
+
+        The target appears twice in the result, read on the right and written
+        on the left, so the two copies need opposite contexts. An AugAssign
+        target is a Name, an Attribute or a Subscript, and all three carry
+        `ctx`, so neither copy is a special case: guarding on Name left
+        `obj.attr` and `a[i]` reading in Store context, and codegen picks the
+        raw subscript over `op_getitem` when it sees Store.
         """
         import copy as copy_module
 
-        # Create a deep copy of target for use in the expression (with Load context)
+        # Copy of the target read on the right-hand side.
         expr_target = copy_module.deepcopy(node.target)
-        if isinstance(expr_target, ast.Name):
-            expr_target.ctx = ast.Load()
+        expr_target.ctx = ast.Load()
 
-        # Create a deep copy of target for assignment (with Store context)
+        # Copy of the target written on the left-hand side.
         assign_target = copy_module.deepcopy(node.target)
-        if isinstance(assign_target, ast.Name):
-            assign_target.ctx = ast.Store()
+        assign_target.ctx = ast.Store()
 
         new_node = ast.Assign(
             [assign_target],

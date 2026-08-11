@@ -28,6 +28,19 @@ def test_desugar_aug_ass():
     assert ast.unparse(tree) == "a = a + 1"
 
 
+@pytest.mark.parametrize("code", ["a += 1", "obj.attr += 1", "a[i] += 1"])
+def test_desugar_aug_assign_contexts(code: str):
+    """The target is read on the right and written on the left.
+
+    `unparse` does not show `ctx`, so `test_desugar_aug_ass` above passes even
+    when the read copy is left in Store context. Codegen does read it: a
+    Subscript in Store context compiles to a raw index instead of op_getitem.
+    """
+    stmt = desugar(ast.parse(code)).body[0]
+    assert isinstance(stmt.targets[0].ctx, ast.Store)
+    assert isinstance(stmt.value.left.ctx, ast.Load)
+
+
 def test_desugar_bool_op():
     code = "a and b and c"
     tree = ast.parse(code)
