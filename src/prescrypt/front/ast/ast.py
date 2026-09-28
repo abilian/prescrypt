@@ -68,32 +68,32 @@ class excepthandler(_ast.excepthandler, AST):
 class arguments(_ast.arguments, AST):
     posonlyargs: list[arg]
     args: list[arg]
-    vararg: None | arg
+    vararg: arg | None
     kwonlyargs: list[arg]
     kw_defaults: list[None] | list[expr]
-    kwarg: None | arg
+    kwarg: arg | None
     defaults: list[expr]
 
 
 class arg(_ast.arg, AST):
     arg: str
-    annotation: None | expr
+    annotation: expr | None
     type_comment: None
 
 
 class keyword(_ast.keyword, AST):
-    arg: None | str
+    arg: str | None
     value: expr
 
 
 class alias(_ast.alias, AST):
     name: str
-    asname: None | str
+    asname: str | None
 
 
 class withitem(_ast.withitem, AST):
     context_expr: expr
-    optional_vars: None | expr
+    optional_vars: expr | None
 
 
 class match_case(_ast.match_case, AST):
@@ -124,7 +124,7 @@ class FunctionDef(_ast.FunctionDef, stmt, AST):
     args: arguments
     body: list[stmt]
     decorator_list: list[expr]
-    returns: None | expr
+    returns: expr | None
     type_comment: None
 
 
@@ -133,7 +133,7 @@ class AsyncFunctionDef(_ast.AsyncFunctionDef, stmt, AST):
     args: arguments
     body: list[stmt]
     decorator_list: list[expr]
-    returns: None | expr
+    returns: expr | None
     type_comment: None
 
 
@@ -146,7 +146,7 @@ class ClassDef(_ast.ClassDef, stmt, AST):
 
 
 class Return(_ast.Return, stmt, AST):
-    value: None | expr
+    value: expr | None
 
 
 class Delete(_ast.Delete, stmt, AST):
@@ -168,7 +168,7 @@ class AugAssign(_ast.AugAssign, stmt, AST):
 class AnnAssign(_ast.AnnAssign, stmt, AST):
     target: expr
     annotation: expr
-    value: None | expr
+    value: expr | None
     simple: int
 
 
@@ -218,8 +218,8 @@ class Match(_ast.Match, stmt, AST):
 
 
 class Raise(_ast.Raise, stmt, AST):
-    exc: None | expr
-    cause: None | expr
+    exc: expr | None
+    cause: expr | None
 
 
 class Try(_ast.Try, stmt, AST):
@@ -231,7 +231,7 @@ class Try(_ast.Try, stmt, AST):
 
 class Assert(_ast.Assert, stmt, AST):
     test: expr
-    msg: None | expr
+    msg: expr | None
 
 
 class Import(_ast.Import, stmt, AST):
@@ -239,7 +239,7 @@ class Import(_ast.Import, stmt, AST):
 
 
 class ImportFrom(_ast.ImportFrom, stmt, AST):
-    module: None | str
+    module: str | None
     names: list[alias]
     level: int
 
@@ -335,7 +335,7 @@ class Await(_ast.Await, expr, AST):
 
 
 class Yield(_ast.Yield, expr, AST):
-    value: None | expr
+    value: expr | None
 
 
 class YieldFrom(_ast.YieldFrom, expr, AST):
@@ -357,7 +357,7 @@ class Call(_ast.Call, expr, AST):
 class FormattedValue(_ast.FormattedValue, expr, AST):
     value: expr
     conversion: int
-    format_spec: None | expr
+    format_spec: expr | None
 
 
 class JoinedStr(_ast.JoinedStr, expr, AST):
@@ -365,8 +365,8 @@ class JoinedStr(_ast.JoinedStr, expr, AST):
 
 
 class Constant(_ast.Constant, expr, AST):
-    value: None | bytes | complex | ellipsis | float | int | str
-    kind: None | str
+    value: bytes | complex | ellipsis | float | int | str | None
+    kind: str | None
 
 
 class Attribute(_ast.Attribute, expr, AST):
@@ -402,9 +402,9 @@ class Tuple(_ast.Tuple, expr, AST):
 
 
 class Slice(_ast.Slice, expr, AST):
-    lower: None | expr
-    upper: None | expr
-    step: None | expr
+    lower: expr | None
+    upper: expr | None
+    step: expr | None
 
 
 class Load(_ast.Load, expr_context, AST):
@@ -536,8 +536,8 @@ class NotIn(_ast.NotIn, cmpop, AST):
 
 
 class ExceptHandler(_ast.ExceptHandler, excepthandler, AST):
-    type: None | expr
-    name: None | str
+    type: expr | None
+    name: str | None
     body: list[stmt]
 
 
@@ -546,7 +546,7 @@ class MatchValue(_ast.MatchValue, pattern, AST):
 
 
 class MatchSingleton(_ast.MatchSingleton, pattern, AST):
-    value: None | int
+    value: int | None
 
 
 class MatchSequence(_ast.MatchSequence, pattern, AST):
@@ -567,12 +567,12 @@ class MatchClass(_ast.MatchClass, pattern, AST):
 
 
 class MatchStar(_ast.MatchStar, pattern, AST):
-    name: None | str
+    name: str | None
 
 
 class MatchAs(_ast.MatchAs, pattern, AST):
     pattern: None
-    name: None | str
+    name: str | None
 
 
 class MatchOr(_ast.MatchOr, pattern, AST):

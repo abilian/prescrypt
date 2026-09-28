@@ -8,7 +8,7 @@ class Visitor(ast.NodeVisitor):
     Base class for visitors.
     """
 
-    def visit(self, node: None | ast.AST | ast.expr | ast.stmt | ast.arguments):
+    def visit(self, node: ast.AST | ast.expr | ast.stmt | ast.arguments | None):
         """
         Override the default visit method and add a type sugnature.
 
@@ -27,7 +27,7 @@ class Transformer(ast.NodeTransformer):
     Base class for transformers.
     """
 
-    def visit(self, node: None | ast.AST | ast.expr | ast.stmt | ast.arguments):
+    def visit(self, node: ast.AST | ast.expr | ast.stmt | ast.arguments | None):
         """
         Override the default visit method and add a type sugnature.
 
