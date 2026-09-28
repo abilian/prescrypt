@@ -31,8 +31,3 @@ tasks:
   - nox: |
       cd prescrypt
       uvx nox
-
-triggers:
-  - action: email
-    condition: failure
-    to: builds@fermigier.com
